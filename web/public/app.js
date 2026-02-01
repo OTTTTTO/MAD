@@ -6,12 +6,16 @@ let agentStats = {};
 let ws = null;
 let wsConnected = false;
 let currentTheme = 'dark';
+let openTabs = new Map(); // <discussionId, {title, pinned}>
+let activeTabId = null;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
   initWebSocket();
   initTheme();
+  initTabs();
+  initKeyboard();
 });
 
 /**
@@ -188,13 +192,20 @@ function selectDiscussion(discussionId) {
   document.querySelectorAll('.discussion-item').forEach(item => {
     item.classList.remove('active');
   });
-  document.querySelector(`[data-id="${discussionId}"]`).classList.add('active');
+  const activeItem = document.querySelector(`[data-id="${discussionId}"]`);
+  if (activeItem) activeItem.classList.add('active');
   
   // 加载消息
   loadMessages(discussionId);
   
-  // 显示导出按钮
+  // 显示按钮
   document.getElementById('exportBtn').style.display = 'block';
+  
+  // 添加标签页
+  const discussionTitle = document.getElementById('currentDiscussionTitle').textContent;
+  if (discussionTitle && discussionTitle !== '选择一个讨论组') {
+    addTab(discussionId, discussionTitle);
+  }
 }
 
 /**
@@ -564,6 +575,210 @@ function exportDiscussion(format) {
   
   const url = `/api/discussion/${currentDiscussionId}/export/${format}`;
   window.open(url, '_blank');
+}
+
+/**
+ * 初始化标签页
+ */
+function initTabs() {
+  const closeAllBtn = document.getElementById('closeAllTabs');
+  const pinBtn = document.getElementById('pinBtn');
+  
+  closeAllBtn.addEventListener('click', closeAllTabs);
+  pinBtn.addEventListener('click', togglePin);
+  
+  // 从 localStorage 恢复标签页
+  const savedTabs = localStorage.getItem('mad-tabs');
+  if (savedTabs) {
+    try {
+      openTabs = new Map(JSON.parse(savedTabs));
+      renderTabs();
+    } catch (e) {
+      console.error('Failed to restore tabs:', e);
+    }
+  }
+}
+
+/**
+ * 添加标签页
+ */
+function addTab(discussionId, title) {
+  if (!openTabs.has(discussionId)) {
+    openTabs.set(discussionId, {
+      title,
+      pinned: false
+    });
+    saveTabs();
+    renderTabs();
+  }
+  
+  activateTab(discussionId);
+}
+
+/**
+ * 激活标签页
+ */
+function activateTab(discussionId) {
+  activeTabId = discussionId;
+  renderTabs();
+  saveTabs();
+  
+  // 显示/隐藏固定按钮
+  const pinBtn = document.getElementById('pinBtn');
+  const tab = openTabs.get(discussionId);
+  if (pinBtn && tab) {
+    pinBtn.style.display = 'block';
+    pinBtn.textContent = tab.pinned ? '📍 取消固定' : '📌 固定';
+  }
+}
+
+/**
+ * 关闭标签页
+ */
+function closeTab(discussionId) {
+  const tab = openTabs.get(discussionId);
+  
+  // 固定的标签页需要确认
+  if (tab && tab.pinned && !confirm('这个标签页已固定，确定要关闭吗？')) {
+    return;
+  }
+  
+  openTabs.delete(discussionId);
+  
+  // 如果关闭的是当前标签页，切换到另一个
+  if (activeTabId === discussionId) {
+    const remainingIds = Array.from(openTabs.keys());
+    if (remainingIds.length > 0) {
+      activateTab(remainingIds[0]);
+      loadMessages(remainingIds[0]);
+    } else {
+      activeTabId = null;
+      currentDiscussionId = null;
+      document.getElementById('pinBtn').style.display = 'none';
+    }
+  }
+  
+  saveTabs();
+  renderTabs();
+}
+
+/**
+ * 关闭所有标签页
+ */
+function closeAllTabs() {
+  const pinnedCount = Array.from(openTabs.values()).filter(t => t.pinned).length;
+  
+  if (pinnedCount > 0 && !confirm(`有 ${pinnedCount} 个固定的标签页，确定要全部关闭吗？`)) {
+    return;
+  }
+  
+  openTabs.clear();
+  activeTabId = null;
+  currentDiscussionId = null;
+  
+  saveTabs();
+  renderTabs();
+  
+  document.getElementById('pinBtn').style.display = 'none';
+}
+
+/**
+ * 切换固定状态
+ */
+function togglePin() {
+  if (!activeTabId) return;
+  
+  const tab = openTabs.get(activeTabId);
+  if (tab) {
+    tab.pinned = !tab.pinned;
+    saveTabs();
+    renderTabs();
+    
+    const pinBtn = document.getElementById('pinBtn');
+    pinBtn.textContent = tab.pinned ? '📍 取消固定' : '📌 固定';
+  }
+}
+
+/**
+ * 渲染标签页
+ */
+function renderTabs() {
+  const tabsContainer = document.getElementById('discussionTabs');
+  const tabList = document.getElementById('tabList');
+  
+  if (openTabs.size === 0) {
+    tabsContainer.style.display = 'none';
+    return;
+  }
+  
+  tabsContainer.style.display = 'flex';
+  
+  // 排序：固定的在前
+  const sortedIds = Array.from(openTabs.entries())
+    .sort((a, b) => {
+      if (a[1].pinned && !b[1].pinned) return -1;
+      if (!a[1].pinned && b[1].pinned) return 1;
+      return 0;
+    })
+    .map(([id]) => id);
+  
+  tabList.innerHTML = sortedIds.map(id => {
+    const tab = openTabs.get(id);
+    const isActive = id === activeTabId;
+    
+    return `
+      <div class="tab ${isActive ? 'active' : ''} ${tab.pinned ? 'pinned' : ''}" 
+           data-id="${id}"
+           onclick="switchToTab('${id}')">
+        <span class="tab-title">${escapeHtml(tab.title)}</span>
+        <span class="tab-close" onclick="event.stopPropagation(); closeTab('${id}')">✕</span>
+      </div>
+    `;
+  }).join('');
+}
+
+/**
+ * 切换到指定标签页
+ */
+function switchToTab(discussionId) {
+  activateTab(discussionId);
+  loadMessages(discussionId);
+}
+
+/**
+ * 保存标签页到 localStorage
+ */
+function saveTabs() {
+  localStorage.setItem('mad-tabs', JSON.stringify(Array.from(openTabs.entries())));
+}
+
+/**
+ * 初始化键盘快捷键
+ */
+function initKeyboard() {
+  document.addEventListener('keydown', (e) => {
+    // Ctrl+Tab: 下一个标签页
+    if (e.ctrlKey && e.key === 'Tab') {
+      e.preventDefault();
+      const ids = Array.from(openTabs.keys());
+      if (ids.length === 0) return;
+      
+      const currentIndex = ids.indexOf(activeTabId);
+      const nextIndex = e.shiftKey 
+        ? (currentIndex - 1 + ids.length) % ids.length
+        : (currentIndex + 1) % ids.length;
+      
+      switchToTab(ids[nextIndex]);
+    }
+    
+    // Ctrl+W: 关闭当前标签页
+    if (e.ctrlKey && e.key === 'w') {
+      e.preventDefault();
+      if (activeTabId) {
+        closeTab(activeTabId);
+      }
+    }
+  });
 }
 
 // 页面卸载时停止刷新

@@ -44,9 +44,16 @@
 
       <!-- 主区域：消息流 -->
       <main class="message-area">
+        <!-- 讨论组标签页 -->
+        <div class="tabs" id="discussionTabs" style="display: none;">
+          <div class="tab-list" id="tabList"></div>
+          <button class="btn btn-sm tab-close" id="closeAllTabs">关闭全部</button>
+        </div>
+        
         <div class="message-header-bar">
           <h2 id="currentDiscussionTitle">选择一个讨论组</h2>
           <div class="header-actions">
+            <button id="pinBtn" class="btn btn-sm" style="display: none;">📌 固定</button>
             <button id="exportBtn" class="btn btn-sm" style="display: none;">📥 导出</button>
           </div>
         </div>

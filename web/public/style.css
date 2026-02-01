@@ -227,6 +227,71 @@ body {
   background: var(--bg-dark);
 }
 
+/* 标签页 */
+.tabs {
+  display: flex;
+  align-items: center;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+}
+
+.tab-list {
+  flex: 1;
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 200px;
+}
+
+.tab:hover {
+  background: var(--bg-message);
+}
+
+.tab.active {
+  background: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.tab-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.85rem;
+}
+
+.tab-close {
+  opacity: 0.6;
+  font-size: 0.8rem;
+  padding: 0 0.25rem;
+}
+
+.tab-close:hover {
+  opacity: 1;
+}
+
+.tab.pinned::before {
+  content: '📌';
+  margin-right: 0.25rem;
+}
+
 .message-header-bar {
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
