@@ -1,0 +1,23 @@
+{
+  "name": "@openclaw/multi-agent-discuss",
+  "version": "1.0.0",
+  "description": "Multi-Agent 协同讨论系统 - 让多个专业 Agent 在虚拟讨论组中协作",
+  "main": "orchestrator.js",
+  "openclaw": {
+    "skill": true,
+    "enabled": true,
+    "type": "tool"
+  },
+  "keywords": [
+    "multi-agent",
+    "discussion",
+    "collaboration",
+    "orchestration"
+  ],
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OTTTTTO/multi-agent-discuss.git"
+  }
+}

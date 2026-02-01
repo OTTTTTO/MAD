@@ -1,0 +1,22 @@
+node_modules/
+*.log
+.DS_Store
+*.swp
+*.swo
+coverage/
+.nyc_output/
+dist/
+build/
+
+# 讨论数据（本地生成，不上传）
+discussions/
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.iml
+
+# 临时文件
+*.tmp
+*.temp
