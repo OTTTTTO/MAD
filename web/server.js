@@ -107,6 +107,40 @@ async function createServer() {
         return;
       }
 
+      // API: 导出讨论为 Markdown
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/export\/markdown/)) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const markdown = orchestrator.exportToMarkdown(discussionId);
+          res.setHeader('Content-Type', 'text/markdown; charset=utf-8');
+          res.setHeader('Content-Disposition', `attachment; filename="discussion-${discussionId}.md"`);
+          res.writeHead(200);
+          res.end(markdown);
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 导出讨论为 JSON
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/export\/json/)) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const json = orchestrator.exportToJson(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Content-Disposition', `attachment; filename="discussion-${discussionId}.json"`);
+          res.writeHead(200);
+          res.end(json);
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
       // 404
       res.writeHead(404);
       res.end('Not Found');

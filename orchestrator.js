@@ -624,6 +624,102 @@ class DiscussionOrchestrator {
     
     return mentions;
   }
+
+  /**
+   * 导出讨论为 Markdown
+   */
+  exportToMarkdown(discussionId) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    const lines = [];
+    
+    // 标题
+    lines.push(`# 讨论记录：${context.topic}`);
+    lines.push('');
+    
+    // 元信息
+    const createdAt = new Date(context.createdAt).toLocaleString('zh-CN');
+    const endedAt = context.endedAt ? new Date(context.endedAt).toLocaleString('zh-CN') : '进行中';
+    
+    lines.push(`**开始时间：** ${createdAt}`);
+    lines.push(`**结束时间：** ${endedAt}`);
+    lines.push(`**参与者：** ${context.participants.map(p => `${p.emoji} ${p.role}`).join('、')}`);
+    lines.push(`**消息数：** ${context.messages.length} 条`);
+    lines.push('');
+    
+    // 冲突信息
+    if (context.conflicts.length > 0) {
+      lines.push('**识别到的冲突：**');
+      context.conflicts.forEach((conflict, i) => {
+        lines.push(`${i + 1}. ${conflict.type}`);
+      });
+      lines.push('');
+    }
+    
+    lines.push('---');
+    lines.push('');
+    
+    // 消息内容
+    context.messages.forEach(msg => {
+      const participant = context.participants.find(p => p.id === msg.role);
+      const emoji = participant ? participant.emoji : '🤖';
+      const role = participant ? participant.role : msg.role;
+      const time = new Date(msg.timestamp).toLocaleString('zh-CN');
+      
+      lines.push(`## ${emoji} ${role}`);
+      lines.push(`*${time}*`);
+      lines.push('');
+      lines.push(msg.content);
+      lines.push('');
+      lines.push('---');
+      lines.push('');
+    });
+    
+    // 总结
+    if (context.messages.length > 0) {
+      const summary = this.generateSummary(context);
+      
+      lines.push('## 📊 讨论总结');
+      lines.push('');
+      
+      if (summary.keyPoints.length > 0) {
+        lines.push('### 关键观点');
+        summary.keyPoints.forEach(point => {
+          lines.push(`- **${point.agent}:** ${point.point.substring(0, 100)}...`);
+        });
+        lines.push('');
+      }
+      
+      if (summary.decisions.length > 0) {
+        lines.push('### 达成的决策');
+        summary.decisions.forEach(decision => {
+          lines.push(`- ${decision.decision.substring(0, 100)}...`);
+        });
+        lines.push('');
+      }
+      
+      if (summary.openQuestions.length > 0) {
+        lines.push('### 待解决问题');
+        summary.openQuestions.forEach(q => {
+          lines.push(`- ${q.question}`);
+        });
+        lines.push('');
+      }
+    }
+    
+    return lines.join('\n');
+  }
+
+  /**
+   * 导出讨论为 JSON
+   */
+  exportToJson(discussionId) {
+    const history = this.getDiscussionHistory(discussionId);
+    return JSON.stringify(history, null, 2);
+  }
 }
 
 /**

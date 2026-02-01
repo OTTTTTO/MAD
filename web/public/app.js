@@ -28,6 +28,11 @@ function initApp() {
     }
   });
   
+  // 导出按钮
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    exportDiscussion('markdown');
+  });
+  
   // 自动刷新（每 5 秒）
   startAutoRefresh();
 }
@@ -97,7 +102,30 @@ function selectDiscussion(discussionId) {
   
   // 加载消息
   loadMessages(discussionId);
+  
+  // 显示导出按钮
+  document.getElementById('exportBtn').style.display = 'block';
 }
+
+/**
+ * 导出讨论
+ */
+function exportDiscussion(format) {
+  if (!currentDiscussionId) {
+    alert('请先选择一个讨论组');
+    return;
+  }
+  
+  const url = `/api/discussion/${currentDiscussionId}/export/${format}`;
+  window.open(url, '_blank');
+}
+
+// 导出按钮事件
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('exportBtn').addEventListener('click', () => {
+    exportDiscussion('markdown');
+  });
+});
 
 /**
  * 加载消息
@@ -108,6 +136,9 @@ async function loadMessages(discussionId) {
     
     const response = await fetch(`/api/discussion/${discussionId}`);
     const data = await response.json();
+    
+    // 更新标题
+    document.getElementById('currentDiscussionTitle').textContent = data.discussion.topic;
     
     const container = document.getElementById('messageContainer');
     
@@ -253,6 +284,19 @@ function stopAutoRefresh() {
     clearInterval(autoRefreshInterval);
     autoRefreshInterval = null;
   }
+}
+
+/**
+ * 导出讨论
+ */
+function exportDiscussion(format) {
+  if (!currentDiscussionId) {
+    alert('请先选择一个讨论组');
+    return;
+  }
+  
+  const url = `/api/discussion/${currentDiscussionId}/export/${format}`;
+  window.open(url, '_blank');
 }
 
 // 页面卸载时停止刷新
