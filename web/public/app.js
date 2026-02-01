@@ -3,10 +3,13 @@
 let currentDiscussionId = null;
 let autoRefreshInterval = null;
 let agentStats = {};
+let ws = null;
+let wsConnected = false;
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
+  initWebSocket();
 });
 
 /**
@@ -264,6 +267,11 @@ function updateStats(text) {
  * 开始自动刷新
  */
 function startAutoRefresh() {
+  if (wsConnected) {
+    // WebSocket 已连接，不需要轮询
+    return;
+  }
+  
   if (autoRefreshInterval) {
     clearInterval(autoRefreshInterval);
   }
@@ -274,6 +282,149 @@ function startAutoRefresh() {
       loadMessages(currentDiscussionId);
     }
   }, 5000); // 每 5 秒刷新
+}
+
+/**
+ * 初始化 WebSocket
+ */
+function initWebSocket() {
+  try {
+    ws = new WebSocket('ws://localhost:18791');
+    
+    ws.onopen = () => {
+      console.log('[WS] Connected');
+      wsConnected = true;
+      updateStatus('🟢 实时连接');
+      
+      // 停止轮询
+      if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+        autoRefreshInterval = null;
+      }
+    };
+    
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      handleWebSocketMessage(data);
+    };
+    
+    ws.onclose = () => {
+      console.log('[WS] Disconnected');
+      wsConnected = false;
+      updateStatus('🔴 连接断开');
+      
+      // 重新开始轮询
+      startAutoRefresh();
+      
+      // 5秒后尝试重连
+      setTimeout(initWebSocket, 5000);
+    };
+    
+    ws.onerror = (error) => {
+      console.error('[WS] Error:', error);
+    };
+  } catch (error) {
+    console.error('[WS] Failed to connect:', error);
+    // WebSocket 不可用，使用轮询
+    startAutoRefresh();
+  }
+}
+
+/**
+ * 处理 WebSocket 消息
+ */
+function handleWebSocketMessage(data) {
+  switch (data.type) {
+    case 'connected':
+      console.log('[WS]', data.message);
+      break;
+      
+    case 'newMessage':
+      // 新消息推送
+      if (data.data.discussionId === currentDiscussionId) {
+        // 添加新消息到当前视图
+        appendMessage(data.data.message);
+      }
+      // 更新讨论列表
+      loadDiscussions();
+      break;
+      
+    case 'agentStatsUpdate':
+      // Agent 统计更新
+      agentStats[data.data.agentId] = data.data.stats;
+      break;
+      
+    default:
+      console.log('[WS] Unknown message type:', data.type);
+  }
+}
+
+/**
+ * 追加消息到视图
+ */
+function appendMessage(message) {
+  const container = document.getElementById('messageContainer');
+  
+  // 移除空状态
+  const emptyState = container.querySelector('.empty-state');
+  if (emptyState) {
+    emptyState.remove();
+  }
+  
+  // 获取参与者信息
+  const participant = findParticipant(message.role);
+  
+  const stats = agentStats[message.role] || {};
+  const karma = stats.karma || 0;
+  const level = stats.level || '🌱 新手';
+  
+  const messageHtml = `
+    <div class="message" style="animation: slideIn 0.3s ease-out">
+      <div class="message-header">
+        <span class="agent-emoji">${participant.emoji}</span>
+        <span class="agent-name">${participant.role}</span>
+        <span class="agent-karma">⭐ ${karma}</span>
+        <span class="agent-level">${level}</span>
+        <span class="message-time">${formatTime(message.timestamp)}</span>
+      </div>
+      <div class="message-content">${formatContent(message.content)}</div>
+    </div>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', messageHtml);
+  
+  // 滚动到底部
+  container.scrollTop = container.scrollHeight;
+}
+
+/**
+ * 查找参与者
+ */
+function findParticipant(roleId) {
+  // 这个函数需要从当前讨论的参与者中查找
+  // 简化版本，返回默认值
+  const roleEmojis = {
+    'coordinator': '💡',
+    'market_research': '📊',
+    'requirement': '🎯',
+    'technical': '🔧',
+    'testing': '🧪',
+    'documentation': '📝'
+  };
+  
+  const roleNames = {
+    'coordinator': '主协调员',
+    'market_research': '市场调研',
+    'requirement': '需求分析',
+    'technical': '技术可行性',
+    'testing': '测试',
+    'documentation': '文档'
+  };
+  
+  return {
+    emoji: roleEmojis[roleId] || '🤖',
+    role: roleNames[roleId] || roleId
+  };
 }
 
 /**
