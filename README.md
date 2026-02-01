@@ -18,7 +18,11 @@ Multi-Agent Discussion 是一个 OpenClaw Skill，让多个专业 Agent 在虚�
 - ✅ **互相 @** - Agent 之间可以互相提问、回应
 - ✅ **冲突检测** - 自动识别意见分歧，组织辩论
 - ✅ **讨论总结** - 综合多方观点形成结构化结论
-- ✅ **过程可追溯** - 保存完整讨论历史
+- ✅ **过程可追溯** - 保存完整讨论历史，随时查看
+- ✅ **Web 可视化** - 实时查看讨论组内容（v1.0.1+）
+- ✅ **Agent 统计** - Karma 系统和等级机制（v1.1.0+）
+- ✅ **导出功能** - 支持 Markdown/JSON 导出（v1.1.1+）
+- ✅ **实时推送** - WebSocket 实时更新（v1.2.0+）
 
 ## 🚀 快速开始
 
@@ -88,7 +92,32 @@ const history = orchestrator.getDiscussionHistory(discussionId);
 回复用户：经过讨论，建议聚焦中文开发者的代码助手...
 ```
 
-### 场景 2：方案评审
+### 场景 2：Web 可视化界面
+
+```bash
+# 启动 Web 服务器
+npm start
+
+# 访问 Web 界面
+# http://localhost:18790
+```
+
+**功能：**
+- 📋 查看所有讨论组
+- 💬 实时阅读讨论内容
+- 📊 查看 Agent 统计和 Karma
+- 📥 导出讨论记录
+- 🔄 自动刷新（5秒）或 WebSocket 实时推送
+
+```bash
+# 启动 WebSocket 服务器（实时推送）
+npm run start:ws
+
+# 访问 Web 界面
+# http://localhost:18790
+```
+
+### 场景 3：方案评审
 
 ```
 主 Agent：这个技术方案大家觉得怎么样？
@@ -134,6 +163,37 @@ const config = {
 const orchestrator = new DiscussionOrchestrator(config);
 ```
 
+## 📊 版本历史
+
+### v1.2.0 (2026-02-02) - Major Update
+- ✨ WebSocket 实时推送
+- 🚀 新消息立即显示
+- 📊 Agent 统计实时更新
+- 🔧 自动重连和降级机制
+
+### v1.1.1 (2026-02-02)
+- ✨ 导出功能（Markdown/JSON）
+- 📥 文件下载
+- 📝 完整讨论记录导出
+
+### v1.1.0 (2026-02-02)
+- ✨ Agent 统计系统
+- ⭐ Karma 计分机制
+- 🏆 等级系统（新手→大师）
+- 📊 API: /api/agents, /api/agent/:id
+
+### v1.0.1 (2026-02-02)
+- ✨ Web 可视化界面
+- 💬 实时查看讨论组内容
+- 📋 讨论列表展示
+- 🔄 自动刷新（5秒）
+
+### v1.0.0 (2026-02-01)
+- 🎉 初始版本
+- ✅ 核心讨论引擎
+- 🤖 6 个专业 Agent 角色
+- ✅ 完整测试套件
+
 ## 📂 项目结构
 
 ```
@@ -150,6 +210,13 @@ mad/
 │       ├── technical.md
 │       ├── testing.md
 │       └── documentation.md
+├── web/
+│   ├── server.js             # HTTP 服务器
+│   ├── websocket.js          # WebSocket 服务器
+│   └── public/               # Web 前端
+│       ├── index.html
+│       ├── style.css
+│       └── app.js
 └── test/
     └── basic.test.js         # 基础测试
 ```
