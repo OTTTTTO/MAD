@@ -1,6 +1,8 @@
-# Multi-Agent Discussion
+# MAD (Multi-Agent Discussion)
 
 > 让多个专业 Agent 在虚拟讨论组中协同工作
+
+**MAD** = Multi-Agent Discussion 的简称，读作 /mæd/
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-blue)](https://openclaw.ai)
@@ -24,8 +26,8 @@ Multi-Agent Discussion 是一个 OpenClaw Skill，让多个专业 Agent 在虚�
 
 ```bash
 cd ~/.openclaw/skills
-git clone https://github.com/OTTTTTO/multi-agent-discuss.git
-cd multi-agent-discuss
+git clone https://github.com/OTTTTTO/mad.git
+cd mad
 npm install
 ```
 
@@ -135,7 +137,7 @@ const orchestrator = new DiscussionOrchestrator(config);
 ## 📂 项目结构
 
 ```
-multi-agent-discuss/
+mad/
 ├── orchestrator.js           # 核心协调引擎
 ├── package.json              # 项目配置
 ├── SKILL.md                  # Skill 说明
