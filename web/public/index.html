@@ -24,6 +24,16 @@
           <h2>📋 讨论组</h2>
           <button id="refreshBtn" class="btn btn-sm">🔄 刷新</button>
         </div>
+        
+        <!-- 搜索框 -->
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="🔍 搜索讨论..." />
+          <div class="search-filters">
+            <label><input type="checkbox" id="filterActive" checked> 进行中</label>
+            <label><input type="checkbox" id="filterEnded" checked> 已结束</label>
+          </div>
+        </div>
+        
         <div id="discussionList" class="discussion-list">
           <div class="loading">加载中...</div>
         </div>

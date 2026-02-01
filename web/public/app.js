@@ -36,8 +36,93 @@ function initApp() {
     exportDiscussion('markdown');
   });
   
+  // 搜索功能
+  const searchInput = document.getElementById('searchInput');
+  let searchTimeout = null;
+  
+  searchInput.addEventListener('input', (e) => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const query = e.target.value.trim();
+      if (query.length >= 2) {
+        performSearch(query);
+      } else {
+        loadDiscussions();
+      }
+    }, 300);
+  });
+  
+  document.getElementById('filterActive').addEventListener('change', () => {
+    const query = searchInput.value.trim();
+    if (query.length >= 2) {
+      performSearch(query);
+    } else {
+      loadDiscussions();
+    }
+  });
+  
+  document.getElementById('filterEnded').addEventListener('change', () => {
+    const query = searchInput.value.trim();
+    if (query.length >= 2) {
+      performSearch(query);
+    } else {
+      loadDiscussions();
+    }
+  });
+  
   // 自动刷新（每 5 秒）
   startAutoRefresh();
+}
+
+/**
+ * 执行搜索
+ */
+async function performSearch(query) {
+  try {
+    updateStatus('搜索中...');
+    
+    const status = [];
+    if (document.getElementById('filterActive').checked) {
+      status.push('active');
+    }
+    if (document.getElementById('filterEnded').checked) {
+      status.push('ended');
+    }
+    
+    const statusParam = status.length === 1 ? status[0] : null;
+    
+    const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&status=${statusParam || ''}`);
+    const results = await response.json();
+    
+    displaySearchResults(results, query);
+    updateStatus(`找到 ${results.messages.length} 条结果`);
+    
+  } catch (error) {
+    console.error('搜索失败:', error);
+    updateStatus('搜索失败');
+  }
+}
+
+/**
+ * 显示搜索结果
+ */
+function displaySearchResults(results, query) {
+  const listContainer = document.getElementById('discussionList');
+  
+  if (results.messages.length === 0) {
+    listContainer.innerHTML = '<div class="empty-state">未找到结果</div>';
+    return;
+  }
+  
+  listContainer.innerHTML = results.messages.slice(0, 20).map(msg => `
+    <div class="discussion-item" onclick="selectDiscussion('${msg.discussionId}')">
+      <div class="topic">${escapeHtml(msg.discussionTopic)}</div>
+      <div class="search-result">
+        <span class="agent-emoji">${msg.emoji}</span>
+        <span class="content-preview">${formatContent(msg.highlight || msg.content.substring(0, 100))}</span>
+      </div>
+    </div>
+  `).join('');
 }
 
 /**

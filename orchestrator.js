@@ -720,6 +720,73 @@ class DiscussionOrchestrator {
     const history = this.getDiscussionHistory(discussionId);
     return JSON.stringify(history, null, 2);
   }
+
+  /**
+   * 搜索讨论
+   */
+  searchDiscussions(query, options = {}) {
+    const results = {
+      discussions: [],
+      messages: []
+    };
+
+    const queryLower = query.toLowerCase();
+
+    // 搜索讨论标题
+    for (const [id, context] of this.discussions.entries()) {
+      if (context.topic.toLowerCase().includes(queryLower)) {
+        results.discussions.push({
+          id,
+          topic: context.topic,
+          status: context.status,
+          messageCount: context.messages.length,
+          participants: context.participants.map(p => p.role)
+        });
+      }
+
+      // 搜索消息内容
+      const matchingMessages = context.messages.filter(msg =>
+        msg.content.toLowerCase().includes(queryLower)
+      );
+
+      matchingMessages.forEach(msg => {
+        const participant = context.participants.find(p => p.id === msg.role);
+        results.messages.push({
+          discussionId: id,
+          discussionTopic: context.topic,
+          messageId: msg.id,
+          role: msg.role,
+          roleName: participant ? participant.role : msg.role,
+          emoji: participant ? participant.emoji : '🤖',
+          content: msg.content,
+          timestamp: msg.timestamp,
+          highlight: this.highlightText(msg.content, query)
+        });
+      });
+    }
+
+    // 排序：最新的在前
+    results.messages.sort((a, b) => b.timestamp - a.timestamp);
+
+    // 应用过滤
+    if (options.status) {
+      results.discussions = results.discussions.filter(d => d.status === options.status);
+    }
+
+    if (options.role) {
+      results.messages = results.messages.filter(m => m.role === options.role);
+    }
+
+    return results;
+  }
+
+  /**
+   * 高亮文本
+   */
+  highlightText(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '**$1**');
+  }
 }
 
 /**

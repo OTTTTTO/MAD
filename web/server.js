@@ -141,6 +141,41 @@ async function createServer() {
         }
       }
 
+      // API: 搜索
+      if (url.pathname === '/api/search') {
+        const query = url.searchParams.get('q') || '';
+        const status = url.searchParams.get('status') || null;
+        const role = url.searchParams.get('role') || null;
+        
+        if (!query) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Query parameter "q" is required' }));
+          return;
+        }
+        
+        const results = orchestrator.searchDiscussions(query, { status, role });
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(results, null, 2));
+        return;
+      }
+
+      // 404
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const json = orchestrator.exportToJson(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.setHeader('Content-Disposition', `attachment; filename="discussion-${discussionId}.json"`);
+          res.writeHead(200);
+          res.end(json);
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
       // 404
       res.writeHead(404);
       res.end('Not Found');
