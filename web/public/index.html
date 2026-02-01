@@ -35,6 +35,7 @@
             <label><input type="checkbox" id="filterActive" checked> 进行中</label>
             <label><input type="checkbox" id="filterEnded" checked> 已结束</label>
           </div>
+          <button id="newDiscussionBtn" class="btn btn-sm" style="margin-top: 0.5rem; width: 100%;">➕ 新建讨论</button>
         </div>
         
         <div id="discussionList" class="discussion-list">
@@ -81,6 +82,22 @@
         <span id="stats"></span>
       </div>
     </footer>
+  </div>
+
+  <!-- 模板选择对话框 -->
+  <div id="templateModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📋 选择讨论模板</h2>
+        <button class="modal-close" onclick="closeTemplateModal()">✕</button>
+      </div>
+      <div class="modal-body" id="templateList">
+        <div class="loading">加载中...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeTemplateModal()">取消</button>
+      </div>
+    </div>
   </div>
 
   <script src="/app.js"></script>

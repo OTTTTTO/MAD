@@ -49,6 +49,13 @@ function initApp() {
   
   // 搜索功能
   const searchInput = document.getElementById('searchInput');
+  
+  // 新建讨论按钮
+  document.getElementById('newDiscussionBtn').addEventListener('click', () => {
+    openTemplateModal();
+  });
+  
+  let searchTimeout = null;
   let searchTimeout = null;
   
   searchInput.addEventListener('input', (e) => {
@@ -856,6 +863,93 @@ function switchToTab(discussionId) {
  */
 function saveTabs() {
   localStorage.setItem('mad-tabs', JSON.stringify(Array.from(openTabs.entries())));
+}
+
+/**
+ * 打开模板选择对话框
+ */
+async function openTemplateModal() {
+  const modal = document.getElementById('templateModal');
+  const templateList = document.getElementById('templateList');
+  
+  modal.style.display = 'flex';
+  
+  try {
+    const response = await fetch('/api/templates');
+    const templates = await response.json();
+    
+    templateList.innerHTML = templates.map(template => `
+      <div class="template-card" onclick="selectTemplate('${template.id}')">
+        <div class="icon">${template.icon}</div>
+        <div class="name">${template.name}</div>
+        <div class="description">${template.description}</div>
+        <div class="participants">
+          参与者: ${template.participants.length} 个
+        </div>
+      </div>
+    `).join('');
+  } catch (error) {
+    templateList.innerHTML = '<div class="error">加载模板失败</div>';
+  }
+}
+
+/**
+ * 关闭模板对话框
+ */
+function closeTemplateModal() {
+  document.getElementById('templateModal').style.display = 'none';
+}
+
+/**
+ * 选择模板
+ */
+async function selectTemplate(templateId) {
+  if (templateId === 'custom') {
+    // 自定义讨论
+    closeTemplateModal();
+    const topic = prompt('请输入讨论主题：');
+    if (topic) {
+      // 这里需要调用创建讨论的 API
+      // 暂时先不实现
+      alert('自定义讨论功能开发中...');
+    }
+    return;
+  }
+  
+  // 使用模板创建讨论
+  const params = {};
+  
+  // 如果模板需要参数，可以在这里收集
+  const context = prompt('请输入讨论背景（可选）：');
+  if (context) {
+    params.context = context;
+  }
+  
+  try {
+    const response = await fetch('/api/discussion/from-template', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        templateId,
+        params
+      })
+    });
+    
+    const result = await response.json();
+    
+    closeTemplateModal();
+    
+    // 加载新创建的讨论
+    loadDiscussions();
+    selectDiscussion(result.discussionId);
+    
+    updateStatus('讨论已创建');
+  } catch (error) {
+    console.error('创建讨论失败:', error);
+    updateStatus('创建失败');
+  }
 }
 
 /**

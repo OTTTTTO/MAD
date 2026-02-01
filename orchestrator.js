@@ -17,6 +17,23 @@
 const fs = require('fs').promises;
 const path = require('path');
 
+// 加载模板
+let templates = null;
+
+async function loadTemplates() {
+  if (templates) return templates;
+  
+  try {
+    const templatePath = path.join(__dirname, 'templates.json');
+    const data = await fs.readFile(templatePath, 'utf8');
+    templates = JSON.parse(data);
+    return templates;
+  } catch (error) {
+    console.error('[Orchestrator] Failed to load templates:', error);
+    return { templates: [] };
+  }
+}
+
 /**
  * 讨论组配置
  */
@@ -222,6 +239,62 @@ class DiscussionOrchestrator {
       participants
     };
   }
+
+  /**
+   * 使用模板创建讨论
+   */
+  async createDiscussionFromTemplate(templateId, params = {}) {
+    const templateData = await loadTemplates();
+    const template = templateData.templates.find(t => t.id === templateId);
+    
+    if (!template) {
+      throw new Error(`Template ${templateId} not found`);
+    }
+    
+    // 生成主题
+    let topic = params.topic || `${template.icon} ${template.name}`;
+    if (params.context) {
+      topic += `: ${params.context}`;
+    }
+    
+    // 选择参与者
+    const selectedRoles = template.participants.map(id => AGENT_ROLES[id] || AGENT_ROLES.coordinator);
+    
+    // 创建讨论
+    const { discussionId, context } = await this.createDiscussion(topic, {
+      participants: selectedRoles
+    });
+    
+    // 发送初始消息
+    let initialPrompt = template.initialPrompt;
+    if (params) {
+      Object.keys(params).forEach(key => {
+        initialPrompt = initialPrompt.replace(`{${key}}`, params[key]);
+      });
+    }
+    
+    if (initialPrompt && template.id !== 'custom') {
+      await this.agentSpeak(discussionId, 'coordinator', initialPrompt);
+    }
+    
+    return {
+      discussionId,
+      context,
+      template
+    };
+  }
+
+  /**
+   * 获取所有模板
+   */
+  async getTemplates() {
+    const templateData = await loadTemplates();
+    return templateData.templates;
+  }
+
+  /**
+   * 根据主题自动选择参与角色
+   */
 
   /**
    * 根据主题自动选择参与角色

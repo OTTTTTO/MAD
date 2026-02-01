@@ -210,6 +210,34 @@ async function createServer() {
         }
       }
 
+      // API: 获取所有模板
+      if (url.pathname === '/api/templates') {
+        const templates = await orchestrator.getTemplates();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(templates, null, 2));
+        return;
+      }
+
+      // API: 使用模板创建讨论
+      if (url.pathname === '/api/discussion/from-template') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const { templateId, params } = JSON.parse(body);
+            const result = await orchestrator.createDiscussionFromTemplate(templateId, params);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
       // 404
       res.writeHead(404);
       res.end('Not Found');
