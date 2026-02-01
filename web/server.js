@@ -1,0 +1,115 @@
+#!/usr/bin/env node
+
+/**
+ * MAD Web Server - 可视化讨论界面
+ * 
+ * 提供 Web 界面让用户查看讨论组内容
+ */
+
+const http = require('http');
+const fs = require('fs').promises;
+const path = require('path');
+const { DiscussionOrchestrator } = require('../orchestrator.js');
+
+const PORT = 18790;
+const WEB_DIR = path.join(__dirname, 'public');
+
+/**
+ * 创建 Web 服务器
+ */
+async function createServer() {
+  const orchestrator = new DiscussionOrchestrator();
+  await orchestrator.initialize();
+
+  const server = http.createServer(async (req, res) => {
+    // CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+    if (req.method === 'OPTIONS') {
+      res.writeHead(200);
+      res.end();
+      return;
+    }
+
+    // 路由处理
+    const url = new URL(req.url, `http://${req.headers.host}`);
+
+    try {
+      // 静态文件
+      if (url.pathname === '/' || url.pathname === '/index.html') {
+        const html = await fs.readFile(path.join(WEB_DIR, 'index.html'), 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.writeHead(200);
+        res.end(html);
+        return;
+      }
+
+      // CSS
+      if (url.pathname === '/style.css') {
+        const css = await fs.readFile(path.join(WEB_DIR, 'style.css'), 'utf8');
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        res.writeHead(200);
+        res.end(css);
+        return;
+      }
+
+      // JavaScript
+      if (url.pathname === '/app.js') {
+        const js = await fs.readFile(path.join(WEB_DIR, 'app.js'), 'utf8');
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.writeHead(200);
+        res.end(js);
+        return;
+      }
+
+      // API: 列出所有讨论
+      if (url.pathname === '/api/discussions') {
+        const discussions = orchestrator.listDiscussions();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(discussions, null, 2));
+        return;
+      }
+
+      // API: 获取讨论详情
+      if (url.pathname.startsWith('/api/discussion/')) {
+        const discussionId = url.pathname.split('/')[3];
+        const history = orchestrator.getDiscussionHistory(discussionId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(history, null, 2));
+        return;
+      }
+
+      // 404
+      res.writeHead(404);
+      res.end('Not Found');
+
+    } catch (error) {
+      console.error('Server error:', error);
+      res.writeHead(500);
+      res.end(JSON.stringify({ error: error.message }));
+    }
+  });
+
+  server.listen(PORT, () => {
+    console.log(`\n🌐 MAD Web Server started!`);
+    console.log(`📍 URL: http://localhost:${PORT}`);
+    console.log(`📊 API: http://localhost:${PORT}/api/discussions`);
+    console.log(`\n按 Ctrl+C 停止服务器\n`);
+  });
+
+  return server;
+}
+
+// 启动服务器
+if (require.main === module) {
+  createServer().catch(error => {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = { createServer };
