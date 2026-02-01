@@ -5,11 +5,13 @@ let autoRefreshInterval = null;
 let agentStats = {};
 let ws = null;
 let wsConnected = false;
+let currentTheme = 'dark';
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
   initWebSocket();
+  initTheme();
 });
 
 /**
@@ -367,6 +369,35 @@ function startAutoRefresh() {
       loadMessages(currentDiscussionId);
     }
   }, 5000); // 每 5 秒刷新
+}
+
+/**
+ * 初始化主题
+ */
+function initTheme() {
+  // 从 localStorage 读取保存的主题
+  const savedTheme = localStorage.getItem('mad-theme') || 'dark';
+  setTheme(savedTheme);
+  
+  // 主题切换按钮
+  document.getElementById('themeToggle').addEventListener('click', () => {
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
+  });
+}
+
+/**
+ * 设置主题
+ */
+function setTheme(theme) {
+  currentTheme = theme;
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('mad-theme', theme);
+  
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.textContent = theme === 'dark' ? '🎨 浅色' : '🎨 深色';
+  }
 }
 
 /**
