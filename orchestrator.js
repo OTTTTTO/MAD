@@ -172,6 +172,7 @@ class DiscussionOrchestrator {
     this.config = config;
     this.discussions = new Map();
     this.dataDir = path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss');
+    this.agentStats = new Map(); // Agent 统计
   }
 
   /**
@@ -269,6 +270,15 @@ class DiscussionOrchestrator {
     const message = context.addMessage(agentId, content, {
       agentRole: participant.role,
       ...metadata
+    });
+
+    // 更新 Agent 统计
+    this.updateAgentStats(agentId, 'message');
+
+    // 检查是否 @ 了其他人
+    const mentionedAgents = this.extractMentions(content);
+    mentionedAgents.forEach(mentionedId => {
+      this.updateAgentStats(mentionedId, 'mention');
     });
 
     // 保存更新
@@ -566,6 +576,126 @@ class DiscussionOrchestrator {
     
     return toDelete.length;
   }
+
+  /**
+   * 更新 Agent 统计
+   */
+  updateAgentStats(agentId, action, data = {}) {
+    if (!this.agentStats.has(agentId)) {
+      this.agentStats.set(agentId, new AgentStats(agentId));
+    }
+    
+    const stats = this.agentStats.get(agentId);
+    stats.update(action, data);
+  }
+
+  /**
+   * 获取 Agent 统计
+   */
+  getAgentStats(agentId) {
+    if (!this.agentStats.has(agentId)) {
+      return null;
+    }
+    return this.agentStats.get(agentId).getSummary();
+  }
+
+  /**
+   * 获取所有 Agent 统计
+   */
+  getAllAgentStats() {
+    const stats = {};
+    for (const [id, agentStats] of this.agentStats.entries()) {
+      stats[id] = agentStats.getSummary();
+    }
+    return stats;
+  }
+
+  /**
+   * 提取消息中的 @mentions
+   */
+  extractMentions(content) {
+    const mentions = [];
+    const mentionRegex = /@(\w+)/g;
+    let match;
+    
+    while ((match = mentionRegex.exec(content)) !== null) {
+      mentions.push(match[1]);
+    }
+    
+    return mentions;
+  }
+}
+
+/**
+ * Agent 统计数据
+ */
+class AgentStats {
+  constructor(agentId) {
+    this.agentId = agentId;
+    this.messageCount = 0;
+    this.mentionsReceived = 0;
+    this.conflictsResolved = 0;
+    this.consensusReached = 0;
+    this.lastActive = null;
+    this.karma = 0;
+    this.verified = false;
+  }
+
+  /**
+   * 更新统计
+   */
+  update(action, data = {}) {
+    switch (action) {
+      case 'message':
+        this.messageCount++;
+        this.lastActive = Date.now();
+        this.karma += 1;
+        break;
+      case 'mention':
+        this.mentionsReceived++;
+        this.karma += 2;
+        break;
+      case 'conflict_resolved':
+        this.conflictsResolved++;
+        this.karma += 5;
+        break;
+      case 'consensus':
+        this.consensusReached++;
+        this.karma += 3;
+        break;
+      case 'quality_bonus':
+        this.karma += data.bonus || 0;
+        break;
+    }
+  }
+
+  /**
+   * 获取统计摘要
+   */
+  getSummary() {
+    return {
+      agentId: this.agentId,
+      messageCount: this.messageCount,
+      mentionsReceived: this.mentionsReceived,
+      conflictsResolved: this.conflictsResolved,
+      consensusReached: this.consensusReached,
+      lastActive: this.lastActive,
+      karma: this.karma,
+      verified: this.verified,
+      level: this.calculateLevel()
+    };
+  }
+
+  /**
+   * 计算等级
+   */
+  calculateLevel() {
+    if (this.karma < 50) return '🌱 新手';
+    if (this.karma < 150) return '🌿 进阶';
+    if (this.karma < 300) return '🌳 熟练';
+    if (this.karma < 500) return '🏆 专家';
+    return '👑 大师';
+  }
 }
 
 /**
@@ -576,5 +706,6 @@ module.exports = {
   DiscussionConfig,
   DiscussionContext,
   AgentDefinition,
+  AgentStats,
   AGENT_ROLES
 };

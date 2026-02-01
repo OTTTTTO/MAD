@@ -220,6 +220,18 @@ body {
   color: var(--primary-color);
 }
 
+.agent-karma {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--warning);
+}
+
+.agent-level {
+  margin-left: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--secondary-color);
+}
+
 .message-time {
   margin-left: auto;
   font-size: 0.85rem;

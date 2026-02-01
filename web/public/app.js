@@ -2,6 +2,7 @@
 
 let currentDiscussionId = null;
 let autoRefreshInterval = null;
+let agentStats = {};
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -15,9 +16,13 @@ function initApp() {
   // 加载讨论列表
   loadDiscussions();
   
+  // 加载 Agent 统计
+  loadAgentStats();
+  
   // 刷新按钮
   document.getElementById('refreshBtn').addEventListener('click', () => {
     loadDiscussions();
+    loadAgentStats();
     if (currentDiscussionId) {
       loadMessages(currentDiscussionId);
     }
@@ -25,6 +30,18 @@ function initApp() {
   
   // 自动刷新（每 5 秒）
   startAutoRefresh();
+}
+
+/**
+ * 加载 Agent 统计
+ */
+async function loadAgentStats() {
+  try {
+    const response = await fetch('/api/agents');
+    agentStats = await response.json();
+  } catch (error) {
+    console.error('加载 Agent 统计失败:', error);
+  }
 }
 
 /**
@@ -108,11 +125,17 @@ async function loadMessages(discussionId) {
     
     container.innerHTML = data.messages.map(msg => {
       const participant = participants[msg.role] || { role: msg.role, emoji: '🤖' };
+      const stats = agentStats[msg.role] || {};
+      const karma = stats.karma || 0;
+      const level = stats.level || '🌱 新手';
+      
       return `
         <div class="message">
           <div class="message-header">
             <span class="agent-emoji">${participant.emoji}</span>
             <span class="agent-name">${participant.role}</span>
+            <span class="agent-karma">⭐ ${karma}</span>
+            <span class="agent-level">${level}</span>
             <span class="message-time">${formatTime(msg.timestamp)}</span>
           </div>
           <div class="message-content">${formatContent(msg.content)}</div>

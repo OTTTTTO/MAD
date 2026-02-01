@@ -83,6 +83,30 @@ async function createServer() {
         return;
       }
 
+      // API: 获取所有 Agent 统计
+      if (url.pathname === '/api/agents') {
+        const stats = orchestrator.getAllAgentStats();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(stats, null, 2));
+        return;
+      }
+
+      // API: 获取单个 Agent 统计
+      if (url.pathname.startsWith('/api/agent/')) {
+        const agentId = url.pathname.split('/')[3];
+        const stats = orchestrator.getAgentStats(agentId);
+        if (!stats) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: 'Agent not found' }));
+          return;
+        }
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(stats, null, 2));
+        return;
+      }
+
       // 404
       res.writeHead(404);
       res.end('Not Found');
