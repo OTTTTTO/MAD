@@ -42,6 +42,11 @@ function initApp() {
     exportDiscussion('markdown');
   });
   
+  // 统计按钮
+  document.getElementById('statsBtn').addEventListener('click', () => {
+    toggleStats();
+  });
+  
   // 搜索功能
   const searchInput = document.getElementById('searchInput');
   let searchTimeout = null;
@@ -240,6 +245,10 @@ async function loadMessages(discussionId) {
     
     // 更新标题
     document.getElementById('currentDiscussionTitle').textContent = data.discussion.topic;
+    
+    // 显示按钮
+    document.getElementById('exportBtn').style.display = 'block';
+    document.getElementById('statsBtn').style.display = 'block';
     
     const container = document.getElementById('messageContainer');
     
@@ -697,6 +706,103 @@ function togglePin() {
     const pinBtn = document.getElementById('pinBtn');
     pinBtn.textContent = tab.pinned ? '📍 取消固定' : '📌 固定';
   }
+}
+
+/**
+ * 切换统计面板
+ */
+async function toggleStats() {
+  if (!currentDiscussionId) return;
+  
+  const panel = document.getElementById('statsPanel');
+  const btn = document.getElementById('statsBtn');
+  
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    btn.textContent = '📊 隐藏统计';
+    await loadStats(currentDiscussionId);
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '📊 统计';
+  }
+}
+
+/**
+ * 加载统计数据
+ */
+async function loadStats(discussionId) {
+  try {
+    updateStatus('加载统计...');
+    
+    const response = await fetch(`/api/discussion/${discussionId}/stats`);
+    const stats = await response.json();
+    
+    displayStats(stats);
+    
+    updateStatus('统计已加载');
+  } catch (error) {
+    console.error('加载统计失败:', error);
+    updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示统计数据
+ */
+function displayStats(stats) {
+  const container = document.getElementById('statsContent');
+  
+  const duration = formatDuration(stats.duration);
+  const mostActive = stats.mostActiveAgent 
+    ? `${stats.mostActiveAgent.emoji} ${stats.mostActiveAgent.role}`
+    : '无';
+  
+  container.innerHTML = `
+    <div class="stat-card">
+      <h3>📊 总消息数</h3>
+      <div class="value">${stats.messageCount}</div>
+      <div class="subtext">来自 ${stats.participantCount} 个参与者</div>
+    </div>
+    
+    <div class="stat-card">
+      <h3>⏱️ 讨论时长</h3>
+      <div class="value">${duration}</div>
+      <div class="subtext">${new Date(stats.createdAt).toLocaleString('zh-CN')}</div>
+    </div>
+    
+    <div class="stat-card">
+      <h3>🏆 最活跃</h3>
+      <div class="value" style="font-size: 1.5rem;">${mostActive}</div>
+      <div class="subtext">${stats.mostActiveAgent ? stats.mostActiveAgent.messageCount + ' 条消息' : ''}</div>
+    </div>
+    
+    <div class="stat-card">
+      <h3>💬 Agent 参与</h3>
+      <div class="agent-participation">
+        ${Object.values(stats.agentStats).map(agent => `
+          <div class="agent-bar">
+            <span class="emoji">${agent.emoji}</span>
+            <span class="name">${agent.role}</span>
+            <div class="bar">
+              <div class="fill" style="width: ${agent.percentage}%"></div>
+            </div>
+            <span class="percentage">${agent.percentage}%</span>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    
+    <div class="stat-card" style="grid-column: 1 / -1;">
+      <h3>🔑 关键词</h3>
+      <div class="keyword-cloud">
+        ${Object.entries(stats.keywordFrequency || {})
+          .slice(0, 15)
+          .map(([word, count]) => `
+            <span class="keyword-tag">${word} (${count})</span>
+          `).join('')}
+      </div>
+    </div>
+  `;
 }
 
 /**

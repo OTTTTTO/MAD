@@ -160,6 +160,40 @@ async function createServer() {
         return;
       }
 
+      // API: 获取讨论统计
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/stats')) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const stats = orchestrator.getDiscussionStats(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(stats, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // 404
+        const query = url.searchParams.get('q') || '';
+        const status = url.searchParams.get('status') || null;
+        const role = url.searchParams.get('role') || null;
+        
+        if (!query) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Query parameter "q" is required' }));
+          return;
+        }
+        
+        const results = orchestrator.searchDiscussions(query, { status, role });
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(results, null, 2));
+        return;
+      }
+
       // 404
         const discussionId = url.pathname.split('/')[3];
         try {

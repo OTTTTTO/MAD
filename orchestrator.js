@@ -787,6 +787,105 @@ class DiscussionOrchestrator {
     const regex = new RegExp(`(${query})`, 'gi');
     return text.replace(regex, '**$1**');
   }
+
+  /**
+   * 获取讨论统计
+   */
+  getDiscussionStats(discussionId) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    // 基础统计
+    const stats = {
+      discussionId,
+      topic: context.topic,
+      status: context.status,
+      messageCount: context.messages.length,
+      participantCount: context.participants.length,
+      duration: context.endedAt 
+        ? context.endedAt - context.createdAt 
+        : Date.now() - context.createdAt,
+      createdAt: context.createdAt,
+      updatedAt: context.updatedAt
+    };
+
+    // Agent 统计
+    stats.agentStats = {};
+    context.participants.forEach(p => {
+      const agentMessages = context.getMessagesForRole(p.id);
+      stats.agentStats[p.id] = {
+        id: p.id,
+        role: p.role,
+        emoji: p.emoji,
+        messageCount: agentMessages.length,
+        percentage: context.messages.length > 0 
+          ? (agentMessages.length / context.messages.length * 100).toFixed(1)
+          : 0
+      };
+    });
+
+    // 最活跃的 Agent
+    const sortedAgents = Object.values(stats.agentStats)
+      .sort((a, b) => b.messageCount - a.messageCount);
+    stats.mostActiveAgent = sortedAgents[0] || null;
+
+    // 时间分布
+    stats.timeDistribution = this.calculateTimeDistribution(context.messages);
+
+    // 关键词频率
+    stats.keywordFrequency = this.calculateKeywordFrequency(context.messages);
+
+    return stats;
+  }
+
+  /**
+   * 计算时间分布
+   */
+  calculateTimeDistribution(messages) {
+    if (messages.length === 0) return {};
+
+    const distribution = {};
+    
+    messages.forEach(msg => {
+      const hour = new Date(msg.timestamp).getHours();
+      const key = `${hour}:00`;
+      distribution[key] = (distribution[key] || 0) + 1;
+    });
+
+    return distribution;
+  }
+
+  /**
+   * 计算关键词频率
+   */
+  calculateKeywordFrequency(messages, topN = 10) {
+    const frequency = {};
+    const stopWords = new Set(['的', '了', '是', '在', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这']);
+
+    messages.forEach(msg => {
+      // 简单的分词（按空格和标点）
+      const words = msg.content
+        .toLowerCase()
+        .replace(/[^\u4e00-\u9fa5a-z0-9\s]/g, ' ')
+        .split(/\s+/)
+        .filter(w => w.length > 1 && !stopWords.has(w));
+
+      words.forEach(word => {
+        frequency[word] = (frequency[word] || 0) + 1;
+      });
+    });
+
+    // 返回前 N 个
+    return Object.entries(frequency)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, topN)
+      .reduce((obj, [word, count]) => {
+        obj[word] = count;
+        return obj;
+      }, {});
+  }
 }
 
 /**
