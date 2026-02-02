@@ -17,6 +17,9 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { DiscussionSimilarityDetector } = require('./similarity.js');
+const { exportToPDF } = require('./exporters/pdf.js');
+const { exportToHTML } = require('./exporters/html.js');
+const { exportToCSV } = require('./exporters/csv.js');
 
 // 加载模板
 let templates = null;
@@ -1827,6 +1830,45 @@ class DiscussionOrchestrator {
     }
 
     return allAgents;
+  }
+
+  /**
+   * 导出讨论为 PDF
+   */
+  async exportToPDF(discussionId, options = {}) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    const history = this.getDiscussionHistory(discussionId);
+    return exportToPDF(history, options);
+  }
+
+  /**
+   * 导出讨论为 HTML
+   */
+  async exportToHTML(discussionId, options = {}) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    const history = this.getDiscussionHistory(discussionId);
+    return exportToHTML(history, options);
+  }
+
+  /**
+   * 导出讨论为 CSV
+   */
+  async exportToCSV(discussionId, options = {}) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    const history = this.getDiscussionHistory(discussionId);
+    return exportToCSV(history, options);
   }
 }
 

@@ -141,6 +141,60 @@ async function createServer() {
         }
       }
 
+      // API: 导出讨论为 PDF
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/export\/pdf/)) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const result = await orchestrator.exportToPDF(discussionId);
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="discussion-${discussionId}.pdf"`);
+          res.setHeader('Content-Length', result.size);
+          res.writeHead(200);
+          res.end(result.data);
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 导出讨论为 HTML
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/export\/html/)) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const result = await orchestrator.exportToHTML(discussionId);
+          res.setHeader('Content-Type', 'text/html; charset=utf-8');
+          res.setHeader('Content-Disposition', `attachment; filename="discussion-${discussionId}.html"`);
+          res.setHeader('Content-Length', result.size);
+          res.writeHead(200);
+          res.end(result.data);
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 导出讨论为 CSV
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/export\/csv/)) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const result = await orchestrator.exportToCSV(discussionId);
+          res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+          res.setHeader('Content-Disposition', `attachment; filename="discussion-${discussionId}.csv"`);
+          res.setHeader('Content-Length', result.size);
+          res.writeHead(200);
+          res.end(result.data);
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
       // API: 搜索
       if (url.pathname === '/api/search') {
         const query = url.searchParams.get('q') || '';
