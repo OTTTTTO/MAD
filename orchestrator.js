@@ -3060,5 +3060,3 @@ DiscussionOrchestrator.prototype.getSuggestionStats = function(discussionId) {
   if (!this.suggestionSystem) return null;
   return this.suggestionSystem.getSuggestionStats(discussionId);
 };
-
-module.exports = { DiscussionOrchestrator, DiscussionConfig, AGENT_ROLES };

@@ -1554,9 +1554,10 @@ async function createServer() {
     }
   });
 
-  server.listen(PORT, () => {
+  server.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🌐 MAD Web Server started!`);
-    console.log(`📍 URL: http://localhost:${PORT}`);
+    console.log(`📍 Local: http://localhost:${PORT}`);
+    console.log(`📍 Network: http://0.0.0.0:${PORT}`);
     console.log(`📊 API: http://localhost:${PORT}/api/discussions`);
     console.log(`\n按 Ctrl+C 停止服务器\n`);
   });
