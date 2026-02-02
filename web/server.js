@@ -198,6 +198,55 @@ async function createServer() {
         }
       }
 
+      // API: 推荐参与者
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/recommendations')) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const context = orchestrator.discussions.get(discussionId);
+          if (!context) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Discussion not found' }));
+            return;
+          }
+          
+          const currentParticipants = context.participants.map(p => p.role);
+          const recommendations = orchestrator.recommendParticipants(context.topic, currentParticipants);
+          
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(recommendations, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 获取待办事项
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/actions')) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const context = orchestrator.discussions.get(discussionId);
+          if (!context) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Discussion not found' }));
+            return;
+          }
+          
+          const actionItems = orchestrator.extractActionItems(context);
+          
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(actionItems, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
       // 404
         const query = url.searchParams.get('q') || '';
         const status = url.searchParams.get('status') || null;

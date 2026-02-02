@@ -55,9 +55,21 @@
           <h2 id="currentDiscussionTitle">选择一个讨论组</h2>
           <div class="header-actions">
             <button id="statsBtn" class="btn btn-sm" style="display: none;">📊 统计</button>
+            <button id="recommendBtn" class="btn btn-sm" style="display: none;">🤖 推荐</button>
+            <button id="actionsBtn" class="btn btn-sm" style="display: none;">✅ 待办</button>
             <button id="pinBtn" class="btn btn-sm" style="display: none;">📌 固定</button>
             <button id="exportBtn" class="btn btn-sm" style="display: none;">📥 导出</button>
           </div>
+        </div>
+        
+        <!-- 待办事项面板 -->
+        <div id="actionsPanel" class="actions-panel" style="display: none;">
+          <div class="actions-content" id="actionsContent"></div>
+        </div>
+        
+        <!-- 推荐面板 -->
+        <div id="recommendPanel" class="recommend-panel" style="display: none;">
+          <div class="recommend-content" id="recommendContent"></div>
         </div>
         
         <!-- 统计面板 -->

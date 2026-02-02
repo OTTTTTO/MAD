@@ -35,6 +35,18 @@ async function loadTemplates() {
 }
 
 /**
+ * Agent 专长标签（用于推荐）
+ */
+const AGENT_EXPERTISE = {
+  'coordinator': ['协调', '组织', '总结', '决策', '规划'],
+  'market_research': ['市场', '用户', '需求', '竞品', '趋势', '调研'],
+  'requirement': ['需求', '功能', '产品', '用户故事', '验收'],
+  'technical': ['技术', '架构', '实现', '开发', '性能', '安全'],
+  'testing': ['测试', '质量', '自动化', '验收', 'Bug'],
+  'documentation': ['文档', '说明', '手册', '知识库', '归档']
+};
+
+/**
  * 讨论组配置
  */
 class DiscussionConfig {
@@ -1108,6 +1120,211 @@ class DiscussionOrchestrator {
     if (score >= 0.7) return '良好';
     if (score >= 0.5) return '一般';
     return '需改进';
+  }
+
+  /**
+   * 推荐参与者（基于讨论主题）
+   */
+  recommendParticipants(topic, currentParticipants = []) {
+    const keywords = this.extractKeywords(topic);
+    const allAgents = Object.keys(AGENT_EXPERTISE);
+    
+    const recommendations = allAgents
+      .filter(agentId => !currentParticipants.includes(agentId))
+      .map(agentId => {
+        const expertise = AGENT_EXPERTISE[agentId] || [];
+        let score = 0;
+        const matchedKeywords = [];
+        
+        // 基于关键词匹配
+        keywords.forEach(keyword => {
+          expertise.forEach(exp => {
+            if (exp.includes(keyword) || keyword.includes(exp)) {
+              score += 0.3;
+              matchedKeywords.push(keyword);
+            }
+          });
+        });
+        
+        // 基于历史参与度（简化版）
+        const history = this.getAgentParticipationHistory(agentId);
+        score += history.relevance * 0.4;
+        
+        // 基于可用性（简化版）
+        score += 0.3; // 所有 Agent 默认可用
+        
+        return {
+          agentId,
+          agentName: this.getAgentDisplayName(agentId),
+          score: Math.min(score, 1),
+          reason: this.generateRecommendationReason(agentId, matchedKeywords, expertise)
+        };
+      })
+      .filter(rec => rec.score > 0.3)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3);
+    
+    return recommendations;
+  }
+
+  /**
+   * 获取 Agent 显示名称
+   */
+  getAgentDisplayName(agentId) {
+    const names = {
+      'coordinator': '主协调员',
+      'market_research': '市场调研',
+      'requirement': '需求分析',
+      'technical': '技术可行性',
+      'testing': '测试',
+      'documentation': '文档'
+    };
+    return names[agentId] || agentId;
+  }
+
+  /**
+   * 生成推荐理由
+   */
+  generateRecommendationReason(agentId, matchedKeywords, expertise) {
+    if (matchedKeywords.length > 0) {
+      return `主题包含"${matchedKeywords[0]}"等相关内容，该 Agent 在${expertise.slice(0, 2).join('、')}方面有专长`;
+    }
+    return `该 Agent 在${expertise.slice(0, 2).join('、')}方面具有专业知识，可以为讨论提供价值`;
+  }
+
+  /**
+   * 获取 Agent 参与历史（简化版）
+   */
+  getAgentParticipationHistory(agentId) {
+    // 在实际实现中，这里应该从数据库或文件中读取历史数据
+    // 现在返回默认值
+    return {
+      relevance: 0.5, // 默认相关性
+      participationCount: 0,
+      averageRating: 0
+    };
+  }
+
+  /**
+   * 提取待办事项
+   */
+  extractActionItems(discussion) {
+    const actionItems = [];
+    
+    discussion.messages.forEach(msg => {
+      // 识别行动关键词模式
+      const actionPatterns = [
+        /(?:需要|要|应该|必须)\s*([^，。；！？\n]{1,50})\s*(?:完成|做|实现|开发|编写|测试)/g,
+        /下一步[:：]\s*([^，。；！？\n]{1,100})/g,
+        /行动项[:：]\s*([^，。；！？\n]{1,100})/g,
+        /TODO[:：]\s*([^，。；！？\n]{1,100})/gi,
+        /任务[:：]\s*([^，。；！？\n]{1,100})/g
+      ];
+      
+      actionPatterns.forEach(pattern => {
+        const matches = msg.content.matchAll(pattern);
+        for (const match of matches) {
+          const task = match[1] ? match[1].trim() : match[0].trim();
+          
+          if (task.length > 2) { // 过滤太短的任务
+            actionItems.push({
+              id: `action-${actionItems.length + 1}`,
+              task,
+              assignee: this.extractAssignee(msg.content, msg.role),
+              deadline: this.extractDeadline(msg.content),
+              priority: this.extractPriority(msg.content),
+              sourceMessage: msg.id,
+              sourceRole: msg.role,
+              timestamp: msg.timestamp,
+              completed: false
+            });
+          }
+        }
+      });
+    });
+    
+    // 去重（基于任务文本相似度）
+    return this.deduplicateActions(actionItems);
+  }
+
+  /**
+   * 提取责任人
+   */
+  extractAssignee(content, role) {
+    // 查找 @ 提及
+    const mentionMatch = content.match(/@([^\s@]+)/);
+    if (mentionMatch) {
+      return mentionMatch[1];
+    }
+    
+    // 默认为当前发言者
+    return role;
+  }
+
+  /**
+   * 提取截止日期
+   */
+  extractDeadline(content) {
+    // 简单的日期提取
+    const datePatterns = [
+      /(\d{4})-(\d{1,2})-(\d{1,2})/,
+      /(\d{1,2})月(\d{1,2})日/,
+      /(\d{1,2})\/(\d{1,2})\/(\d{4})/
+    ];
+    
+    for (const pattern of datePatterns) {
+      const match = content.match(pattern);
+      if (match) {
+        return match[0];
+      }
+    }
+    
+    // 提取相对时间
+    if (content.includes('明天')) {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow.toISOString().split('T')[0];
+    }
+    
+    if (content.includes('下周')) {
+      const nextWeek = new Date();
+      nextWeek.setDate(nextWeek.getDate() + 7);
+      return nextWeek.toISOString().split('T')[0];
+    }
+    
+    return null;
+  }
+
+  /**
+   * 提取优先级
+   */
+  extractPriority(content) {
+    if (content.includes('紧急') || content.includes('重要') || content.includes('优先')) {
+      return 'high';
+    }
+    if (content.includes('一般') || content.includes('普通')) {
+      return 'medium';
+    }
+    return 'medium'; // 默认中等
+  }
+
+  /**
+   * 去重待办事项
+   */
+  deduplicateActions(actions) {
+    const unique = [];
+    const seen = new Set();
+    
+    actions.forEach(action => {
+      // 简单的去重策略：基于任务文本的前 20 个字符
+      const key = action.task.substring(0, 20);
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(action);
+      }
+    });
+    
+    return unique;
   }
 }
 

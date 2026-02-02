@@ -52,6 +52,16 @@ function initApp() {
     toggleStats();
   });
   
+  // 推荐按钮
+  document.getElementById('recommendBtn').addEventListener('click', () => {
+    toggleRecommendations();
+  });
+  
+  // 待办事项按钮
+  document.getElementById('actionsBtn').addEventListener('click', () => {
+    toggleActions();
+  });
+  
   // 搜索功能
   const searchInput = document.getElementById('searchInput');
   
@@ -260,6 +270,9 @@ async function loadMessages(discussionId) {
     // 显示按钮
     document.getElementById('exportBtn').style.display = 'block';
     document.getElementById('statsBtn').style.display = 'block';
+    document.getElementById('recommendBtn').style.display = 'block';
+    document.getElementById('actionsBtn').style.display = 'block';
+    document.getElementById('pinBtn').style.display = 'block';
     
     const container = document.getElementById('messageContainer');
     
@@ -797,6 +810,247 @@ async function toggleStats() {
     panel.style.display = 'none';
     btn.textContent = '📊 统计';
   }
+}
+
+/**
+ * 切换推荐面板
+ */
+async function toggleRecommendations() {
+  if (!currentDiscussionId) return;
+  
+  const panel = document.getElementById('recommendPanel');
+  const btn = document.getElementById('recommendBtn');
+  
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    btn.textContent = '🤖 隐藏推荐';
+    await loadRecommendations(currentDiscussionId);
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '🤖 推荐';
+  }
+}
+
+/**
+ * 加载推荐
+ */
+async function loadRecommendations(discussionId) {
+  try {
+    updateStatus('加载推荐...');
+    
+    const response = await fetch(`/api/discussion/${discussionId}/recommendations`);
+    const recommendations = await response.json();
+    
+    displayRecommendations(recommendations);
+    
+    updateStatus('推荐已加载');
+  } catch (error) {
+    console.error('加载推荐失败:', error);
+    updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示推荐
+ */
+function displayRecommendations(recommendations) {
+  const container = document.getElementById('recommendContent');
+  
+  if (!recommendations || recommendations.length === 0) {
+    container.innerHTML = '<div class="empty-state">暂无推荐</div>';
+    return;
+  }
+  
+  container.innerHTML = `
+    <div class="recommend-header">
+      <h3>🤖 智能推荐</h3>
+      <p class="subtitle">基于讨论主题为您推荐合适的 Agent</p>
+    </div>
+    <div class="recommend-list">
+      ${recommendations.map(rec => `
+        <div class="recommend-card">
+          <div class="recommend-info">
+            <div class="recommend-name">${rec.agentName}</div>
+            <div class="recommend-score">
+              <span class="score-value">${Math.round(rec.score * 100)}%</span>
+              <span class="score-label">匹配度</span>
+            </div>
+          </div>
+          <div class="recommend-reason">${escapeHtml(rec.reason)}</div>
+          <button class="btn btn-sm recommend-add" onclick="addRecommendedAgent('${rec.agentId}')">
+            添加到讨论
+          </button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/**
+ * 添加推荐的 Agent
+ */
+async function addRecommendedAgent(agentId) {
+  // 这个功能需要后端支持
+  // 暂时显示提示
+  updateStatus('添加 Agent 功能开发中...');
+  alert('添加 Agent 到讨论的功能正在开发中');
+}
+
+// ==================== 待办事项功能 ====================
+
+/**
+ * 切换待办事项面板
+ */
+async function toggleActions() {
+  if (!currentDiscussionId) return;
+  
+  const panel = document.getElementById('actionsPanel');
+  const btn = document.getElementById('actionsBtn');
+  
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    btn.textContent = '✅ 隐藏待办';
+    await loadActions(currentDiscussionId);
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '✅ 待办';
+  }
+}
+
+/**
+ * 加载待办事项
+ */
+async function loadActions(discussionId) {
+  try {
+    updateStatus('加载待办事项...');
+    
+    const response = await fetch(`/api/discussion/${discussionId}/actions`);
+    const actions = await response.json();
+    
+    displayActions(actions);
+    
+    updateStatus(`已加载 ${actions.length} 个待办事项`);
+  } catch (error) {
+    console.error('加载待办事项失败:', error);
+    updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示待办事项
+ */
+function displayActions(actions) {
+  const container = document.getElementById('actionsContent');
+  
+  if (!actions || actions.length === 0) {
+    container.innerHTML = '<div class="empty-state">未找到待办事项</div>';
+    return;
+  }
+  
+  container.innerHTML = `
+    <div class="actions-header">
+      <h3>📝 待办事项 (${actions.length})</h3>
+      <div class="actions-actions">
+        <button class="btn btn-sm" onclick="exportActions()">导出</button>
+        <button class="btn btn-sm" onclick="markAllComplete()">全部完成</button>
+      </div>
+    </div>
+    <div class="actions-list">
+      ${actions.map(action => `
+        <div class="action-item ${action.completed ? 'completed' : ''}" data-action-id="${action.id}">
+          <div class="action-checkbox">
+            <input type="checkbox" ${action.completed ? 'checked' : ''} onchange="toggleActionComplete('${action.id}')">
+          </div>
+          <div class="action-content">
+            <div class="action-text">${escapeHtml(action.task)}</div>
+            <div class="action-meta">
+              ${action.assignee ? `<span class="action-assignee">👤 ${escapeHtml(action.assignee)}</span>` : ''}
+              ${action.deadline ? `<span class="action-deadline">📅 ${escapeHtml(action.deadline)}</span>` : ''}
+              <span class="action-priority priority-${action.priority}">${getPriorityLabel(action.priority)}</span>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/**
+ * 获取优先级标签
+ */
+function getPriorityLabel(priority) {
+  const labels = {
+    'high': '🔴 高',
+    'medium': '🟡 中',
+    'low': '🟢 低'
+  };
+  return labels[priority] || '🟡 中';
+}
+
+/**
+ * 切换待办事项完成状态
+ */
+function toggleActionComplete(actionId) {
+  const actionEl = document.querySelector(`[data-action-id="${actionId}"]`);
+  if (actionEl) {
+    actionEl.classList.toggle('completed');
+    updateStatus('状态已更新');
+  }
+}
+
+/**
+ * 标记全部完成
+ */
+function markAllComplete() {
+  const checkboxes = document.querySelectorAll('.action-item input[type="checkbox"]');
+  checkboxes.forEach(cb => {
+    cb.checked = true;
+    const actionEl = cb.closest('.action-item');
+    if (actionEl) {
+      actionEl.classList.add('completed');
+    }
+  });
+  updateStatus('已标记全部完成');
+}
+
+/**
+ * 导出待办事项
+ */
+function exportActions() {
+  const actions = document.querySelectorAll('.action-item');
+  const actionList = [];
+  
+  actions.forEach(actionEl => {
+    const text = actionEl.querySelector('.action-text').textContent;
+    const assignee = actionEl.querySelector('.action-assignee')?.textContent || '';
+    const deadline = actionEl.querySelector('.action-deadline')?.textContent || '';
+    const priority = actionEl.querySelector('.action-priority')?.textContent || '';
+    const completed = actionEl.classList.contains('completed');
+    
+    actionList.push({
+      task: text,
+      assignee,
+      deadline,
+      priority,
+      completed
+    });
+  });
+  
+  // 导出为文本
+  const text = actionList.map((a, i) => 
+    `${i + 1}. ${a.task}\n   ${a.assignee} ${a.deadline} ${a.priority} ${a.completed ? '✅' : '☐'}`
+  ).join('\n\n');
+  
+  // 下载文件
+  const blob = new Blob([text], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `actions-${currentDiscussionId}.txt`;
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  updateStatus('已导出待办事项');
 }
 
 /**
