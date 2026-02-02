@@ -1524,6 +1524,33 @@ function getSimilarityColor(similarity) {
 }
 
 /**
+ * 获取状态标签文本
+ */
+function getStatusLabel(status) {
+  const labels = {
+    'active': '进行中',
+    'ended': '已结束',
+    'initializing': '初始化',
+    'concluding': '结束中'
+  };
+  return labels[status] || status;
+}
+
+/**
+ * 切换到指定讨论
+ */
+function switchToDiscussion(discussionId) {
+  // 关闭相似讨论面板
+  const panel = document.getElementById('similarPanel');
+  if (panel) {
+    panel.style.display = 'none';
+  }
+
+  // 选择并加载讨论
+  selectDiscussion(discussionId);
+}
+
+/**
  * 合并讨论
  */
 async function mergeDiscussion(sourceId) {
