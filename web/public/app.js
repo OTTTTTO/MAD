@@ -10,6 +10,7 @@ let openTabs = new Map(); // <discussionId, {title, pinned}>
 let activeTabId = null;
 let highlights = new Map(); // <messageId, {color, annotation, highlightedBy, highlightedAt}>
 let reasoningVisibility = new Map(); // <messageId, boolean> 控制思维链展开/折叠
+let toastCounter = 0; // Toast 计数器
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -18,7 +19,130 @@ document.addEventListener('DOMContentLoaded', () => {
   initTheme();
   initTabs();
   initKeyboard();
+  initToast();
 });
+
+// ==================== Toast 通知系统 ====================
+
+/**
+ * 初始化 Toast 容器
+ */
+function initToast() {
+  // 确保容器存在
+  let container = document.getElementById('toastContainer');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'toastContainer';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+  }
+}
+
+/**
+ * 显示 Toast 通知
+ * @param {string} message - 消息内容
+ * @param {string} type - 类型：success, error, warning, info
+ * @param {string} title - 标题（可选）
+ * @param {number} duration - 持续时间（毫秒），0 表示不自动关闭
+ */
+function showToast(message, type = 'info', title = '', duration = 3000) {
+  const container = document.getElementById('toastContainer');
+  if (!container) return;
+
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.id = `toast-${++toastCounter}`;
+
+  // 图标映射
+  const icons = {
+    success: '✅',
+    error: '❌',
+    warning: '⚠️',
+    info: 'ℹ️'
+  };
+
+  // 默认标题
+  const defaultTitles = {
+    success: '成功',
+    error: '错误',
+    warning: '警告',
+    info: '提示'
+  };
+
+  const icon = icons[type] || icons.info;
+  const toastTitle = title || defaultTitles[type] || '通知';
+
+  toast.innerHTML = `
+    <div class="toast-icon">${icon}</div>
+    <div class="toast-content">
+      <div class="toast-title">${toastTitle}</div>
+      <div class="toast-message">${message}</div>
+    </div>
+    <button class="toast-close" onclick="removeToast('${toast.id}')">✕</button>
+    ${duration > 0 ? '<div class="toast-progress" style="animation-duration: ' + duration + 'ms;"></div>' : ''}
+  `;
+
+  container.appendChild(toast);
+
+  // 自动关闭
+  if (duration > 0) {
+    setTimeout(() => {
+      removeToast(toast.id);
+    }, duration);
+  }
+
+  return toast.id;
+}
+
+/**
+ * 移除 Toast
+ */
+function removeToast(toastId) {
+  const toast = document.getElementById(toastId);
+  if (toast) {
+    toast.classList.add('toast-removing');
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 300); // 等待动画完成
+  }
+}
+
+/**
+ * 清除所有 Toast
+ */
+function clearAllToasts() {
+  const container = document.getElementById('toastContainer');
+  if (container) {
+    const toasts = container.querySelectorAll('.toast');
+    toasts.forEach(toast => {
+      toast.classList.add('toast-removing');
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 300);
+    });
+  }
+}
+
+// 快捷方法
+function showSuccessToast(message, title = '成功', duration = 3000) {
+  return showToast(message, 'success', title, duration);
+}
+
+function showErrorToast(message, title = '错误', duration = 5000) {
+  return showToast(message, 'error', title, duration);
+}
+
+function showWarningToast(message, title = '警告', duration = 4000) {
+  return showToast(message, 'warning', title, duration);
+}
+
+function showInfoToast(message, title = '提示', duration = 3000) {
+  return showToast(message, 'info', title, duration);
+}
 
 /**
  * 初始化应用
@@ -50,7 +174,7 @@ function initApp() {
       loadMessages(currentDiscussionId);
     }
   });
-  
+
   // 导出按钮
   document.getElementById('exportBtn').addEventListener('click', () => {
     exportDiscussion('markdown');
@@ -86,6 +210,7 @@ function initApp() {
       await loadAgentStates(currentDiscussionId);
 
       updateStatus(`✅ 讨论已清空`);
+      showSuccessToast('讨论已清空');
     } catch (error) {
       console.error('清空讨论失败:', error);
       alert('清空失败：' + error.message);
@@ -97,25 +222,25 @@ function initApp() {
   document.getElementById('statsBtn').addEventListener('click', () => {
     toggleStats();
   });
-  
+
   // 推荐按钮
   document.getElementById('recommendBtn').addEventListener('click', () => {
     toggleRecommendations();
   });
-  
+
   // 待办事项按钮
   document.getElementById('actionsBtn').addEventListener('click', () => {
     toggleActions();
   });
-  
+
   // 相似讨论按钮
   document.getElementById('similarBtn').addEventListener('click', () => {
     toggleSimilarPanel();
   });
-  
+
   // 搜索功能
   const searchInput = document.getElementById('searchInput');
-  
+
   // 新建讨论按钮
   document.getElementById('newDiscussionBtn').addEventListener('click', () => {
     openTemplateModal();
@@ -137,7 +262,7 @@ function initApp() {
   });
 
   let searchTimeout = null;
-  
+
   searchInput.addEventListener('input', (e) => {
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => {
@@ -149,7 +274,7 @@ function initApp() {
       }
     }, 300);
   });
-  
+
   document.getElementById('filterActive').addEventListener('change', () => {
     const query = searchInput.value.trim();
     if (query.length >= 2) {
@@ -158,7 +283,7 @@ function initApp() {
       loadDiscussions();
     }
   });
-  
+
   document.getElementById('filterEnded').addEventListener('change', () => {
     const query = searchInput.value.trim();
     if (query.length >= 2) {
@@ -167,7 +292,7 @@ function initApp() {
       loadDiscussions();
     }
   });
-  
+
   // 自动刷新（每 5 秒）
   startAutoRefresh();
 }
@@ -178,7 +303,7 @@ function initApp() {
 async function performSearch(query) {
   try {
     updateStatus('搜索中...');
-    
+
     const status = [];
     if (document.getElementById('filterActive').checked) {
       status.push('active');
@@ -186,15 +311,15 @@ async function performSearch(query) {
     if (document.getElementById('filterEnded').checked) {
       status.push('ended');
     }
-    
+
     const statusParam = status.length === 1 ? status[0] : null;
-    
+
     const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&status=${statusParam || ''}`);
     const results = await response.json();
-    
+
     displaySearchResults(results, query);
     updateStatus(`找到 ${results.messages.length} 条结果`);
-    
+
   } catch (error) {
     console.error('搜索失败:', error);
     updateStatus('搜索失败');
@@ -206,12 +331,12 @@ async function performSearch(query) {
  */
 function displaySearchResults(results, query) {
   const listContainer = document.getElementById('discussionList');
-  
+
   if (results.messages.length === 0) {
     listContainer.innerHTML = '<div class="empty-state">未找到结果</div>';
     return;
   }
-  
+
   listContainer.innerHTML = results.messages.slice(0, 20).map(msg => `
     <div class="discussion-item" onclick="selectDiscussion('${msg.discussionId}')">
       <div class="topic">${escapeHtml(msg.discussionTopic)}</div>
@@ -331,7 +456,7 @@ function exportDiscussion(format) {
     alert('请先选择一个讨论组');
     return;
   }
-  
+
   const url = `/api/discussion/${currentDiscussionId}/export/${format}`;
   window.open(url, '_blank');
 }
@@ -349,13 +474,13 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadMessages(discussionId) {
   try {
     updateStatus('加载中...');
-    
+
     const response = await fetch(`/api/discussion/${discussionId}`);
     const data = await response.json();
-    
+
     // 更新标题
     document.getElementById('currentDiscussionTitle').textContent = data.discussion.topic;
-    
+
     // 显示按钮
     document.getElementById('exportBtn').style.display = 'block';
     document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
@@ -364,45 +489,45 @@ async function loadMessages(discussionId) {
     document.getElementById('actionsBtn').style.display = 'block';
     document.getElementById('similarBtn').style.display = 'block';
     document.getElementById('pinBtn').style.display = 'block';
-    
+
     // v2.5.3: 加载 Agent 状态
     await loadAgentStates(discussionId);
-    
+
     const container = document.getElementById('messageContainer');
-    
+
     if (!data.messages || data.messages.length === 0) {
       container.innerHTML = '<div class="empty-state">暂无消息</div>';
       updateStatus('无消息');
       return;
     }
-    
+
     // 记录旧的消息数量，用于检测新消息
-    const oldMessageCount = container.children.length > 0 && 
-                          container.querySelector('.message') !== null ? 
-                          container.querySelectorAll('.message').length : 
+    const oldMessageCount = container.children.length > 0 &&
+                          container.querySelector('.message') !== null ?
+                          container.querySelectorAll('.message').length :
                           data.messages.length;
-    
+
     // 获取参与者信息
     const participants = {};
     data.participants.forEach(p => {
       participants[p.id] = p;
     });
-    
+
     container.innerHTML = data.messages.map(msg => {
       const participant = participants[msg.id] || { role: msg.role, emoji: '🤖' };
       const stats = agentStats[msg.role] || {};
       const karma = stats.karma || 0;
       const level = stats.level || '🌱 新手';
-      
+
       // 检查是否有高亮
       const highlight = highlights.get(msg.id);
       const highlightClass = highlight ? 'highlighted' : '';
       const highlightStyle = highlight ? `style="--highlight-color: ${getHighlightColor(highlight.color)};"` : '';
-      
+
       // 检查是否有思维链
       const hasReasoning = msg.reasoning && msg.reasoning.length > 0;
       const reasoningData = hasReasoning ? `data-reasoning="${escapeHtml(JSON.stringify(msg.reasoning))}"` : '';
-      
+
       return `
         <div class="message ${highlightClass}" data-message-id="${msg.id}" ${highlightStyle} ${reasoningData}>
           <div class="message-header">
@@ -422,19 +547,19 @@ async function loadMessages(discussionId) {
         </div>
       `;
     }).join('');
-    
+
     // ✅ 智能滚动：只有当用户已经在底部时才自动滚动
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-    
+
     if (isNearBottom) {
       container.scrollTop = container.scrollHeight;
     } else if (data.messages.length > oldMessageCount) {
       // 有新消息但用户不在底部，显示提示
       showNewMessageBanner(data.messages.length - oldMessageCount);
     }
-    
+
     updateStatus(`已加载 ${data.messages.length} 条消息`);
-    
+
   } catch (error) {
     console.error('加载消息失败:', error);
     updateStatus('加载失败');
@@ -449,7 +574,7 @@ function showNewMessageBanner(newMessageCount) {
   if (banner) {
     banner.innerHTML = `📨 有 ${newMessageCount} 条新消息 <button id="scrollToBottomBtn" class="btn btn-sm">↓ 滚动到底部</button>`;
     banner.style.display = 'block';
-    
+
     // 绑定滚动按钮事件
     const scrollBtn = document.getElementById('scrollToBottomBtn');
     if (scrollBtn) {
@@ -482,19 +607,19 @@ async function loadAgentStates(discussionId) {
       console.warn('Agent 状态 API 不可用');
       return;
     }
-    
+
     const states = await response.json();
-    
+
     const statesBar = document.getElementById('agentStatesBar');
     const statesContent = document.getElementById('agentStatesContent');
-    
+
     if (!states || Object.keys(states).length === 0) {
       statesBar.style.display = 'none';
       return;
     }
-    
+
     statesBar.style.display = 'block';
-    
+
     // 获取参与者信息
     const discussionResponse = await fetch(`/api/discussion/${discussionId}`);
     const discussionData = await discussionResponse.json();
@@ -502,7 +627,7 @@ async function loadAgentStates(discussionId) {
     discussionData.participants.forEach(p => {
       participants[p.id] = p;
     });
-    
+
     statesContent.innerHTML = Object.entries(states).map(([agentId, state]) => {
       const participant = participants[agentId] || { role: agentId, emoji: '🤖' };
       const statusText = {
@@ -510,7 +635,7 @@ async function loadAgentStates(discussionId) {
         'speaking': '🗣️ 发言中',
         'waiting': '⏸️ 等待中'
       }[state.status] || state.status;
-      
+
       return `
         <div class="agent-state-item ${state.status}">
           <span class="agent-state-emoji">${participant.emoji}</span>
@@ -519,7 +644,7 @@ async function loadAgentStates(discussionId) {
         </div>
       `;
     }).join('');
-    
+
   } catch (error) {
     console.error('加载 Agent 状态失败:', error);
   }
@@ -531,7 +656,7 @@ async function loadAgentStates(discussionId) {
 function formatContent(content) {
   // 转义 HTML
   let formatted = escapeHtml(content);
-  
+
   // 简单的 markdown 处理
   // 代码块
   formatted = formatted.replace(/```(\w+)?\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
@@ -541,7 +666,7 @@ function formatContent(content) {
   formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   // 斜体
   formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-  
+
   return formatted;
 }
 
@@ -574,19 +699,21 @@ function getHighlightColor(colorName) {
 function copyMessage(messageId) {
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageEl) return;
-  
+
   const contentEl = messageEl.querySelector('.message-content');
   if (!contentEl) return;
-  
+
   // 获取纯文本内容
   const text = contentEl.textContent;
-  
+
   // 复制到剪贴板
   navigator.clipboard.writeText(text).then(() => {
     updateStatus('已复制到剪贴板');
+    showSuccessToast('已复制到剪贴板');
   }).catch(err => {
     console.error('复制失败:', err);
     updateStatus('复制失败');
+    showErrorToast('复制失败');
   });
 }
 
@@ -597,7 +724,7 @@ function formatTime(timestamp) {
   const date = new Date(timestamp);
   const now = new Date();
   const diff = now - date;
-  
+
   if (diff < 60000) {
     return '刚刚';
   } else if (diff < 3600000) {
@@ -644,11 +771,11 @@ function startAutoRefresh() {
     // WebSocket 已连接，不需要轮询
     return;
   }
-  
+
   if (autoRefreshInterval) {
     clearInterval(autoRefreshInterval);
   }
-  
+
   autoRefreshInterval = setInterval(() => {
     loadDiscussions();
     if (currentDiscussionId) {
@@ -664,7 +791,7 @@ function initTheme() {
   // 从 localStorage 读取保存的主题
   const savedTheme = localStorage.getItem('mad-theme') || 'dark';
   setTheme(savedTheme);
-  
+
   // 主题切换按钮
   document.getElementById('themeToggle').addEventListener('click', () => {
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
@@ -679,7 +806,7 @@ function setTheme(theme) {
   currentTheme = theme;
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('mad-theme', theme);
-  
+
   const btn = document.getElementById('themeToggle');
   if (btn) {
     btn.textContent = theme === 'dark' ? '🎨 浅色' : '🎨 深色';
@@ -692,36 +819,36 @@ function setTheme(theme) {
 function initWebSocket() {
   try {
     ws = new WebSocket('ws://localhost:18791');
-    
+
     ws.onopen = () => {
       console.log('[WS] Connected');
       wsConnected = true;
       updateStatus('🟢 实时连接');
-      
+
       // 停止轮询
       if (autoRefreshInterval) {
         clearInterval(autoRefreshInterval);
         autoRefreshInterval = null;
       }
     };
-    
+
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       handleWebSocketMessage(data);
     };
-    
+
     ws.onclose = () => {
       console.log('[WS] Disconnected');
       wsConnected = false;
       updateStatus('🔴 连接断开');
-      
+
       // 重新开始轮询
       startAutoRefresh();
-      
+
       // 5秒后尝试重连
       setTimeout(initWebSocket, 5000);
     };
-    
+
     ws.onerror = (error) => {
       console.error('[WS] Error:', error);
     };
@@ -740,7 +867,7 @@ function handleWebSocketMessage(data) {
     case 'connected':
       console.log('[WS]', data.message);
       break;
-      
+
     case 'newMessage':
       // 新消息推送
       if (data.data.discussionId === currentDiscussionId) {
@@ -750,12 +877,12 @@ function handleWebSocketMessage(data) {
       // 更新讨论列表
       loadDiscussions();
       break;
-      
+
     case 'agentStatsUpdate':
       // Agent 统计更新
       agentStats[data.data.agentId] = data.data.stats;
       break;
-      
+
     default:
       console.log('[WS] Unknown message type:', data.type);
   }
@@ -766,25 +893,25 @@ function handleWebSocketMessage(data) {
  */
 function appendMessage(message) {
   const container = document.getElementById('messageContainer');
-  
+
   // 移除空状态
   const emptyState = container.querySelector('.empty-state');
   if (emptyState) {
     emptyState.remove();
   }
-  
+
   // 获取参与者信息
   const participant = findParticipant(message.role);
-  
+
   const stats = agentStats[message.role] || {};
   const karma = stats.karma || 0;
   const level = stats.level || '🌱 新手';
-  
+
   // 检查是否有高亮
   const highlight = highlights.get(message.id);
   const highlightClass = highlight ? 'highlighted' : '';
   const highlightStyle = highlight ? `style="--highlight-color: ${getHighlightColor(highlight.color)};"` : '';
-  
+
   const messageHtml = `
     <div class="message ${highlightClass}" data-message-id="${message.id}" ${highlightStyle} style="animation: slideIn 0.3s ease-out">
       <div class="message-header">
@@ -802,9 +929,9 @@ function appendMessage(message) {
       ${highlight && highlight.annotation ? `<div class="message-annotation"><span class="annotation-label">📝 标注：</span>${escapeHtml(highlight.annotation)}</div>` : ''}
     </div>
   `;
-  
+
   container.insertAdjacentHTML('beforeend', messageHtml);
-  
+
   // 滚动到底部
   container.scrollTop = container.scrollHeight;
 }
@@ -823,7 +950,7 @@ function findParticipant(roleId) {
     'testing': '🧪',
     'documentation': '📝'
   };
-  
+
   const roleNames = {
     'coordinator': '主协调员',
     'market_research': '市场调研',
@@ -832,7 +959,7 @@ function findParticipant(roleId) {
     'testing': '测试',
     'documentation': '文档'
   };
-  
+
   return {
     emoji: roleEmojis[roleId] || '🤖',
     role: roleNames[roleId] || roleId
@@ -857,7 +984,7 @@ function exportDiscussion(format) {
     alert('请先选择一个讨论组');
     return;
   }
-  
+
   const url = `/api/discussion/${currentDiscussionId}/export/${format}`;
   window.open(url, '_blank');
 }
@@ -868,10 +995,10 @@ function exportDiscussion(format) {
 function initTabs() {
   const closeAllBtn = document.getElementById('closeAllTabs');
   const pinBtn = document.getElementById('pinBtn');
-  
+
   closeAllBtn.addEventListener('click', closeAllTabs);
   pinBtn.addEventListener('click', togglePin);
-  
+
   // 从 localStorage 恢复标签页
   const savedTabs = localStorage.getItem('mad-tabs');
   if (savedTabs) {
@@ -896,7 +1023,7 @@ function addTab(discussionId, title) {
     saveTabs();
     renderTabs();
   }
-  
+
   activateTab(discussionId);
 }
 
@@ -907,7 +1034,7 @@ function activateTab(discussionId) {
   activeTabId = discussionId;
   renderTabs();
   saveTabs();
-  
+
   // 显示/隐藏固定按钮
   const pinBtn = document.getElementById('pinBtn');
   const tab = openTabs.get(discussionId);
@@ -922,14 +1049,14 @@ function activateTab(discussionId) {
  */
 function closeTab(discussionId) {
   const tab = openTabs.get(discussionId);
-  
+
   // 固定的标签页需要确认
   if (tab && tab.pinned && !confirm('这个标签页已固定，确定要关闭吗？')) {
     return;
   }
-  
+
   openTabs.delete(discussionId);
-  
+
   // 如果关闭的是当前标签页，切换到另一个
   if (activeTabId === discussionId) {
     const remainingIds = Array.from(openTabs.keys());
@@ -942,7 +1069,7 @@ function closeTab(discussionId) {
       document.getElementById('pinBtn').style.display = 'none';
     }
   }
-  
+
   saveTabs();
   renderTabs();
 }
@@ -952,18 +1079,18 @@ function closeTab(discussionId) {
  */
 function closeAllTabs() {
   const pinnedCount = Array.from(openTabs.values()).filter(t => t.pinned).length;
-  
+
   if (pinnedCount > 0 && !confirm(`有 ${pinnedCount} 个固定的标签页，确定要全部关闭吗？`)) {
     return;
   }
-  
+
   openTabs.clear();
   activeTabId = null;
   currentDiscussionId = null;
-  
+
   saveTabs();
   renderTabs();
-  
+
   document.getElementById('pinBtn').style.display = 'none';
 }
 
@@ -972,13 +1099,13 @@ function closeAllTabs() {
  */
 function togglePin() {
   if (!activeTabId) return;
-  
+
   const tab = openTabs.get(activeTabId);
   if (tab) {
     tab.pinned = !tab.pinned;
     saveTabs();
     renderTabs();
-    
+
     const pinBtn = document.getElementById('pinBtn');
     pinBtn.textContent = tab.pinned ? '📍 取消固定' : '📌 固定';
   }
@@ -989,10 +1116,10 @@ function togglePin() {
  */
 async function toggleStats() {
   if (!currentDiscussionId) return;
-  
+
   const panel = document.getElementById('statsPanel');
   const btn = document.getElementById('statsBtn');
-  
+
   if (panel.style.display === 'none') {
     panel.style.display = 'block';
     btn.textContent = '📊 隐藏统计';
@@ -1008,10 +1135,10 @@ async function toggleStats() {
  */
 async function toggleRecommendations() {
   if (!currentDiscussionId) return;
-  
+
   const panel = document.getElementById('recommendPanel');
   const btn = document.getElementById('recommendBtn');
-  
+
   if (panel.style.display === 'none') {
     panel.style.display = 'block';
     btn.textContent = '🤖 隐藏推荐';
@@ -1028,12 +1155,12 @@ async function toggleRecommendations() {
 async function loadRecommendations(discussionId) {
   try {
     updateStatus('加载推荐...');
-    
+
     const response = await fetch(`/api/discussion/${discussionId}/recommendations`);
     const recommendations = await response.json();
-    
+
     displayRecommendations(recommendations);
-    
+
     updateStatus('推荐已加载');
   } catch (error) {
     console.error('加载推荐失败:', error);
@@ -1046,12 +1173,12 @@ async function loadRecommendations(discussionId) {
  */
 function displayRecommendations(recommendations) {
   const container = document.getElementById('recommendContent');
-  
+
   if (!recommendations || recommendations.length === 0) {
     container.innerHTML = '<div class="empty-state">暂无推荐</div>';
     return;
   }
-  
+
   container.innerHTML = `
     <div class="recommend-header">
       <h3>🤖 智能推荐</h3>
@@ -1094,10 +1221,10 @@ async function addRecommendedAgent(agentId) {
  */
 async function toggleActions() {
   if (!currentDiscussionId) return;
-  
+
   const panel = document.getElementById('actionsPanel');
   const btn = document.getElementById('actionsBtn');
-  
+
   if (panel.style.display === 'none') {
     panel.style.display = 'block';
     btn.textContent = '✅ 隐藏待办';
@@ -1114,12 +1241,12 @@ async function toggleActions() {
 async function loadActions(discussionId) {
   try {
     updateStatus('加载待办事项...');
-    
+
     const response = await fetch(`/api/discussion/${discussionId}/actions`);
     const actions = await response.json();
-    
+
     displayActions(actions);
-    
+
     updateStatus(`已加载 ${actions.length} 个待办事项`);
   } catch (error) {
     console.error('加载待办事项失败:', error);
@@ -1132,12 +1259,12 @@ async function loadActions(discussionId) {
  */
 function displayActions(actions) {
   const container = document.getElementById('actionsContent');
-  
+
   if (!actions || actions.length === 0) {
     container.innerHTML = '<div class="empty-state">未找到待办事项</div>';
     return;
   }
-  
+
   container.innerHTML = `
     <div class="actions-header">
       <h3>📝 待办事项 (${actions.length})</h3>
@@ -1183,10 +1310,10 @@ function getPriorityLabel(priority) {
  */
 async function toggleSimilarPanel() {
   if (!currentDiscussionId) return;
-  
+
   const panel = document.getElementById('similarPanel');
   const btn = document.getElementById('similarBtn');
-  
+
   if (panel.style.display === 'none') {
     panel.style.display = 'block';
     btn.textContent = '🔗 隐藏相似';
@@ -1203,15 +1330,15 @@ async function toggleSimilarPanel() {
 async function loadSimilarDiscussions(discussionId) {
   try {
     updateStatus('查找相似讨论...');
-    
+
     const threshold = 0.1; // 相似度阈值
     const limit = 10; // 最多显示 10 个
-    
+
     const response = await fetch(`/api/discussion/${discussionId}/similar?threshold=${threshold}&limit=${limit}`);
     const similar = await response.json();
-    
+
     displaySimilarDiscussions(similar);
-    
+
     updateStatus(`找到 ${similar.length} 个相似讨论`);
   } catch (error) {
     console.error('加载相似讨论失败:', error);
@@ -1224,12 +1351,12 @@ async function loadSimilarDiscussions(discussionId) {
  */
 function displaySimilarDiscussions(similar) {
   const container = document.getElementById('similarContent');
-  
+
   if (!similar || similar.length === 0) {
     container.innerHTML = '<div class="empty-state">未找到相似讨论</div>';
     return;
   }
-  
+
   container.innerHTML = `
     <div class="similar-list">
       ${similar.map(item => `
@@ -1272,14 +1399,14 @@ function getSimilarityColor(similarity) {
  */
 async function mergeDiscussion(sourceId) {
   if (!currentDiscussionId) return;
-  
+
   if (!confirm(`确定要将讨论 ${sourceId} 合并到当前讨论吗？`)) {
     return;
   }
-  
+
   try {
     updateStatus('合并讨论中...');
-    
+
     const response = await fetch(`/api/discussion/${currentDiscussionId}/merge`, {
       method: 'POST',
       headers: {
@@ -1289,11 +1416,12 @@ async function mergeDiscussion(sourceId) {
         sourceIds: [sourceId]
       })
     });
-    
+
     const result = await response.json();
-    
+
     if (response.ok) {
       updateStatus(`合并成功：${result.mergedMessagesCount} 条消息`);
+      showSuccessToast(`成功合并 ${result.mergedMessagesCount} 条消息`);
       // 重新加载讨论
       await loadMessages(currentDiscussionId);
       // 重新加载相似讨论
@@ -1302,6 +1430,7 @@ async function mergeDiscussion(sourceId) {
       loadDiscussions();
     } else {
       updateStatus(`合并失败：${result.error}`);
+      showErrorToast(`合并失败：${result.error}`);
     }
   } catch (error) {
     console.error('合并讨论失败:', error);
@@ -1341,14 +1470,14 @@ function markAllComplete() {
 function exportActions() {
   const actions = document.querySelectorAll('.action-item');
   const actionList = [];
-  
+
   actions.forEach(actionEl => {
     const text = actionEl.querySelector('.action-text').textContent;
     const assignee = actionEl.querySelector('.action-assignee')?.textContent || '';
     const deadline = actionEl.querySelector('.action-deadline')?.textContent || '';
     const priority = actionEl.querySelector('.action-priority')?.textContent || '';
     const completed = actionEl.classList.contains('completed');
-    
+
     actionList.push({
       task: text,
       assignee,
@@ -1357,12 +1486,12 @@ function exportActions() {
       completed
     });
   });
-  
+
   // 导出为文本
-  const text = actionList.map((a, i) => 
+  const text = actionList.map((a, i) =>
     `${i + 1}. ${a.task}\n   ${a.assignee} ${a.deadline} ${a.priority} ${a.completed ? '✅' : '☐'}`
   ).join('\n\n');
-  
+
   // 下载文件
   const blob = new Blob([text], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
@@ -1371,7 +1500,7 @@ function exportActions() {
   a.download = `actions-${currentDiscussionId}.txt`;
   a.click();
   URL.revokeObjectURL(url);
-  
+
   updateStatus('已导出待办事项');
 }
 
@@ -1381,12 +1510,12 @@ function exportActions() {
 async function loadStats(discussionId) {
   try {
     updateStatus('加载统计...');
-    
+
     const response = await fetch(`/api/discussion/${discussionId}/stats`);
     const stats = await response.json();
-    
+
     displayStats(stats);
-    
+
     updateStatus('统计已加载');
   } catch (error) {
     console.error('加载统计失败:', error);
@@ -1399,31 +1528,31 @@ async function loadStats(discussionId) {
  */
 function displayStats(stats) {
   const container = document.getElementById('statsContent');
-  
+
   const duration = formatDuration(stats.duration);
-  const mostActive = stats.mostActiveAgent 
+  const mostActive = stats.mostActiveAgent
     ? `${stats.mostActiveAgent.emoji} ${stats.mostActiveAgent.role}`
     : '无';
-  
+
   container.innerHTML = `
     <div class="stat-card">
       <h3>📊 总消息数</h3>
       <div class="value">${stats.messageCount}</div>
       <div class="subtext">来自 ${stats.participantCount} 个参与者</div>
     </div>
-    
+
     <div class="stat-card">
       <h3>⏱️ 讨论时长</h3>
       <div class="value">${duration}</div>
       <div class="subtext">${new Date(stats.createdAt).toLocaleString('zh-CN')}</div>
     </div>
-    
+
     <div class="stat-card">
       <h3>🏆 最活跃</h3>
       <div class="value" style="font-size: 1.5rem;">${mostActive}</div>
       <div class="subtext">${stats.mostActiveAgent ? stats.mostActiveAgent.messageCount + ' 条消息' : ''}</div>
     </div>
-    
+
     <div class="stat-card">
       <h3>💬 Agent 参与</h3>
       <div class="agent-participation">
@@ -1439,7 +1568,7 @@ function displayStats(stats) {
         `).join('')}
       </div>
     </div>
-    
+
     <div class="stat-card" style="grid-column: 1 / -1;">
       <h3>🔑 关键词</h3>
       <div class="keyword-cloud">
@@ -1450,13 +1579,13 @@ function displayStats(stats) {
           `).join('')}
       </div>
     </div>
-    
+
     <div class="stat-card" style="grid-column: 1 / -1;">
       <h3>⭐ 质量评分</h3>
       <div id="qualityScoreContent">加载中...</div>
     </div>
   `;
-  
+
   // 加载质量评分
   loadQualityScore();
 }
@@ -1466,11 +1595,11 @@ function displayStats(stats) {
  */
 async function loadQualityScore() {
   if (!currentDiscussionId) return;
-  
+
   try {
     const response = await fetch(`/api/discussion/${currentDiscussionId}/quality`);
     const quality = await response.json();
-    
+
     displayQualityScore(quality);
   } catch (error) {
     console.error('加载质量评分失败:', error);
@@ -1484,10 +1613,10 @@ async function loadQualityScore() {
 function displayQualityScore(quality) {
   const container = document.getElementById('qualityScoreContent');
   if (!container) return;
-  
+
   const totalScore = quality.total * 10; // 转换为 10 分制
   const ratingClass = getRatingClass(quality.rating);
-  
+
   container.innerHTML = `
     <div class="quality-score-container">
       <div class="quality-total">
@@ -1497,7 +1626,7 @@ function displayQualityScore(quality) {
         </div>
         <div class="quality-rating ${ratingClass}">${quality.rating}</div>
       </div>
-      
+
       <div class="quality-dimensions">
         <div class="dimension">
           <div class="dimension-label">
@@ -1508,7 +1637,7 @@ function displayQualityScore(quality) {
             <div class="dimension-fill" style="width: ${quality.innovation * 100}%"></div>
           </div>
         </div>
-        
+
         <div class="dimension">
           <div class="dimension-label">
             <span>📋 完整性</span>
@@ -1518,7 +1647,7 @@ function displayQualityScore(quality) {
             <div class="dimension-fill" style="width: ${quality.completeness * 100}%"></div>
           </div>
         </div>
-        
+
         <div class="dimension">
           <div class="dimension-label">
             <span>🔧 可行性</span>
@@ -1528,7 +1657,7 @@ function displayQualityScore(quality) {
             <div class="dimension-fill" style="width: ${quality.feasibility * 100}%"></div>
           </div>
         </div>
-        
+
         <div class="dimension">
           <div class="dimension-label">
             <span>💰 价值性</span>
@@ -1562,14 +1691,14 @@ function getRatingClass(rating) {
 function renderTabs() {
   const tabsContainer = document.getElementById('discussionTabs');
   const tabList = document.getElementById('tabList');
-  
+
   if (openTabs.size === 0) {
     tabsContainer.style.display = 'none';
     return;
   }
-  
+
   tabsContainer.style.display = 'flex';
-  
+
   // 排序：固定的在前
   const sortedIds = Array.from(openTabs.entries())
     .sort((a, b) => {
@@ -1578,13 +1707,13 @@ function renderTabs() {
       return 0;
     })
     .map(([id]) => id);
-  
+
   tabList.innerHTML = sortedIds.map(id => {
     const tab = openTabs.get(id);
     const isActive = id === activeTabId;
-    
+
     return `
-      <div class="tab ${isActive ? 'active' : ''} ${tab.pinned ? 'pinned' : ''}" 
+      <div class="tab ${isActive ? 'active' : ''} ${tab.pinned ? 'pinned' : ''}"
            data-id="${id}"
            onclick="switchToTab('${id}')">
         <span class="tab-title">${escapeHtml(tab.title)}</span>
@@ -1615,13 +1744,13 @@ function saveTabs() {
 async function openTemplateModal() {
   const modal = document.getElementById('templateModal');
   const templateList = document.getElementById('templateList');
-  
+
   modal.style.display = 'flex';
-  
+
   try {
     const response = await fetch('/api/templates');
     const templates = await response.json();
-    
+
     templateList.innerHTML = templates.map(template => `
       <div class="template-card" onclick="selectTemplate('${template.id}')">
         <div class="icon">${template.icon}</div>
@@ -1659,16 +1788,16 @@ async function selectTemplate(templateId) {
     }
     return;
   }
-  
+
   // 使用模板创建讨论
   const params = {};
-  
+
   // 如果模板需要参数，可以在这里收集
   const context = prompt('请输入讨论背景（可选）：');
   if (context) {
     params.context = context;
   }
-  
+
   try {
     const response = await fetch('/api/discussion/from-template', {
       method: 'POST',
@@ -1680,16 +1809,17 @@ async function selectTemplate(templateId) {
         params
       })
     });
-    
+
     const result = await response.json();
-    
+
     closeTemplateModal();
-    
+
     // 加载新创建的讨论
     loadDiscussions();
     selectDiscussion(result.discussionId);
-    
+
     updateStatus('讨论已创建');
+    showSuccessToast('讨论已创建成功！', '创建成功');
   } catch (error) {
     console.error('创建讨论失败:', error);
     updateStatus('创建失败');
@@ -1706,15 +1836,15 @@ function initKeyboard() {
       e.preventDefault();
       const ids = Array.from(openTabs.keys());
       if (ids.length === 0) return;
-      
+
       const currentIndex = ids.indexOf(activeTabId);
-      const nextIndex = e.shiftKey 
+      const nextIndex = e.shiftKey
         ? (currentIndex - 1 + ids.length) % ids.length
         : (currentIndex + 1) % ids.length;
-      
+
       switchToTab(ids[nextIndex]);
     }
-    
+
     // Ctrl+W: 关闭当前标签页
     if (e.ctrlKey && e.key === 'w') {
       e.preventDefault();
@@ -1801,7 +1931,7 @@ function saveHighlights() {
 function toggleHighlight(messageId) {
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageEl) return;
-  
+
   if (highlights.has(messageId)) {
     // 移除高亮
     highlights.delete(messageId);
@@ -1813,7 +1943,7 @@ function toggleHighlight(messageId) {
     // 添加高亮
     showColorPicker(messageId);
   }
-  
+
   saveHighlights();
 }
 
@@ -1823,7 +1953,7 @@ function toggleHighlight(messageId) {
 function showColorPicker(messageId) {
   const existingPicker = document.getElementById('highlightColorPicker');
   if (existingPicker) existingPicker.remove();
-  
+
   const picker = document.createElement('div');
   picker.id = 'highlightColorPicker';
   picker.className = 'color-picker';
@@ -1844,14 +1974,14 @@ function showColorPicker(messageId) {
       <button class="btn btn-sm btn-primary" id="confirmHighlight">确定</button>
     </div>
   `;
-  
+
   document.body.appendChild(picker);
-  
+
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   const rect = messageEl.getBoundingClientRect();
   picker.style.top = `${rect.bottom + 10}px`;
   picker.style.left = `${rect.left}px`;
-  
+
   // 颜色选择事件
   picker.querySelectorAll('.color-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -1859,7 +1989,7 @@ function showColorPicker(messageId) {
       btn.classList.add('selected');
     });
   });
-  
+
   // 确定高亮
   picker.querySelector('#confirmHighlight').addEventListener('click', () => {
     const selectedColor = picker.querySelector('.color-btn.selected');
@@ -1867,19 +1997,19 @@ function showColorPicker(messageId) {
       alert('请选择一个颜色');
       return;
     }
-    
+
     const color = selectedColor.dataset.color;
     const annotation = document.getElementById('annotationText').value.trim();
-    
+
     applyHighlight(messageId, color, annotation);
     picker.remove();
   });
-  
+
   // 取消
   picker.querySelector('#cancelHighlight').addEventListener('click', () => {
     picker.remove();
   });
-  
+
   // 默认选中第一个颜色
   picker.querySelector('.color-btn').classList.add('selected');
 }
@@ -1890,7 +2020,7 @@ function showColorPicker(messageId) {
 function applyHighlight(messageId, color, annotation) {
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageEl) return;
-  
+
   const colorMap = {
     'yellow': '#fef08a',
     'blue': '#93c5fd',
@@ -1898,9 +2028,9 @@ function applyHighlight(messageId, color, annotation) {
     'pink': '#f9a8d4',
     'orange': '#fdba74'
   };
-  
+
   const bgColor = colorMap[color] || '#fef08a';
-  
+
   // 保存高亮数据
   highlights.set(messageId, {
     color,
@@ -1908,11 +2038,11 @@ function applyHighlight(messageId, color, annotation) {
     highlightedBy: 'user',
     highlightedAt: new Date().toISOString()
   });
-  
+
   // 应用样式
   messageEl.classList.add('highlighted');
   messageEl.style.setProperty('--highlight-color', bgColor);
-  
+
   // 添加标注
   if (annotation) {
     let annotationEl = messageEl.querySelector('.message-annotation');
@@ -1926,14 +2056,14 @@ function applyHighlight(messageId, color, annotation) {
     const annotationEl = messageEl.querySelector('.message-annotation');
     if (annotationEl) annotationEl.remove();
   }
-  
+
   // 更新按钮状态
   const highlightBtn = messageEl.querySelector('.highlight-btn');
   if (highlightBtn) {
     highlightBtn.classList.add('active');
     highlightBtn.title = '取消高亮';
   }
-  
+
   saveHighlights();
 }
 
@@ -1942,21 +2072,21 @@ function applyHighlight(messageId, color, annotation) {
  */
 function removeHighlight(messageId) {
   highlights.delete(messageId);
-  
+
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   if (messageEl) {
     messageEl.classList.remove('highlighted');
     messageEl.style.removeProperty('--highlight-color');
     const annotationEl = messageEl.querySelector('.message-annotation');
     if (annotationEl) annotationEl.remove();
-    
+
     const highlightBtn = messageEl.querySelector('.highlight-btn');
     if (highlightBtn) {
       highlightBtn.classList.remove('active');
       highlightBtn.title = '高亮';
     }
   }
-  
+
   saveHighlights();
 }
 
@@ -1968,12 +2098,12 @@ function removeHighlight(messageId) {
 function toggleReasoning(messageId) {
   const isVisible = reasoningVisibility.get(messageId) || false;
   reasoningVisibility.set(messageId, !isVisible);
-  
+
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageEl) return;
-  
+
   let reasoningEl = messageEl.querySelector('.reasoning-chain');
-  
+
   if (!isVisible) {
     // 展开思维链
     if (!reasoningEl) {
@@ -2003,7 +2133,7 @@ async function fetchReasoningData(messageId) {
   // 如果需要实时获取，可以调用 API
   const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
   if (!messageEl) return null;
-  
+
   // 从 DOM 元素的数据属性中获取思维链
   const reasoningData = messageEl.dataset.reasoning;
   if (reasoningData) {
@@ -2014,7 +2144,7 @@ async function fetchReasoningData(messageId) {
       return null;
     }
   }
-  
+
   return null;
 }
 
@@ -2024,7 +2154,7 @@ async function fetchReasoningData(messageId) {
 function createReasoningChain(messageId, reasoning) {
   const container = document.createElement('div');
   container.className = 'reasoning-chain';
-  
+
   const header = document.createElement('div');
   header.className = 'reasoning-header';
   header.innerHTML = `
@@ -2032,23 +2162,23 @@ function createReasoningChain(messageId, reasoning) {
     <button class="reasoning-close" onclick="toggleReasoning('${messageId}')">✕</button>
   `;
   container.appendChild(header);
-  
+
   const stepsContainer = document.createElement('div');
   stepsContainer.className = 'reasoning-steps';
-  
+
   // 创建步骤树
   let currentStep = null;
   let depth = 0;
-  
+
   reasoning.forEach((step, index) => {
     const stepEl = document.createElement('div');
     stepEl.className = 'reasoning-step';
     stepEl.dataset.step = step.step || index + 1;
-    
-    const confidenceStars = step.confidence 
-      ? '⭐'.repeat(Math.round(step.confidence * 5)) 
+
+    const confidenceStars = step.confidence
+      ? '⭐'.repeat(Math.round(step.confidence * 5))
       : '';
-    
+
     stepEl.innerHTML = `
       <div class="step-number">${step.step || index + 1}</div>
       <div class="step-content">
@@ -2057,12 +2187,12 @@ function createReasoningChain(messageId, reasoning) {
         ${step.timestamp ? `<div class="step-time">${formatTime(step.timestamp)}</div>` : ''}
       </div>
     `;
-    
+
     stepsContainer.appendChild(stepEl);
   });
-  
+
   container.appendChild(stepsContainer);
-  
+
   return container;
 }
 
@@ -2375,10 +2505,12 @@ async function submitCreateAgent(event) {
 
     if (response.ok) {
       updateStatus(`Agent "${agent.name}" 创建成功`);
+      showSuccessToast(`Agent "${agent.name}" 创建成功！`, '创建成功');
       closeCreateAgentModal();
       await loadCustomAgents();
     } else {
       updateStatus(`创建失败：${agent.error}`);
+      showErrorToast(`创建失败：${agent.error}`);
     }
   } catch (error) {
     console.error('创建 Agent 失败:', error);
@@ -2645,11 +2777,13 @@ async function submitCreateTag(event) {
 
     if (response.ok) {
       updateStatus(`标签 "${tag.name}" 创建成功`);
+      showSuccessToast(`标签 "${tag.name}" 创建成功！`, '创建成功');
       closeCreateTagModal();
       await loadTagList();
       await loadTags(); // 更新过滤器
     } else {
       updateStatus(`创建失败：${tag.error}`);
+      showErrorToast(`创建失败：${tag.error}`);
     }
   } catch (error) {
     console.error('创建标签失败:', error);
@@ -2843,10 +2977,12 @@ async function submitCreateFavorite(event) {
 
     if (response.ok) {
       updateStatus(`收藏夹 "${favorite.name}" 创建成功`);
+      showSuccessToast(`收藏夹 "${favorite.name}" 创建成功！`, '创建成功');
       closeCreateFavoriteModal();
       await loadFavoriteList();
     } else {
       updateStatus(`创建失败：${favorite.error}`);
+      showErrorToast(`创建失败：${favorite.error}`);
     }
   } catch (error) {
     console.error('创建收藏夹失败:', error);
