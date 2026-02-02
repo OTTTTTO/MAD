@@ -431,10 +431,10 @@ async function createServer() {
         const discussionId = url.pathname.split('/')[3];
         const threshold = parseFloat(url.searchParams.get('threshold')) || 0.1;
         const limit = parseInt(url.searchParams.get('limit')) || 10;
-        
+
         try {
-          const similar = orchestrator.findSimilarDiscussions(discussionId, threshold, limit);
-          
+          const similar = await orchestrator.findSimilarDiscussions(discussionId, threshold, limit);
+
           res.setHeader('Content-Type', 'application/json; charset=utf-8');
           res.writeHead(200);
           res.end(JSON.stringify(similar, null, 2));

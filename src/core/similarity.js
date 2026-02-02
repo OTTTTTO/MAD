@@ -333,6 +333,11 @@ class DiscussionSimilarityDetector {
       if (similarity >= threshold) {
         const discussion = discussions.get(id);
 
+        // 跳过不存在的讨论（数据不一致时可能发生）
+        if (!discussion) {
+          return;
+        }
+
         // 提取共同关键词
         const otherText = this.extractTextFromDiscussion(discussion);
         const commonKeywords = SimilarityCalculator.getCommonKeywords(targetText, otherText);

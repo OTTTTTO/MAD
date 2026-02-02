@@ -327,14 +327,14 @@ class DiscussionOrchestrator {
           const filepath = path.join(discussionsDir, file);
           const data = await fs.readFile(filepath, 'utf8');
           const context = JSON.parse(data);
-          
+
           // 恢复为 DiscussionContext 对象
           const restoredContext = new DiscussionContext(
             context.id,
             context.topic,
             context.participants.map(p => new AgentDefinition(p))
           );
-          
+
           // 恢复所有属性
           Object.assign(restoredContext, {
             status: context.status,
@@ -345,7 +345,7 @@ class DiscussionOrchestrator {
             agentStates: new Map(Object.entries(context.agentStates || {})),
             metadata: context.metadata || {}
           });
-          
+
           this.discussions.set(discussionId, restoredContext);
         } catch (error) {
           console.error(`[Orchestrator] Failed to load discussion ${file}:`, error.message);
@@ -691,6 +691,14 @@ class DiscussionOrchestrator {
     const decisions = [];
     const openQuestions = [];
 
+    // 确保 messages 和 conflicts 是数组
+    if (!context.messages) {
+      context.messages = [];
+    }
+    if (!context.conflicts) {
+      context.conflicts = [];
+    }
+
     // 分析消息提取关键点
     context.messages.forEach(msg => {
       // 查找"建议"、"我认为"等关键词
@@ -974,6 +982,14 @@ class DiscussionOrchestrator {
     const context = this.discussions.get(discussionId);
     if (!context) {
       throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    // 确保 messages 和 conflicts 是数组
+    if (!context.messages) {
+      context.messages = [];
+    }
+    if (!context.conflicts) {
+      context.conflicts = [];
     }
 
     const lines = [];
@@ -1532,7 +1548,12 @@ class DiscussionOrchestrator {
    */
   extractActionItems(discussion) {
     const actionItems = [];
-    
+
+    // 确保 messages 是数组
+    if (!discussion.messages) {
+      discussion.messages = [];
+    }
+
     discussion.messages.forEach(msg => {
       // 识别行动关键词模式
       const actionPatterns = [
@@ -1673,10 +1694,10 @@ class DiscussionOrchestrator {
   /**
    * 查找相似讨论
    */
-  findSimilarDiscussions(discussionId, threshold = 0.1, limit = 10) {
+  async findSimilarDiscussions(discussionId, threshold = 0.1, limit = 10) {
     // 确保相似度检测器已初始化
     if (!this.similarityInitialized) {
-      this.initializeSimilarityDetector();
+      await this.initializeSimilarityDetector();
     }
 
     if (!this.discussions.has(discussionId)) {
@@ -1694,10 +1715,10 @@ class DiscussionOrchestrator {
   /**
    * 计算两个讨论之间的相似度
    */
-  calculateDiscussionSimilarity(id1, id2) {
+  async calculateDiscussionSimilarity(id1, id2) {
     // 确保相似度检测器已初始化
     if (!this.similarityInitialized) {
-      this.initializeSimilarityDetector();
+      await this.initializeSimilarityDetector();
     }
 
     return this.similarityDetector.calculateSimilarity(id1, id2);
@@ -1722,6 +1743,17 @@ class DiscussionOrchestrator {
       }
 
       const sourceContext = this.discussions.get(sourceId);
+
+      // 确保 messages 和 conflicts 是数组
+      if (!targetContext.messages) {
+        targetContext.messages = [];
+      }
+      if (!sourceContext.messages) {
+        sourceContext.messages = [];
+      }
+      if (!sourceContext.conflicts) {
+        sourceContext.conflicts = [];
+      }
 
       // 合并消息
       sourceContext.messages.forEach(msg => {
@@ -1752,7 +1784,6 @@ class DiscussionOrchestrator {
       }
 
       // 删除源讨论
-      this.discussions.delete(sourceId);
       await this.deleteDiscussion(sourceId);
     }
 
@@ -2512,6 +2543,11 @@ class CollaborationManager {
   getAllMentions(discussionId) {
     const context = this.orchestrator.contexts.get(discussionId);
     if (!context) return [];
+
+    // 确保 messages 是数组
+    if (!context.messages) {
+      context.messages = [];
+    }
 
     const mentions = [];
     context.messages.forEach(message => {
