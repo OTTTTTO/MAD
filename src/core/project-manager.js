@@ -578,6 +578,53 @@ class ProjectManager {
   async getCompletedProjects() {
     return await this.listProjects({ status: 'completed' });
   }
+
+  /**
+   * 克隆项目组
+   */
+  async cloneProject(projectId, newName = null) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    // 创建新项目组
+    const clonedProject = new ProjectGroup(
+      `group-${Date.now()}`,
+      newName || `${project.name} (副本)`,
+      project.category
+    );
+
+    // 复制属性
+    clonedProject.description = project.description;
+    clonedProject.tags = [...(project.tags || [])];
+    clonedProject.participants = [...(project.participants || [])];
+
+    // 不复制消息和标记
+    clonedProject.messages = [];
+    clonedProject.markers = [];
+
+    // 重置统计
+    clonedProject.stats = {
+      totalMessages: 0,
+      totalMarkers: 0,
+      totalTokens: 0,
+      progress: 0,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+
+    // 设置为活跃状态
+    clonedProject.status = 'active';
+
+    // 保存
+    this.projects.set(clonedProject.id, clonedProject);
+    await this.saveProject(clonedProject);
+
+    console.log(`[ProjectManager] 已克隆项目组: ${projectId} -> ${clonedProject.id}`);
+
+    return clonedProject;
+  }
 }
 
 module.exports = ProjectManager;

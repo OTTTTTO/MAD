@@ -34,6 +34,12 @@
 - **状态筛选：** 按状态（active, completed, archived）筛选项目
 - **保持整洁：** 归档的项目不会显示在活跃列表中
 
+#### 项目克隆
+- **克隆功能：** 基于现有项目创建新项目
+- **保留配置：** 类别、描述、标签、参与者
+- **清空数据：** 消息流、标记、统计数据
+- **自定义名称：** 可指定新项目名称，默认为 "原项目名 (副本)"
+
 #### 实现细节
 - 新增 `ProjectManager.searchProjects()` 方法
 - 新增 `ProjectManager.getStatistics()` 方法
@@ -58,6 +64,8 @@
 - 新增 `V3Integration.getArchivedProjects()` 接口
 - 新增 `V3Integration.getActiveProjects()` 接口
 - 新增 `V3Integration.getCompletedProjects()` 接口
+- 新增 `ProjectManager.cloneProject()` 方法
+- 新增 `V3Integration.cloneProject()` 接口
 - ProjectGroup 新增 `tags` 属性和 `addTag()`, `removeTag()`, `hasTag()`, `getTags()` 方法
 
 #### 使用示例
@@ -93,6 +101,9 @@ await v3.unarchiveProject('group-xxx');
 const archived = await v3.getArchivedProjects();
 const active = await v3.getActiveProjects();
 const completed = await v3.getCompletedProjects();
+
+// 克隆项目
+const cloned = await v3.cloneProject('group-xxx');
 ```
 
 ### 📚 文档更新
@@ -102,17 +113,19 @@ const completed = await v3.getCompletedProjects();
 - README 新增使用示例（场景 7：使用项目标签）
 - README 新增使用示例（场景 8：导出项目）
 - README 新增使用示例（场景 9：归档项目）
+- README 新增使用示例（场景 10：克隆项目）
 - 说明搜索范围和权重
 - 说明统计指标含义
 - 说明标签用途和场景
 - 说明导出格式和内容
 - 说明归档用途和场景
+- 说明克隆用途和保留的属性
 
 ### 📊 统计
 
 - **新增文件：** 0 个
 - **修改文件：** 2 个（project-manager.js, v3-integration.js）
-- **新增代码：** 约 280 行
+- **新增代码：** 约 320 行
 - **测试状态：** ✅ 通过
 
 ---

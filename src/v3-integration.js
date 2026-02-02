@@ -379,6 +379,13 @@ class V3Integration {
   async getCompletedProjects() {
     return await this.projectManager.getCompletedProjects();
   }
+
+  /**
+   * v3.6.0: 克隆项目组
+   */
+  async cloneProject(projectId, newName = null) {
+    return await this.projectManager.cloneProject(projectId, newName);
+  }
 }
 
 module.exports = V3Integration;
