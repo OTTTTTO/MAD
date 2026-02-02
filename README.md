@@ -6,7 +6,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-blue)](https://openclaw.ai)
-[![Version](https://img.shields.io/badge/version-2.6.2-green)](https://github.com/OTTTTTO/MAD)
+[![Version](https://img.shields.io/badge/version-2.6.7-green)](https://github.com/OTTTTTO/MAD)
 [![Language](https://img.shields.io/badge/lang-中文-blue)](#) [![English](https://img.shields.io/badge/lang-English-red)](./README_EN.md)
 
 **语言 / Language:** 🇨🇳 [中文](./README.md) | 🇬🇧 [English](./README_EN.md)
@@ -35,6 +35,8 @@ Multi-Agent Discussion 是一个 OpenClaw Skill，让多个专业 Agent 在虚�
 - ✅ **增强导出** - 支持 Markdown/JSON 批量导出（v2.6.0+）
 - ✅ **模板市场增强** - 模板评分、分享和推荐（v2.6.0+）
 - ✅ **智能建议** - 基于历史的改进建议（v2.6.0+）
+- ✅ **消息气泡样式** - 增强圆角、阴影和动画效果（v2.6.6+）
+- ✅ **GitHub Issue 监控** - 自动监控并创建修复任务（v2.6.7+）
 
 ## 🚀 快速开始
 
