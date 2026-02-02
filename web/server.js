@@ -10,9 +10,9 @@ const http = require('http');
 const fs = require('fs').promises;
 const path = require('path');
 const { DiscussionOrchestrator, TagManager, FavoritesManager, SnapshotManager, RestoreManager, BranchManager } = require('../orchestrator.js');
-const { parseMentions, validateMentions, highlightMentions } = require('../mention.js');
-const { createReply, getReplies, getReplyTree } = require('../reply.js');
-const { compareSnapshots, formatDiffHTML } = require('../version/diff.js');
+const { parseMentions, validateMentions, highlightMentions } = require('../src/core/mention.js');
+const { createReply, getReplies, getReplyTree } = require('../src/core/reply.js');
+const { compareSnapshots, formatDiffHTML } = require('../src/features/version/diff.js');
 
 const PORT = 18790;
 const WEB_DIR = path.join(__dirname, 'public');

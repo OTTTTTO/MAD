@@ -2,7 +2,7 @@
  * v2.6.1 快速测试 - Agent Performance 修复验证
  */
 
-const { AgentPerformanceAnalyzer } = require('../agent-performance.js');
+const { AgentPerformanceAnalyzer } = require('../src/core/agent-performance.js');
 
 // Mock orchestrator
 class MockOrchestrator {

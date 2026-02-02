@@ -20,3 +20,9 @@ logs/
 # 临时文件
 *.tmp
 *.temp
+
+# 运行时数据（data/ 目录）
+data/tags/*.json
+data/favorites/*.json
+data/cache/
+

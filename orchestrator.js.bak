@@ -16,29 +16,29 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { DiscussionSimilarityDetector } = require('./src/core/similarity.js');
-const { exportToPDF } = require('./src/features/exporters/pdf.js');
-const { exportToHTML } = require('./src/features/exporters/html.js');
-const { exportToCSV } = require('./src/features/exporters/csv.js');
-const { parseMentions, validateMentions, highlightMentions, extractMentionedAgentIds } = require('./src/core/mention.js');
-const { createReply, getReplies, getReplyTree, getReplyChain, countReplies, hasReplies, formatReplyQuote, searchMessages } = require('./src/core/reply.js');
-const { SnapshotManager } = require('./src/features/version/snapshot.js');
-const { RestoreManager } = require('./src/features/version/restore.js');
-const { BranchManager } = require('./src/features/version/branch.js');
-const { RealtimeManager } = require('./src/core/realtime.js');
-const { GlobalSearchManager } = require('./src/features/search/global.js');
-const { DiscussionCacheManager } = require('./src/features/cache/lru.js');
-const { DiscussionMessagePager, SnapshotPager } = require('./src/features/pagination/loader.js');
-const { DiscussionHistoryManager } = require('./src/core/history.js');
+const { DiscussionSimilarityDetector } = require('./similarity.js');
+const { exportToPDF } = require('./exporters/pdf.js');
+const { exportToHTML } = require('./exporters/html.js');
+const { exportToCSV } = require('./exporters/csv.js');
+const { parseMentions, validateMentions, highlightMentions, extractMentionedAgentIds } = require('./mention.js');
+const { createReply, getReplies, getReplyTree, getReplyChain, countReplies, hasReplies, formatReplyQuote, searchMessages } = require('./reply.js');
+const { SnapshotManager } = require('./version/snapshot.js');
+const { RestoreManager } = require('./version/restore.js');
+const { BranchManager } = require('./version/branch.js');
+const { RealtimeManager } = require('./realtime.js');
+const { GlobalSearchManager } = require('./search/global.js');
+const { DiscussionCacheManager } = require('./cache/lru.js');
+const { DiscussionMessagePager, SnapshotPager } = require('./pagination/loader.js');
+const { DiscussionHistoryManager } = require('./history.js');
 
 // v2.6.0 新功能
-const { QualityScorer, RealtimeFeedback, ScoreVisualizer } = require('./src/core/quality-scoring.js');
-const { AgentPerformanceAnalyzer } = require('./src/core/agent-performance.js');
-const { exportToMarkdown } = require('./src/features/exporters/markdown.js');
-const { exportToJSON } = require('./src/features/exporters/json.js');
-const { batchExport, exportAll, exportSummaryReport } = require('./src/features/exporters/batch.js');
-const { TemplateMarket } = require('./src/features/templates/market-manager.js');
-const { DiscussionSuggestionSystem } = require('./src/core/suggestions.js');
+const { QualityScorer, RealtimeFeedback, ScoreVisualizer } = require('./quality-scoring.js');
+const { AgentPerformanceAnalyzer } = require('./agent-performance.js');
+const { exportToMarkdown } = require('./exporters/markdown.js');
+const { exportToJSON } = require('./exporters/json.js');
+const { batchExport, exportAll, exportSummaryReport } = require('./exporters/batch.js');
+const { TemplateMarket } = require('./templates/market-manager.js');
+const { DiscussionSuggestionSystem } = require('./suggestions.js');
 
 // 加载模板
 let templates = null;
