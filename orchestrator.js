@@ -22,6 +22,10 @@ const { exportToHTML } = require('./exporters/html.js');
 const { exportToCSV } = require('./exporters/csv.js');
 const { parseMentions, validateMentions, highlightMentions, extractMentionedAgentIds } = require('./mention.js');
 const { createReply, getReplies, getReplyTree, getReplyChain, countReplies, hasReplies, formatReplyQuote, searchMessages } = require('./reply.js');
+const { SnapshotManager } = require('./version/snapshot.js');
+const { RestoreManager } = require('./version/restore.js');
+const { BranchManager } = require('./version/branch.js');
+const { RealtimeManager } = require('./realtime.js');
 
 // 加载模板
 let templates = null;
@@ -221,6 +225,10 @@ class DiscussionOrchestrator {
     this.similarityInitialized = false; // 相似度检测器是否已初始化
     this.contexts = new Map(); // 讨论上下文映射
     this.collaboration = null; // 协作管理器（延迟初始化）
+    this.snapshotManager = null; // 快照管理器（延迟初始化）
+    this.restoreManager = null; // 恢复管理器（延迟初始化）
+    this.branchManager = null; // 分支管理器（延迟初始化）
+    this.realtimeManager = null; // 实时管理器（延迟初始化）
   }
 
   /**
@@ -232,6 +240,18 @@ class DiscussionOrchestrator {
       await fs.mkdir(path.join(this.dataDir, 'discussions'), { recursive: true });
       await fs.mkdir(path.join(this.dataDir, 'logs'), { recursive: true });
       this.collaboration = new CollaborationManager(this);
+      
+      // 初始化版本控制管理器
+      this.snapshotManager = new SnapshotManager(this);
+      await this.snapshotManager.initialize();
+      
+      this.restoreManager = new RestoreManager(this, this.snapshotManager);
+      
+      this.branchManager = new BranchManager(this);
+      await this.branchManager.initialize();
+      
+      this.realtimeManager = new RealtimeManager(this);
+      
       console.log('[Orchestrator] Initialized successfully');
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
@@ -2314,5 +2334,9 @@ module.exports = {
   TagManager,
   FavoritesManager,
   CollaborationManager,
+  SnapshotManager,
+  RestoreManager,
+  BranchManager,
+  RealtimeManager,
   AGENT_ROLES
 };
