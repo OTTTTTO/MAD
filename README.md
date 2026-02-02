@@ -1,42 +1,78 @@
-# MAD (Multi-Agent Discussion)
+# MAD (Multi-Agent Discussion) v3.0
 
-> 让多个专业 Agent 在虚拟讨论组中协同工作
+> 让多个专业 Agent 在智能项目组中协同工作，自主推进项目进展
 
 **MAD** = Multi-Agent Discussion 的简称，读作 /mæd/
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-blue)](https://openclaw.ai)
-[![Version](https://img.shields.io/badge/version-2.6.7-green)](https://github.com/OTTTTTO/MAD)
+[![Version](https://img.shields.io/badge/version-3.0.0-green)](https://github.com/OTTTTTO/MAD)
 [![Language](https://img.shields.io/badge/lang-中文-blue)](#) [![English](https://img.shields.io/badge/lang-English-red)](./README_EN.md)
 
 **语言 / Language:** 🇨🇳 [中文](./README.md) | 🇬🇧 [English](./README_EN.md)
 
+---
+
+## 🎉 v3.0 重大更新
+
+### 核心升级
+
+**从"讨论"到"项目组"**
+- ❌ v2.x: 临时性、一次性的讨论
+- ✅ v3.0: 持续性、可追溯的智能项目组
+
+**智能标记系统**
+- 🎯 自动检测决策、问题、方案、里程碑
+- 📍 标记时间轴，重要节点一目了然
+- 🤝 AI 驱动的标记建议
+
+**自然语言创建**
+- 💬 "我想写一篇关于微服务架构的专利文档"
+- 🤖 自动分析、自动选专家、自动创建项目
+- 🚀 零配置，立即开始
+
+**Token 智能管理**
+- 📊 自动计算 Token 使用量
+- 🗜️ 上下文智能压缩，节省成本
+- 💰 预算控制，避免超支
+
+**自主推进**
+- 🔄 自动检测项目停滞
+- 💬 主动触发 Agent 讨论
+- ❓ 智能生成询问问题
+
+---
+
 ## 📖 简介
 
-Multi-Agent Discussion 是一个 OpenClaw Skill，让多个专业 Agent 在虚拟讨论组中协同工作。Agent 之间可以互相 @、回应观点、形成共识，最终产生比单个 Agent 更全面的解决方案。
+Multi-Agent Discussion v3.0 是一个 OpenClaw Skill，让多个专业 Agent 在智能项目组中协同工作。Agent 之间可以互相 @、回应观点、形成共识，最终产生比单个 Agent 更全面的解决方案。
 
 ### 核心特性
 
+#### v3.0 新特性 ✨
+- ✅ **智能项目组** - 持续的项目空间，支持长期协作
+- ✅ **智能标记系统** - AI 自动检测重要时刻
+- ✅ **自然语言创建** - 用一句话描述，系统自动配置
+- ✅ **Token 智能管理** - 自动计算、压缩、控制成本
+- ✅ **自主推进** - 项目停滞时自动触发讨论
+- ✅ **17+ 专家角色** - 架构、专利、数据库、安全等
+- ✅ **项目组视图** - 可视化项目进展
+
+#### v2.x 经典特性
 - ✅ **虚拟讨论组** - 创建多 Agent 协作的讨论空间
 - ✅ **动态发言** - Agent 根据上下文智能判断何时发言
 - ✅ **互相 @** - Agent 之间可以互相提问、回应
 - ✅ **冲突检测** - 自动识别意见分歧，组织辩论
 - ✅ **讨论总结** - 综合多方观点形成结构化结论
 - ✅ **过程可追溯** - 保存完整讨论历史，随时查看
-- ✅ **Web 可视化** - 实时查看讨论组内容（v1.0.1+）
-- ✅ **Agent 统计** - Karma 系统和等级机制（v1.1.0+）
-- ✅ **导出功能** - 支持 Markdown/JSON 导出（v1.1.1+）
-- ✅ **实时推送** - WebSocket 实时更新（v1.2.0+）
-- ✅ **讨论模板市场** - 10+ 预置模板，一键创建讨论（v2.0.0+）
-- ✅ **Agent 自定义** - 创建自己的 Agent 角色（v2.0.0+）
-- ✅ **相似度检测** - 查找相似讨论，避免重复工作（v2.0.0+）
-- ✅ **讨论质量评分** - 多维度评分系统，实时反馈（v2.6.0+）
-- ✅ **Agent 性能分析** - 深入分析 Agent 发言和贡献（v2.6.0+）
-- ✅ **增强导出** - 支持 Markdown/JSON 批量导出（v2.6.0+）
-- ✅ **模板市场增强** - 模板评分、分享和推荐（v2.6.0+）
-- ✅ **智能建议** - 基于历史的改进建议（v2.6.0+）
-- ✅ **消息气泡样式** - 增强圆角、阴影和动画效果（v2.6.6+）
-- ✅ **GitHub Issue 监控** - 自动监控并创建修复任务（v2.6.7+）
+- ✅ **Web 可视化** - 实时查看讨论组内容
+- ✅ **Agent 统计** - Karma 系统和等级机制
+- ✅ **导出功能** - 支持 Markdown/JSON/PDF 导出
+- ✅ **实时推送** - WebSocket 实时更新
+- ✅ **讨论模板市场** - 10+ 预置模板，一键创建讨论
+- ✅ **相似度检测** - 查找相似讨论，避免重复工作
+
+---
 
 ## 🚀 快速开始
 
@@ -67,6 +103,33 @@ npm install
 
 ### 基础用法
 
+#### v3.0 方式：自然语言创建项目
+
+```javascript
+const V3Integration = require('./src/v3-integration.js');
+
+// 初始化 v3.0
+const v3 = new V3Integration(orchestrator);
+await v3.initialize();
+
+// 用自然语言创建项目
+const result = await v3.createProjectFromInput(
+  '我想写一篇关于微服务分层架构设计的专利文档'
+);
+
+// 系统自动：
+// 1. 分析意图（文档编写）
+// 2. 选取专家（专利专家、技术架构师、文档专家）
+// 3. 创建项目组
+// 4. 启动智能推进
+// 5. 添加第一条消息
+
+console.log(result.project.id);
+console.log(result.experts); // [{ id: 'patent-expert', name: '专利专家' }, ...]
+```
+
+#### v2.x 方式：创建讨论（仍然支持）
+
 ```javascript
 const { DiscussionOrchestrator } = require('./orchestrator.js');
 
@@ -86,9 +149,85 @@ await orchestrator.agentSpeak(discussionId, 'market_research', '...');
 const history = orchestrator.getDiscussionHistory(discussionId);
 ```
 
+### Web 界面
+
+```bash
+# 启动 Web 服务器
+npm start
+
+# 访问不同的界面：
+# http://localhost:18790              - v2.x 经典界面
+# http://localhost:18790/index-v3     - v3.0 自然语言创建
+# http://localhost:18790/project-view - v3.0 项目组视图
+```
+
+**v3.0 项目组视图功能：**
+- 📋 查看所有项目组
+- 📍 标记时间轴
+- 💬 实时阅读消息流
+- 📊 项目统计（消息数、标记数、Tokens、进度）
+- ✨ 智能标记一键生成
+- 📝 项目总结自动生成
+
+---
+
 ## 💡 使用示例
 
-### 场景 1：需求评估
+### 场景 1：v3.0 自然语言创建项目（推荐）
+
+```
+用户：我想写一篇关于微服务分层架构设计的专利文档
+
+↓ 系统自动分析 ↓
+
+💡 智能分析器：
+  - 领域：架构设计 + 专利编写
+  - 类别：文档编写
+  - 专家：专利专家 + 技术架构师 + 文档专家
+
+🏗️ 系统自动：
+  - 创建项目组 "微服务分层架构设计"
+  - 添加专家到项目
+  - 启动智能推进
+  - 开始自动讨论
+
+↓ 项目组自主推进 ↓
+
+📜 专利专家：准备专利文档结构...
+🏛️ 技术架构师：描述技术方案...
+📝 文档专家：整理成正式文档...
+🎯 系统标记：[里程碑] 文档初稿完成
+
+↓ 最终输出 ↓
+
+✅ 完整的专利文档
+✅ 技术方案说明
+✅ 可直接提交申请
+```
+
+### 场景 2：智能标记项目进展
+
+```bash
+# 访问项目组视图
+# http://localhost:18790/project-view
+
+# 点击 "✨ 智能标记" 按钮
+
+# 系统自动：
+1. 分析所有消息
+2. 检测重要时刻
+3. 生成标记建议
+4. 添加到时间轴
+
+# 标记示例：
+🎯 决策：采用微服务架构
+⚠️ 问题：性能瓶颈
+💡 方案：引入缓存层
+🏆 里程碑：架构设计完成
+🤝 共识：使用 Redis 缓存
+```
+
+### 场景 3：v2.x 需求评估（经典方式）
 
 ```
 用户：我想开发一个"自动写代码"的技能
@@ -106,48 +245,7 @@ const history = orchestrator.getDiscussionHistory(discussionId);
 回复用户：经过讨论，建议聚焦中文开发者的代码助手...
 ```
 
-### 场景 2：Web 可视化界面
-
-```bash
-# 启动 Web 服务器
-npm start
-
-# 访问 Web 界面
-# http://localhost:18790
-```
-
-**功能：**
-- 📋 查看所有讨论组
-- 💬 实时阅读讨论内容
-- 📊 查看 Agent 统计和 Karma
-- 📥 导出讨论记录
-- 🔄 自动刷新（5秒）或 WebSocket 实时推送
-
-```bash
-# 启动 WebSocket 服务器（实时推送）
-npm run start:ws
-
-# 访问 Web 界面
-# http://localhost:18790
-```
-
-### 场景 3：方案评审
-
-```
-主 Agent：这个技术方案大家觉得怎么样？
-
-↓ 多 Agent 讨论 ↓
-
-技术 Agent：分析优缺点
-测试 Agent：评估测试难度
-市场 Agent：考虑交付时间
-
-↓ 达成共识 ↓
-
-形成评审意见
-```
-
-### 场景 4：使用模板市场（v2.0.0+）
+### 场景 4：使用模板市场（v2.x）
 
 ```bash
 # 访问 Web 界面
@@ -165,44 +263,32 @@ npm run start:ws
 # 一键使用模板创建讨论
 ```
 
-### 场景 5：自定义 Agent（v2.0.0+）
-
-```javascript
-// 通过 Web 界面创建自定义 Agent
-// 或通过 API 创建
-
-await orchestrator.createCustomAgent({
-  name: '安全专家',
-  emoji: '🔒',
-  systemPrompt: '你是安全专家，专注于信息安全...',
-  triggerKeywords: ['安全', '漏洞', '加密'],
-  expertise: ['安全', '漏洞分析', '加密'],
-  speakProbability: 0.6
-});
-
-// 在讨论中使用自定义 Agent
-await orchestrator.createDiscussion('评估系统安全性', {
-  participants: ['custom-001', 'technical', 'testing']
-});
-```
-
-### 场景 6：查找相似讨论（v2.0.0+）
-
-```javascript
-// 查找与当前讨论相似的其他讨论
-const similar = orchestrator.findSimilarDiscussions(
-  discussionId,
-  0.3,  // 相似度阈值
-  10    // 最多返回 10 个
-);
-
-// 相似讨论可用于：
-// - 参考历史讨论结果
-// - 避免重复讨论
-// - 合并相关讨论
-```
+---
 
 ## 🎭 可用角色
+
+### v3.0 专家角色（17+）
+
+| 角色 | Emoji | 职责 | 领域 |
+|------|-------|------|------|
+| 架构师 | 🏗️ | 技术架构、技术选型 | 架构设计 |
+| 系统架构师 | 🏛️ | 系统设计、分层架构 | 架构设计 |
+| 专利专家 | 📜 | 专利编写、权利要求 | 专利编写 |
+| 法务专家 | ⚖️ | 法律合规、知识产权 | 法律 |
+| 技术文档专家 | 📝 | 技术文档编写 | 文档编写 |
+| 文档专家 | 📚 | 知识管理 | 文档编写 |
+| 数据库专家 | 🗄️ | 数据库设计、查询优化 | 数据库 |
+| DBA | 🔧 | 数据库管理、性能优化 | 数据库 |
+| 测试专家 | 🧪 | 测试策略、测试用例 | 测试 |
+| QA工程师 | ✅ | 质量保证、自动化测试 | 测试 |
+| 安全专家 | 🔒 | 安全风险、安全方案 | 安全 |
+| 性能工程师 | ⚡ | 性能优化、瓶颈分析 | 性能 |
+| DevOps工程师 | 🚀 | 部署、CI/CD | DevOps |
+| 产品经理 | 📊 | 需求分析、产品规划 | 需求分析 |
+| 业务分析师 | 💼 | 业务需求分析 | 需求分析 |
+| 市场研究员 | 📈 | 市场调研、竞品分析 | 市场调研 |
+
+### v2.x 经典角色
 
 | 角色 | Emoji | 职责 |
 |------|-------|------|
@@ -213,13 +299,42 @@ const similar = orchestrator.findSimilarDiscussions(
 | 测试 | 🧪 | 质量保障、测试策略 |
 | 文档 | 📝 | 记录讨论、整理输出 |
 
+---
+
 ## 📚 文档
 
-详细文档请查看：
+### v3.0 文档
+- [V3_RELEASE_NOTES.md](./docs/V3_RELEASE_NOTES.md) - v3.0 完整发布说明
+- [DEVELOPMENT_PROGRESS.md](./DEVELOPMENT_PROGRESS.md) - v3.0 开发进度
+
+### v2.x 文档
 - [SKILL.md](./SKILL.md) - 完整功能说明
 - [agents/prompts/](./agents/prompts/) - 各角色配置
+- [用户使用指南](./docs/user-guide.md) - 如何发起讨论、使用模板、CLI 命令
+- [API 文档](./docs/api.md) - 完整的 API 参考
+- [自定义 Agent](./docs/custom-agents.md) - 创建自己的 Agent 角色
+- [模板系统](./docs/templates.md) - 使用和创建讨论模板
+
+---
 
 ## 🔧 配置
+
+### v3.0 配置
+
+```javascript
+const V3Integration = require('./src/v3-integration.js');
+
+const v3 = new V3Integration(orchestrator);
+
+// 可选：配置管理器
+v3.projectManager.dataDir = '/path/to/projects';
+v3.expertManager.dataDir = '/path/to/experts';
+
+// 初始化
+await v3.initialize();
+```
+
+### v2.x 配置
 
 ```javascript
 const config = {
@@ -232,303 +347,78 @@ const config = {
 const orchestrator = new DiscussionOrchestrator(config);
 ```
 
+---
+
 ## 📊 版本历史
 
-### v2.6.2 (2026-02-02)
-- 🐛 **Bug 修复**
-  - 修复移动端侧边栏无法显示的问题
-  - 添加汉堡菜单按钮
-  - 优化移动端布局
-  - 修复页面刷新导致的抖动问题（智能滚动）
-- 📱 **移动端优化**
-  - 添加移动端侧边栏切换功能
-  - 遮罩层支持
-  - 自动关闭侧边栏（选择讨论后）
-- 📖 **文档完善**
-  - 添加英文版 README (README_EN.md)
-  - 添加语言切换入口
-  - 更新版本历史
+### v3.0.0 (2026-02-02) - **重大更新** 🎉
+- 🎯 **核心重构**
+  - 从"讨论"升级为"项目组"
+  - 17+ 专家角色
+  - 智能分析器
+  - 项目流管理器
+- 📍 **智能标记系统**
+  - 自动检测决策、问题、方案、里程碑
+  - AI 驱动的标记建议
+  - 项目总结生成
+- 💬 **自然语言创建**
+  - 一句话创建项目
+  - 自动分析意图
+  - 自动选取专家
+- 📊 **Token 智能管理**
+  - 自动计算 Token
+  - 上下文压缩
+  - 预算控制
+- 🔄 **自主推进**
+  - 自动检测项目停滞
+  - 主动触发讨论
+  - 智能询问
+- 🎨 **新界面**
+  - v3.0 自然语言创建界面
+  - 项目组视图（时间轴、统计）
+- 📝 **完整文档**
+  - v3.0 发布说明
+  - API 文档更新
 
-### v2.6.1 (2026-02-02)
-- 🔧 **性能优化**
-  - 优化大量讨论时的查询效率
-  - 改进 WebSocket 连接稳定性
-  - 优化消息加载性能
-- 🐛 **Bug 修复**
-  - 修复 WebSocket 断线重连问题
-  - 修复标签页切换时的状态丢失
-  - 修复搜索结果显示不完整
+### v2.8.5 - v2.6.0
+- 详见 [CHANGELOG.md](./CHANGELOG.md)
 
-### v2.6.0 (2026-02-02) - **智能分析与增强** 🎉
-- 📜 **讨论历史管理**
-  - 历史统计（总数、状态、时间分布）
-  - 旧讨论查找和列表
-  - 讨论归档功能
-  - 讨论删除功能
-  - 归档恢复功能
-  - 存储使用情况查看
-- 🔧 **新增 API**
-  - GET /api/history/stats - 历史统计
-  - GET /api/history/old - 旧讨论列表
-  - POST /api/discussion/:id/archive - 归档讨论
-  - POST /api/history/archive-batch - 批量归档
-  - DELETE /api/discussion/:id - 删除讨论
-  - POST /api/history/clear-ended - 清理已结束讨论
-  - GET /api/history/archives - 归档列表
-  - POST /api/history/restore/:id - 恢复归档
-  - GET /api/history/storage - 存储使用情况
-- 📁 新增文件：history.js
-- 📁 新增目录：archive/（归档存储）
-
-### v2.5.1 (2026-02-02)
-- ⌨️ **键盘快捷键支持**
-  - 12 个预定义快捷键（搜索、新建、帮助等）
-  - 自定义快捷键注册
-  - 快捷键帮助对话框（Ctrl+/）
-  - 快捷键提示徽章
-  - 智能按键处理（忽略输入框中的按键）
-- 🎨 **UI 改进**
-  - 快捷键提示徽章显示
-  - 帮助对话框样式
-  - 响应式设计优化
-- 🔧 **新增功能**
-  - KeyboardShortcutManager 类
-  - 快捷键配置系统
-  - 事件驱动的快捷键处理
-- 📁 新增文件：web/shortcuts.js, web/public/shortcuts.css
-
-### v2.5.0 (2026-02-02)
-- 🔍 **高级搜索**
-  - 🌐 全局搜索（跨讨论、消息、快照）
-  - 📜 搜索历史和建议
-  - 🔥 热门关键词统计
-  - 🎯 相关性评分算法
-  - 🎛️ 高级过滤器
-- ⚡ **性能优化**
-  - 💾 LRU 缓存机制
-  - 📄 消息分页加载
-  - 🔍 索引优化
-  - ⚡ 更快的响应速度
-- 🔧 **新增 API**
-  - POST /api/search - 全局搜索
-  - GET /api/search/history - 搜索历史
-  - GET /api/search/hot - 热门关键词
-  - GET /api/search/suggestions - 搜索建议
-  - GET /api/cache/stats - 缓存统计
-  - GET /api/discussion/:id/messages - 消息分页
-  - GET /api/discussion/:id/messages/latest - 最新消息
-  - GET /api/discussion/:id/messages/stats - 消息统计
-- 📁 新增目录：search/, cache/, pagination/
-- 📁 新增文件：search/global.js, cache/lru.js, pagination/loader.js
-
-### v2.4.0 (2026-02-02)
-- ✨ 讨论版本控制
-  - 📸 讨论快照（手动/自动）
-  - 🔍 版本比较和差异显示
-  - ⏪ 版本恢复
-  - 🌳 版本分支管理
-- ✨ 实时协作基础
-  - 💬 实时消息同步
-  - 🖱️ 光标位置追踪
-  - 👥 在线用户列表
-- 🔧 版本控制 API
-  - 快照 CRUD 操作
-  - 版本比较
-  - 恢复预览
-  - 分支管理
-- 📁 新增目录：version/, snapshots/, branches/
-- 📁 新增文件：realtime.js
-
-### v2.3.0 (2026-02-02)
-- ✨ 实时协作编辑（基础）
-  - 实时管理器
-  - 客户端连接管理
-  - 光标同步基础
-
-### v2.2.0 (2026-02-02)
-- ✨ @提及功能
-  - 💬 智能解析 @mention
-  - ✅ 自动验证 Agent
-  - 🎨 高亮显示提及
-  - 📊 提及面板和统计
-  - 🔔 提及通知
-- ✨ 回复功能
-  - ↩️ 消息回复支持
-  - 🌳 回复链可视化
-  - 📊 回复统计
-  - 🔍 快速跳转到原始消息
-- ✨ 消息搜索
-  - 🔍 全文搜索
-  - 🎯 类型过滤（mention/reply/quote）
-  - ✨ 搜索结果高亮
-  - ⚡ 快速跳转
-- ✨ 消息操作
-  - ↩️ 回复消息
-  - ❝ 引用消息
-  - 🔗 复制链接
-  - 👁️ 查看回复
-- 📁 新增文件：mention.js, reply.js
-- 🔧 新增 API：6 个 @提及和回复相关端点
-
-### v2.1.0 (2026-02-02)
-- ✨ 讨论标签系统
-  - 🏷️ 创建、编辑、删除标签
-  - 🎨 自定义标签颜色和图标
-  - 💡 基于内容的智能标签建议
-  - 🔍 按标签过滤讨论
-  - 📊 标签使用统计
-- ✨ 讨论收藏夹
-  - ⭐ 创建、管理收藏夹
-  - ➕ 添加讨论到收藏夹
-  - 🔍 快速访问收藏的讨论
-  - 📝 收藏夹描述和图标
-- 🎨 标签管理对话框
-- 🎨 收藏夹管理对话框
-- 📁 新增目录：tags/, favorites/
-- 🔧 新增 API：11 个标签和收藏夹相关端点
-
-### v2.0.0 (2026-02-02) - **重大更新** 🎉
-- ✨ 讨论相似度检测
-  - TF-IDF 文本向量化算法
-  - 余弦相似度计算
-  - 相似讨论查找和推荐
-  - 共同关键词提取
-  - 讨论合并功能
-- ✨ 讨论模板市场
-  - 10 个高质量预置模板
-  - 模板浏览和搜索
-  - 分类过滤（产品/技术/市场/管理）
-  - 模板评分和评论系统
-  - 一键使用模板创建讨论
-- ✨ Agent 自定义
-  - 创建完全自定义的 Agent 角色
-  - 系统提示词编辑器
-  - 触发关键词和专长标签设置
-  - 发言概率控制
-  - Agent 测试功能
-  - 3 个预置自定义 Agent
-- 🐛 修复创建讨论时的参与者选择问题
-- 📝 完整的测试套件
-
-### v1.9.0 (2026-02-02)
-- ✨ 智能推荐参与者
-  - 基于讨论主题自动推荐相关 Agent
-  - 显示推荐理由和匹配度
-  - 支持专长标签匹配
-  - 一键添加推荐 Agent
-- ✨ 讨论转待办事项
-  - 自动识别讨论中的行动项
-  - 提取责任人、截止日期、优先级
-  - 生成待办清单
-  - 支持导出为文本文件
-- ✨ 讨论相似度检测（开发中）
-
-### v1.8.0 (2026-02-02)
-- ✨ 讨论高亮和标注
-  - 多种颜色高亮（黄色、蓝色、绿色、粉色、橙色）
-  - 支持添加文字标注
-  - 高亮状态持久化到 localStorage
-  - 一键复制消息内容
-- ✨ 可视化思维链
-  - 记录 Agent 的推理步骤
-  - 树状图展示思维过程
-  - 可展开/折叠每个步骤
-  - 显示推理时间和置信度
-- ✨ 讨论质量评分
-  - 四维度评分：创新性、完整性、可行性、价值性
-  - 实时计算讨论质量
-  - 评分等级：优秀/良好/一般/需改进
-  - 可视化评分趋势
-
-### v1.7.0 (2026-02-02)
-- ✨ 讨论模板系统
-  - 5 个预定义模板（需求评估、技术评审、方案讨论、问题解决、自定义）
-  - 一键创建讨论
-  - 参数化配置
-  - 模板管理（CRUD）
-
-### v1.6.0 (2026-02-02)
-- ✨ 讨论统计和分析
-- 📊 详细的分析数据
-- 📈 Agent 行为统计
-- 💬 参与度分析
-
-### v1.5.0 (2026-02-02)
-- ✨ 多讨论管理
-- 📋 标签页系统
-- 🔄 快速切换讨论
-- 📌 固定功能
-- ⌨️ 键盘快捷键
-
-### v1.4.0 (2026-02-02)
-- ✨ 主题定制和响应式设计
-- 🎨 深色/浅色主题切换
-- 🎨 CSS 变量系统
-- 💾 主题持久化
-- 📱 移动端适配
-
-### v1.3.0 (2026-02-02)
-- ✨ 搜索和过滤功能
-- 🔍 全文搜索
-- 🔎 搜索结果高亮
-- 🎯 状态过滤器（进行中/已结束）
-- ⚡ 实时搜索
-
-### v1.2.0 (2026-02-02) - Major Update
-- ✨ WebSocket 实时推送
-- 🚀 新消息立即显示
-- 📊 Agent 统计实时更新
-- 🔧 自动重连和降级机制
-
-### v1.1.1 (2026-02-02)
-- ✨ 导出功能（Markdown/JSON）
-- 📥 文件下载
-- 📝 完整讨论记录导出
-
-### v1.1.0 (2026-02-02)
-- ✨ Agent 统计系统
-- ⭐ Karma 计分机制
-- 🏆 等级系统（新手→大师）
-- 📊 API: /api/agents, /api/agent/:id
-
-### v1.0.1 (2026-02-02)
-- ✨ Web 可视化界面
-- 💬 实时查看讨论组内容
-- 📋 讨论列表展示
-- 🔄 自动刷新（5秒）
-
-### v1.0.0 (2026-02-01)
-- 🎉 初始版本
-- ✅ 核心讨论引擎
-- 🤖 6 个专业 Agent 角色
-- ✅ 完整测试套件
+---
 
 ## 📂 项目结构
 
 ```
 mad/
-├── orchestrator.js           # 核心协调引擎
+├── orchestrator.js           # v2.x 核心协调引擎
+├── src/                      # v3.0 源代码
+│   ├── models/
+│   │   └── project-group.js  # 数据模型
+│   ├── core/
+│   │   ├── project-manager.js      # 项目组管理
+│   │   ├── expert-manager.js       # 专家管理
+│   │   ├── smart-analyzer.js       # 智能分析
+│   │   ├── project-flow.js         # 项目流管理
+│   │   ├── progress-manager.js     # 智能推进
+│   │   ├── marker-detector.js      # 标记检测
+│   │   └── marker-generator.js     # 标记生成
+│   └── v3-integration.js     # v3.0 集成入口
+├── api/
+│   └── skill-routes.js       # v3.0 API 路由
+├── web/
+│   ├── server.js             # HTTP 服务器
+│   └── public/
+│       ├── index.html        # v2.x 经典界面
+│       ├── index-v3.html     # v3.0 自然语言创建
+│       └── project-view.html # v3.0 项目组视图
+├── agents/
+│   └── prompts/              # 各角色系统提示词
 ├── package.json              # 项目配置
 ├── SKILL.md                  # Skill 说明
 ├── README.md                 # 本文件
-├── agents/
-│   └── prompts/              # 各角色系统提示词
-│       ├── coordinator.md    # 主协调员
-│       ├── market_research.md
-│       ├── requirement.md
-│       ├── technical.md
-│       ├── testing.md
-│       └── documentation.md
-├── web/
-│   ├── server.js             # HTTP 服务器
-│   ├── websocket.js          # WebSocket 服务器
-│   └── public/               # Web 前端
-│       ├── index.html
-│       ├── style.css
-│       └── app.js
-└── test/
-    └── basic.test.js         # 基础测试
+└── test/                     # 测试文件
 ```
+
+---
 
 ## 🔧 故障排除
 
@@ -561,11 +451,17 @@ tail -f /tmp/mad-web-server.log
 
 **Q: 讨论数据丢失？**
 - 数据存储在 `~/.openclaw/multi-agent-discuss/discussions/`
+- 项目组数据存储在 `~/.openclaw/multi-agent-discuss/projects/`
 - 检查文件权限和磁盘空间
 
 **Q: Agent 不响应？**
 - 检查 OpenClaw 配置
 - 查看 Agent 日志：`tail -f logs/agent-*.log`
+
+**Q: v3.0 和 v2.x 的区别？**
+- v3.0 是项目组，支持长期协作、智能标记、自动推进
+- v2.x 是讨论，适合临时性、一次性对话
+- 两者完全兼容，可以同时使用
 
 ### 获取帮助
 
@@ -573,26 +469,33 @@ tail -f /tmp/mad-web-server.log
 - 🐛 [提交 Issue](https://github.com/OTTTTTO/MAD/issues)
 - 💬 [Discord 社区](https://discord.com/invite/clawd)
 
-### 📚 使用文档
-
-- 📖 [用户使用指南](docs/user-guide.md) - 如何发起讨论、使用模板、CLI 命令
-- 🔧 [API 文档](docs/api.md) - 完整的 API 参考
-- 🎨 [自定义 Agent](docs/custom-agents.md) - 创建自己的 Agent 角色
-- 📋 [模板系统](docs/templates.md) - 使用和创建讨论模板
+---
 
 ## 🧪 测试
 
 ```bash
+# 运行所有测试
 npm test
+
+# 运行特定测试
+npm test -- test/v3-integration.test.js
+npm test -- test/marker-system.test.js
+npm test -- test/basic.test.js
 ```
+
+---
 
 ## 🤝 贡献
 
 欢迎贡献！请提交 Issue 或 Pull Request。
 
+---
+
 ## 📄 许可证
 
 MIT License - 详见 [LICENSE](./LICENSE) 文件
+
+---
 
 ## 🙏 致谢
 
@@ -601,4 +504,25 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 
 ---
 
+## 🚀 Roadmap
+
+### v3.1.0（计划中）
+- 🎤 多模态支持（语音输入）
+- 📎 文件上传（图片、文档）
+- 🌍 多语言支持
+
+### v3.2.0（计划中）
+- 👥 团队协作
+- 🔐 权限管理
+- 📤 项目分享
+
+### v3.3.0（计划中）
+- 📊 高级分析
+- 📈 可视化报表
+- 🔔 智能提醒
+
+---
+
 **让 Agent 们协同工作，产生更好的答案！** 🚀
+
+**从 v3.0 开始，让 AI 自主推进你的项目！** 🤖✨
