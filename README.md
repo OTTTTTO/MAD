@@ -223,6 +223,30 @@ const orchestrator = new DiscussionOrchestrator(config);
 
 ## 📊 版本历史
 
+### v2.5.0 (2026-02-02)
+- 🔍 **高级搜索**
+  - 🌐 全局搜索（跨讨论、消息、快照）
+  - 📜 搜索历史和建议
+  - 🔥 热门关键词统计
+  - 🎯 相关性评分算法
+  - 🎛️ 高级过滤器
+- ⚡ **性能优化**
+  - 💾 LRU 缓存机制
+  - 📄 消息分页加载
+  - 🔍 索引优化
+  - ⚡ 更快的响应速度
+- 🔧 **新增 API**
+  - POST /api/search - 全局搜索
+  - GET /api/search/history - 搜索历史
+  - GET /api/search/hot - 热门关键词
+  - GET /api/search/suggestions - 搜索建议
+  - GET /api/cache/stats - 缓存统计
+  - GET /api/discussion/:id/messages - 消息分页
+  - GET /api/discussion/:id/messages/latest - 最新消息
+  - GET /api/discussion/:id/messages/stats - 消息统计
+- 📁 新增目录：search/, cache/, pagination/
+- 📁 新增文件：search/global.js, cache/lru.js, pagination/loader.js
+
 ### v2.4.0 (2026-02-02)
 - ✨ 讨论版本控制
   - 📸 讨论快照（手动/自动）

@@ -835,6 +835,220 @@ async function createServer() {
         return;
       }
 
+      // ===== v2.5.0 全局搜索 API =====
+
+      // API: 全局搜索
+      if (url.pathname === '/api/search' && req.method === 'GET') {
+        const query = url.searchParams.get('q') || '';
+        const scope = url.searchParams.get('scope') || 'all';
+        const limit = parseInt(url.searchParams.get('limit')) || 50;
+        const offset = parseInt(url.searchParams.get('offset')) || 0;
+        const sortBy = url.searchParams.get('sortBy') || 'relevance';
+
+        if (!query) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Query parameter "q" is required' }));
+          return;
+        }
+
+        const results = await orchestrator.search(query, { scope, limit, offset, sortBy });
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(results, null, 2));
+        return;
+      }
+
+      // API: 获取搜索历史
+      if (url.pathname === '/api/search/history' && req.method === 'GET') {
+        const limit = parseInt(url.searchParams.get('limit')) || 20;
+        const history = orchestrator.getSearchHistory(limit);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(history, null, 2));
+        return;
+      }
+
+      // API: 清除搜索历史
+      if (url.pathname === '/api/search/history' && req.method === 'DELETE') {
+        if (orchestrator.searchManager) {
+          orchestrator.searchManager.clearSearchHistory();
+        }
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }, null, 2));
+        return;
+      }
+
+      // API: 获取热门关键词
+      if (url.pathname === '/api/search/hot' && req.method === 'GET') {
+        const limit = parseInt(url.searchParams.get('limit')) || 10;
+        const keywords = orchestrator.getHotKeywords(limit);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(keywords, null, 2));
+        return;
+      }
+
+      // API: 获取搜索建议
+      if (url.pathname === '/api/search/suggestions' && req.method === 'GET') {
+        const query = url.searchParams.get('q') || '';
+        const limit = parseInt(url.searchParams.get('limit')) || 5;
+        const suggestions = orchestrator.getSearchSuggestions(query, limit);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(suggestions, null, 2));
+        return;
+      }
+
+      // API: 获取搜索统计
+      if (url.pathname === '/api/search/stats' && req.method === 'GET') {
+        const stats = orchestrator.getSearchStats();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(stats, null, 2));
+        return;
+      }
+
+      // ===== v2.5.0 缓存管理 API =====
+
+      // API: 获取缓存统计
+      if (url.pathname === '/api/cache/stats' && req.method === 'GET') {
+        const stats = orchestrator.getCacheStats();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(stats, null, 2));
+        return;
+      }
+
+      // API: 清除所有缓存
+      if (url.pathname === '/api/cache' && req.method === 'DELETE') {
+        orchestrator.clearCache();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }, null, 2));
+        return;
+      }
+
+      // API: 清除特定讨论的缓存
+      if (url.pathname.startsWith('/api/cache/discussion/') && req.method === 'DELETE') {
+        const discussionId = url.pathname.split('/')[4];
+        orchestrator.clearDiscussionCache(discussionId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success: true }, null, 2));
+        return;
+      }
+
+      // ===== v2.5.0 分页加载 API =====
+
+      // API: 获取讨论消息（分页）
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/messages') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const page = parseInt(url.searchParams.get('page')) || 1;
+        const pageSize = parseInt(url.searchParams.get('pageSize')) || 50;
+
+        try {
+          const result = await orchestrator.getMessagesPaginated(discussionId, page, pageSize);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 按时间范围获取消息
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/messages/time-range') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const startTime = parseInt(url.searchParams.get('startTime'));
+        const endTime = parseInt(url.searchParams.get('endTime'));
+        const limit = parseInt(url.searchParams.get('limit')) || 100;
+
+        try {
+          const result = await orchestrator.getMessagesByTimeRange(discussionId, startTime, endTime, limit);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 按角色获取消息（分页）
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.includes('/messages/role/') && req.method === 'GET') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const role = parts[5];
+        const page = parseInt(url.searchParams.get('page')) || 1;
+        const pageSize = parseInt(url.searchParams.get('pageSize')) || 50;
+
+        try {
+          const result = await orchestrator.getMessagesByRole(discussionId, role, page, pageSize);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 获取最新消息
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/messages/latest') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const count = parseInt(url.searchParams.get('count')) || 20;
+
+        try {
+          const result = await orchestrator.getLatestMessages(discussionId, count);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 获取消息统计
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/messages/stats') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+
+        try {
+          const stats = await orchestrator.getMessageStats(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(stats, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 获取快照（分页）
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/snapshots-paged') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const page = parseInt(url.searchParams.get('page')) || 1;
+        const pageSize = parseInt(url.searchParams.get('pageSize')) || 20;
+
+        try {
+          const result = await orchestrator.getSnapshotsPaginated(discussionId, page, pageSize);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
       // ===== @提及和回复 API =====
 
       // API: 获取讨论中的所有 @提及

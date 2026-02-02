@@ -26,6 +26,9 @@ const { SnapshotManager } = require('./version/snapshot.js');
 const { RestoreManager } = require('./version/restore.js');
 const { BranchManager } = require('./version/branch.js');
 const { RealtimeManager } = require('./realtime.js');
+const { GlobalSearchManager } = require('./search/global.js');
+const { DiscussionCacheManager } = require('./cache/lru.js');
+const { DiscussionMessagePager, SnapshotPager } = require('./pagination/loader.js');
 
 // 加载模板
 let templates = null;
@@ -229,6 +232,10 @@ class DiscussionOrchestrator {
     this.restoreManager = null; // 恢复管理器（延迟初始化）
     this.branchManager = null; // 分支管理器（延迟初始化）
     this.realtimeManager = null; // 实时管理器（延迟初始化）
+    this.searchManager = null; // 全局搜索管理器（延迟初始化）
+    this.cacheManager = null; // 缓存管理器（延迟初始化）
+    this.messagePager = null; // 消息分页管理器（延迟初始化）
+    this.snapshotPager = null; // 快照分页管理器（延迟初始化）
   }
 
   /**
@@ -252,7 +259,13 @@ class DiscussionOrchestrator {
       
       this.realtimeManager = new RealtimeManager(this);
       
-      console.log('[Orchestrator] Initialized successfully');
+      // 初始化 v2.5.0 新功能管理器
+      this.searchManager = new GlobalSearchManager(this);
+      this.cacheManager = new DiscussionCacheManager(50);
+      this.messagePager = new DiscussionMessagePager(this);
+      this.snapshotPager = new SnapshotPager(this);
+      
+      console.log('[Orchestrator] Initialized successfully (v2.5.0)');
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
       throw error;
@@ -277,6 +290,7 @@ class DiscussionOrchestrator {
     context.status = 'active';
     
     this.discussions.set(discussionId, context);
+    this.contexts.set(discussionId, context); // 同时添加到 contexts 映射
     
     // 保存讨论上下文
     await this.saveDiscussion(context);
@@ -2323,6 +2337,99 @@ class CollaborationManager {
 }
 
 /**
+ * v2.5.0 便利方法 - 全局搜索
+ */
+DiscussionOrchestrator.prototype.search = async function(query, options = {}) {
+  if (!this.searchManager) {
+    await this.initialize();
+  }
+  return this.searchManager.search(query, options);
+};
+
+DiscussionOrchestrator.prototype.getSearchHistory = function(limit = 20) {
+  if (!this.searchManager) return [];
+  return this.searchManager.getSearchHistory(limit);
+};
+
+DiscussionOrchestrator.prototype.getHotKeywords = function(limit = 10) {
+  if (!this.searchManager) return [];
+  return this.searchManager.getHotKeywords(limit);
+};
+
+DiscussionOrchestrator.prototype.getSearchSuggestions = function(query, limit = 5) {
+  if (!this.searchManager) return [];
+  return this.searchManager.getSearchSuggestions(query, limit);
+};
+
+DiscussionOrchestrator.prototype.getSearchStats = function() {
+  if (!this.searchManager) return null;
+  return this.searchManager.getSearchStats();
+};
+
+/**
+ * v2.5.0 便利方法 - 缓存管理
+ */
+DiscussionOrchestrator.prototype.getCacheStats = function() {
+  if (!this.cacheManager) return null;
+  return this.cacheManager.getStats();
+};
+
+DiscussionOrchestrator.prototype.clearCache = function() {
+  if (!this.cacheManager) return;
+  this.cacheManager.clearAll();
+};
+
+DiscussionOrchestrator.prototype.clearDiscussionCache = function(discussionId) {
+  if (!this.cacheManager) return;
+  this.cacheManager.clearDiscussionCache(discussionId);
+};
+
+/**
+ * v2.5.0 便利方法 - 分页加载
+ */
+DiscussionOrchestrator.prototype.getMessagesPaginated = async function(discussionId, page = 1, pageSize = 50) {
+  if (!this.messagePager) {
+    await this.initialize();
+  }
+  return this.messagePager.getMessages(discussionId, page, pageSize);
+};
+
+DiscussionOrchestrator.prototype.getMessagesByTimeRange = async function(discussionId, startTime, endTime, limit = 100) {
+  if (!this.messagePager) {
+    await this.initialize();
+  }
+  return this.messagePager.getMessagesByTimeRange(discussionId, startTime, endTime, limit);
+};
+
+DiscussionOrchestrator.prototype.getMessagesByRole = async function(discussionId, role, page = 1, pageSize = 50) {
+  if (!this.messagePager) {
+    await this.initialize();
+  }
+  return this.messagePager.getMessagesByRole(discussionId, role, page, pageSize);
+};
+
+DiscussionOrchestrator.prototype.getLatestMessages = async function(discussionId, count = 20) {
+  if (!this.messagePager) {
+    await this.initialize();
+  }
+  return this.messagePager.getLatestMessages(discussionId, count);
+};
+
+DiscussionOrchestrator.prototype.getMessageStats = async function(discussionId) {
+  if (!this.messagePager) {
+    await this.initialize();
+  }
+  return this.messagePager.getMessageStats(discussionId);
+};
+
+DiscussionOrchestrator.prototype.getSnapshotsPaginated = async function(discussionId, page = 1, pageSize = 20) {
+  if (!this.snapshotPager) {
+    await this.initialize();
+  }
+  return this.snapshotPager.getSnapshots(discussionId, page, pageSize);
+};
+
+/**
  * 导出
  */
 module.exports = {
@@ -2338,5 +2445,9 @@ module.exports = {
   RestoreManager,
   BranchManager,
   RealtimeManager,
+  GlobalSearchManager,
+  DiscussionCacheManager,
+  DiscussionMessagePager,
+  SnapshotPager,
   AGENT_ROLES
 };
