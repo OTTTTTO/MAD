@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MAD - Multi-Agent Discussion Viewer</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/shortcuts.css">
 </head>
 <body>
   <div class="container">
@@ -405,5 +406,18 @@
   </div>
 
   <script src="/app.js"></script>
+  <script src="/shortcuts.js"></script>
+  <script>
+    // 初始化键盘快捷键
+    document.addEventListener('DOMContentLoaded', () => {
+      window.shortcutManager = new KeyboardShortcutManager();
+      
+      // 监听快捷键事件
+      document.addEventListener('shortcut', (e) => {
+        console.log('[App] Shortcut triggered:', e.detail.action);
+        // 可以在这里添加特定的快捷键处理逻辑
+      });
+    });
+  </script>
 </body>
 </html>

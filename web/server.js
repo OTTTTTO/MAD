@@ -66,9 +66,27 @@ async function createServer() {
         return;
       }
 
+      // Shortcuts.css
+      if (url.pathname === '/shortcuts.css') {
+        const css = await fs.readFile(path.join(WEB_DIR, 'shortcuts.css'), 'utf8');
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+        res.writeHead(200);
+        res.end(css);
+        return;
+      }
+
       // JavaScript
       if (url.pathname === '/app.js') {
         const js = await fs.readFile(path.join(WEB_DIR, 'app.js'), 'utf8');
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.writeHead(200);
+        res.end(js);
+        return;
+      }
+
+      // Shortcuts.js
+      if (url.pathname === '/shortcuts.js') {
+        const js = await fs.readFile(path.join(__dirname, 'shortcuts.js'), 'utf8');
         res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
         res.writeHead(200);
         res.end(js);
