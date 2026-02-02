@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/mad",
-  "version": "3.6.2",
+  "version": "3.6.3",
   "description": "MAD (Multi-Agent Discussion) - 让多个专业 Agent 在虚拟讨论组中协同工作",
   "homepage": "https://github.com/OTTTTTO/mad",
   "main": "orchestrator.js",
