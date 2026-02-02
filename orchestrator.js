@@ -738,6 +738,41 @@ class DiscussionOrchestrator {
   }
 
   /**
+   * v2.5.4: 清空讨论消息（保留讨论结构）
+   */
+  async clearDiscussionMessages(discussionId) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    // 清空消息列表
+    context.messages = [];
+    context.rounds = 0;
+    context.conflicts = [];
+    context.updatedAt = Date.now();
+
+    // 重置所有 Agent 状态为 waiting
+    for (const [agentId, state] of context.agentStates) {
+      context.agentStates.set(agentId, {
+        status: 'waiting',
+        lastUpdate: Date.now()
+      });
+    }
+
+    // 保存更新后的上下文
+    await this.saveDiscussion(context);
+
+    console.log(`[Orchestrator] Cleared messages for discussion ${discussionId}`);
+
+    return {
+      discussionId,
+      messageCount: 0,
+      clearedAt: Date.now()
+    };
+  }
+
+  /**
    * 清理过期讨论
    */
   async cleanupOldDiscussions(maxAge = 86400000) { // 24小时

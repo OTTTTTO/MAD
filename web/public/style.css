@@ -527,6 +527,16 @@ body {
   font-size: 0.85rem;
 }
 
+/* v2.5.4: 危险按钮样式 */
+.btn-danger {
+  background: #dc3545;
+}
+
+.btn-danger:hover {
+  background: #c82333;
+  opacity: 1;
+}
+
 /* 底部状态栏 */
 .footer {
   background: var(--bg-card);

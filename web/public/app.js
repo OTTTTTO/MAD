@@ -46,7 +46,44 @@ function initApp() {
   document.getElementById('exportBtn').addEventListener('click', () => {
     exportDiscussion('markdown');
   });
-  
+
+  // v2.5.4: 清空按钮
+  document.getElementById('clearBtn').addEventListener('click', async () => {
+    if (!currentDiscussionId) {
+      alert('请先选择一个讨论组');
+      return;
+    }
+
+    // 确认对话框
+    if (!confirm('确定要清空此讨论的所有消息吗？\n\n⚠️ 此操作不可恢复！\n\n讨论结构将保留，但所有消息将被删除。')) {
+      return;
+    }
+
+    try {
+      updateStatus('正在清空讨论...');
+
+      const response = await fetch(`/api/discussion/${currentDiscussionId}/clear`, {
+        method: 'POST'
+      });
+
+      if (!response.ok) {
+        throw new Error('清空失败');
+      }
+
+      const result = await response.json();
+
+      // 重新加载消息
+      await loadMessages(currentDiscussionId);
+      await loadAgentStates(currentDiscussionId);
+
+      updateStatus(`✅ 讨论已清空`);
+    } catch (error) {
+      console.error('清空讨论失败:', error);
+      alert('清空失败：' + error.message);
+      updateStatus('清空失败');
+    }
+  });
+
   // 统计按钮
   document.getElementById('statsBtn').addEventListener('click', () => {
     toggleStats();
@@ -243,10 +280,11 @@ function selectDiscussion(discussionId) {
   
   // 加载消息
   loadMessages(discussionId);
-  
+
   // 显示按钮
   document.getElementById('exportBtn').style.display = 'block';
-  
+  document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
+
   // 添加标签页
   const discussionTitle = document.getElementById('currentDiscussionTitle').textContent;
   if (discussionTitle && discussionTitle !== '选择一个讨论组') {
@@ -289,6 +327,7 @@ async function loadMessages(discussionId) {
     
     // 显示按钮
     document.getElementById('exportBtn').style.display = 'block';
+    document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
     document.getElementById('statsBtn').style.display = 'block';
     document.getElementById('recommendBtn').style.display = 'block';
     document.getElementById('actionsBtn').style.display = 'block';

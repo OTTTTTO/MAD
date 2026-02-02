@@ -1048,6 +1048,21 @@ async function createServer() {
         return;
       }
 
+      // v2.5.4: API: 清空讨论消息
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/clear/) && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const result = await orchestrator.clearDiscussionMessages(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
       // API: 清理已结束的讨论
       if (url.pathname === '/api/history/clear-ended' && req.method === 'POST') {
         try {
