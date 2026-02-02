@@ -273,10 +273,62 @@ class DiscussionOrchestrator {
       this.historyManager = new DiscussionHistoryManager(this);
       await this.historyManager.initialize();
       
-      console.log('[Orchestrator] Initialized successfully (v2.5.3)');
+      // 加载已保存的讨论记录
+      await this.loadAllDiscussions();
+      
+      console.log(`[Orchestrator] Initialized successfully (v2.5.3) - Loaded ${this.discussions.size} discussions`);
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
       throw error;
+    }
+  }
+
+  /**
+   * 加载所有已保存的讨论
+   */
+  async loadAllDiscussions() {
+    const discussionsDir = path.join(this.dataDir, 'discussions');
+    
+    try {
+      const files = await fs.readdir(discussionsDir);
+      const discussionFiles = files.filter(f => f.endsWith('.json'));
+      
+      for (const file of discussionFiles) {
+        try {
+          const discussionId = file.replace('.json', '');
+          const filepath = path.join(discussionsDir, file);
+          const data = await fs.readFile(filepath, 'utf8');
+          const context = JSON.parse(data);
+          
+          // 恢复为 DiscussionContext 对象
+          const restoredContext = new DiscussionContext(
+            context.id,
+            context.topic,
+            context.participants.map(p => new AgentDefinition(p))
+          );
+          
+          // 恢复所有属性
+          Object.assign(restoredContext, {
+            status: context.status,
+            messages: context.messages || [],
+            createdAt: context.createdAt,
+            startedAt: context.startedAt,
+            endedAt: context.endedAt,
+            agentStates: new Map(Object.entries(context.agentStates || {})),
+            metadata: context.metadata || {}
+          });
+          
+          this.discussions.set(discussionId, restoredContext);
+        } catch (error) {
+          console.error(`[Orchestrator] Failed to load discussion ${file}:`, error.message);
+        }
+      }
+      
+      if (this.discussions.size > 0) {
+        console.log(`[Orchestrator] Loaded ${this.discussions.size} discussions from disk`);
+      }
+    } catch (error) {
+      console.error('[Orchestrator] Failed to load discussions:', error.message);
     }
   }
 
