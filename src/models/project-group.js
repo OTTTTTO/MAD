@@ -19,6 +19,7 @@ class ProjectGroup {
     this.participants = [];
     this.tags = [];  // 项目标签
     this.notes = ''; // 项目备注
+    this.priority = 'medium'; // 项目优先级: low, medium, high, critical
     this.stats = {
       totalMessages: 0,
       totalMarkers: 0,
@@ -107,6 +108,38 @@ class ProjectGroup {
 
     this.notes += separator + `--- ${timestamp} ---\n${text}`;
     this.stats.updatedAt = Date.now();
+  }
+
+  /**
+   * 设置优先级
+   */
+  setPriority(priority) {
+    const validPriorities = ['low', 'medium', 'high', 'critical'];
+    if (!validPriorities.includes(priority)) {
+      throw new Error(`无效的优先级: ${priority}，必须是 ${validPriorities.join(', ')}`);
+    }
+    this.priority = priority;
+    this.stats.updatedAt = Date.now();
+  }
+
+  /**
+   * 获取优先级
+   */
+  getPriority() {
+    return this.priority;
+  }
+
+  /**
+   * 获取优先级数值（用于排序）
+   */
+  getPriorityValue() {
+    const values = {
+      'low': 1,
+      'medium': 2,
+      'high': 3,
+      'critical': 4
+    };
+    return values[this.priority] || 2;
   }
 }
 

@@ -1,0 +1,58 @@
+{
+  "id": "group-1770048098831",
+  "name": "MAD v4.0 功能规划",
+  "category": "planning",
+  "messages": [],
+  "markers": [],
+  "participants": [
+    {
+      "id": "coordinator",
+      "name": "主协调员",
+      "role": "coordinator",
+      "emoji": "💡"
+    },
+    {
+      "id": "market",
+      "name": "市场调研",
+      "role": "market",
+      "emoji": "📊"
+    },
+    {
+      "id": "requirements",
+      "name": "需求分析",
+      "role": "requirements",
+      "emoji": "🎯"
+    },
+    {
+      "id": "technical",
+      "name": "技术专家",
+      "role": "technical",
+      "emoji": "🔧"
+    },
+    {
+      "id": "testing",
+      "name": "测试专家",
+      "role": "testing",
+      "emoji": "🧪"
+    },
+    {
+      "id": "docs",
+      "name": "文档专家",
+      "role": "docs",
+      "emoji": "📝"
+    }
+  ],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048098831,
+    "updatedAt": 1770048098831
+  },
+  "status": "active",
+  "description": "讨论 MAD v4.0 版本的功能规划和技术方向"
+}

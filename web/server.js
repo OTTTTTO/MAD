@@ -1572,6 +1572,90 @@ async function createServer() {
         }
       }
 
+      // ==================== v3.6.0 项目组 API ====================
+      
+      // API: 列出所有项目组
+      if (url.pathname === '/api/projects' || url.pathname === '/api/projects/list') {
+        try {
+          const ProjectManager = require('../src/core/project-manager.js');
+          const pm = new ProjectManager();
+          await pm.init();
+          const projects = await pm.listProjects();
+          res.setHeader('Content-Type', 'application/json');
+          res.writeHead(200);
+          res.end(JSON.stringify(projects));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+      
+      // API: 获取项目统计
+      if (url.pathname.startsWith('/api/projects/statistics')) {
+        try {
+          const ProjectManager = require('../src/core/project-manager.js');
+          const pm = new ProjectManager();
+          await pm.init();
+          const stats = await pm.getStatistics();
+          res.setHeader('Content-Type', 'application/json');
+          res.writeHead(200);
+          res.end(JSON.stringify(stats));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+      
+      // API: 搜索项目
+      if (url.pathname.startsWith('/api/projects/search')) {
+        try {
+          const ProjectManager = require('../src/core/project-manager.js');
+          const pm = new ProjectManager();
+          await pm.init();
+          const query = url.searchParams.get('q') || '';
+          const limit = parseInt(url.searchParams.get('limit')) || 10;
+          const results = await pm.searchProjects(query, { limit });
+          res.setHeader('Content-Type', 'application/json');
+          res.writeHead(200);
+          res.end(JSON.stringify(results));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+      
+      // API: 获取项目详情
+      if (url.pathname.match(/^\/api\/project\/[^/]+$/)) {
+        try {
+          const projectId = url.pathname.split('/')[3];
+          const ProjectManager = require('../src/core/project-manager.js');
+          const pm = new ProjectManager();
+          await pm.init();
+          const project = await pm.loadProject(projectId);
+          if (!project) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Project not found' }));
+            return;
+          }
+          res.setHeader('Content-Type', 'application/json');
+          res.writeHead(200);
+          res.end(JSON.stringify(project));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+      
+      // ==================== v3.6.0 项目组 API 结束 ====================
+
       // 404
       res.writeHead(404);
       res.end('Not Found');
