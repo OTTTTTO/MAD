@@ -511,6 +511,73 @@ class ProjectManager {
 
     return results;
   }
+
+  /**
+   * 归档项目组
+   */
+  async archiveProject(projectId) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    if (project.status === 'archived') {
+      throw new Error(`项目组已归档: ${projectId}`);
+    }
+
+    project.status = 'archived';
+    project.stats.updatedAt = Date.now();
+
+    await this.saveProject(project);
+
+    console.log(`[ProjectManager] 已归档项目组: ${projectId}`);
+
+    return project;
+  }
+
+  /**
+   * 取消归档项目组
+   */
+  async unarchiveProject(projectId) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    if (project.status !== 'archived') {
+      throw new Error(`项目组未归档: ${projectId}`);
+    }
+
+    project.status = 'active';
+    project.stats.updatedAt = Date.now();
+
+    await this.saveProject(project);
+
+    console.log(`[ProjectManager] 已取消归档项目组: ${projectId}`);
+
+    return project;
+  }
+
+  /**
+   * 获取已归档的项目组
+   */
+  async getArchivedProjects() {
+    return await this.listProjects({ status: 'archived' });
+  }
+
+  /**
+   * 获取活跃的项目组
+   */
+  async getActiveProjects() {
+    return await this.listProjects({ status: 'active' });
+  }
+
+  /**
+   * 获取已完成的项目组
+   */
+  async getCompletedProjects() {
+    return await this.listProjects({ status: 'completed' });
+  }
 }
 
 module.exports = ProjectManager;

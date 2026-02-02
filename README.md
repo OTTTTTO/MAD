@@ -165,6 +165,7 @@ npm start
 - 📋 查看所有项目组
 - 🔍 **项目搜索** - 按关键词搜索项目组（名称、描述、标记）
 - 🏷️ **项目标签** - 为项目添加标签，方便分类和筛选
+- 📦 **项目归档** - 归档已完成的项目，保持列表整洁
 - 📤 **项目导出** - 导出项目为 Markdown 或 JSON 格式
 - 📊 **全局统计** - 项目总数、分类统计、活跃项目数
 - 📍 标记时间轴
@@ -378,6 +379,31 @@ await v3.exportProject('group-xxx', 'markdown', '/custom/output/dir');
 **导出格式：**
 - **Markdown:** 包含项目信息、参与者、统计、标记、消息流
 - **JSON:** 完整的项目数据，可用于备份或迁移
+
+### 场景 9：归档项目（v3.6.0 新增）
+
+```javascript
+// 归档已完成的项目
+await v3.archiveProject('group-xxx');
+
+// 获取已归档的项目
+const archived = await v3.getArchivedProjects();
+
+// 获取活跃的项目
+const active = await v3.getActiveProjects();
+
+// 获取已完成的项目
+const completed = await v3.getCompletedProjects();
+
+// 取消归档（重新激活）
+await v3.unarchiveProject('group-xxx');
+```
+
+**归档用途：**
+- ✅ 清理活跃项目列表
+- ✅ 保留已完成的项目记录
+- ✅ 随时恢复已归档的项目
+- ✅ 按状态筛选项目
 
 ---
 

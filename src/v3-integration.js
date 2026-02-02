@@ -344,6 +344,41 @@ class V3Integration {
   async exportAllProjects(format = 'markdown', outputDir = null) {
     return await this.projectManager.exportAllProjects(format, outputDir);
   }
+
+  /**
+   * v3.6.0: 归档项目组
+   */
+  async archiveProject(projectId) {
+    return await this.projectManager.archiveProject(projectId);
+  }
+
+  /**
+   * v3.6.0: 取消归档项目组
+   */
+  async unarchiveProject(projectId) {
+    return await this.projectManager.unarchiveProject(projectId);
+  }
+
+  /**
+   * v3.6.0: 获取已归档的项目组
+   */
+  async getArchivedProjects() {
+    return await this.projectManager.getArchivedProjects();
+  }
+
+  /**
+   * v3.6.0: 获取活跃的项目组
+   */
+  async getActiveProjects() {
+    return await this.projectManager.getActiveProjects();
+  }
+
+  /**
+   * v3.6.0: 获取已完成的项目组
+   */
+  async getCompletedProjects() {
+    return await this.projectManager.getCompletedProjects();
+  }
 }
 
 module.exports = V3Integration;

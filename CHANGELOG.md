@@ -28,6 +28,12 @@
 - **Markdown 内容：** 项目信息、参与者、统计、标记、消息流
 - **JSON 内容：** 完整的项目数据，可用于备份或迁移
 
+#### 项目归档
+- **归档功能：** 将已完成的项目标记为已归档
+- **取消归档：** 恢复已归档的项目
+- **状态筛选：** 按状态（active, completed, archived）筛选项目
+- **保持整洁：** 归档的项目不会显示在活跃列表中
+
 #### 实现细节
 - 新增 `ProjectManager.searchProjects()` 方法
 - 新增 `ProjectManager.getStatistics()` 方法
@@ -47,6 +53,11 @@
 - 新增 `V3Integration.removeTagFromProject()` 接口
 - 新增 `V3Integration.exportProject()` 接口
 - 新增 `V3Integration.exportAllProjects()` 接口
+- 新增 `V3Integration.archiveProject()` 接口
+- 新增 `V3Integration.unarchiveProject()` 接口
+- 新增 `V3Integration.getArchivedProjects()` 接口
+- 新增 `V3Integration.getActiveProjects()` 接口
+- 新增 `V3Integration.getCompletedProjects()` 接口
 - ProjectGroup 新增 `tags` 属性和 `addTag()`, `removeTag()`, `hasTag()`, `getTags()` 方法
 
 #### 使用示例
@@ -71,6 +82,17 @@ const result = await v3.exportProject('group-xxx', 'markdown');
 
 // 批量导出
 const results = await v3.exportAllProjects('markdown');
+
+// 归档项目
+await v3.archiveProject('group-xxx');
+
+// 取消归档
+await v3.unarchiveProject('group-xxx');
+
+// 按状态筛选
+const archived = await v3.getArchivedProjects();
+const active = await v3.getActiveProjects();
+const completed = await v3.getCompletedProjects();
 ```
 
 ### 📚 文档更新
@@ -79,16 +101,18 @@ const results = await v3.exportAllProjects('markdown');
 - README 新增使用示例（场景 6：获取项目统计）
 - README 新增使用示例（场景 7：使用项目标签）
 - README 新增使用示例（场景 8：导出项目）
+- README 新增使用示例（场景 9：归档项目）
 - 说明搜索范围和权重
 - 说明统计指标含义
 - 说明标签用途和场景
 - 说明导出格式和内容
+- 说明归档用途和场景
 
 ### 📊 统计
 
 - **新增文件：** 0 个
 - **修改文件：** 2 个（project-manager.js, v3-integration.js）
-- **新增代码：** 约 200 行
+- **新增代码：** 约 280 行
 - **测试状态：** ✅ 通过
 
 ---
