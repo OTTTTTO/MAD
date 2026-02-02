@@ -573,6 +573,13 @@ tail -f /tmp/mad-web-server.log
 - 🐛 [提交 Issue](https://github.com/OTTTTTO/MAD/issues)
 - 💬 [Discord 社区](https://discord.com/invite/clawd)
 
+### 📚 使用文档
+
+- 📖 [用户使用指南](docs/user-guide.md) - 如何发起讨论、使用模板、CLI 命令
+- 🔧 [API 文档](docs/api.md) - 完整的 API 参考
+- 🎨 [自定义 Agent](docs/custom-agents.md) - 创建自己的 Agent 角色
+- 📋 [模板系统](docs/templates.md) - 使用和创建讨论模板
+
 ## 🧪 测试
 
 ```bash
