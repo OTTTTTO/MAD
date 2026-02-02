@@ -1,0 +1,172 @@
+/**
+ * MAD v3.0 - 项目组管理器
+ * 负责项目组的创建、加载、保存、查询
+ */
+
+const fs = require('fs').promises;
+const path = require('path');
+const { ProjectGroup } = require('../models/project-group.js');
+
+class ProjectManager {
+  constructor(dataDir) {
+    this.dataDir = dataDir || path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss', 'projects');
+    this.projects = new Map();
+  }
+
+  async init() {
+    await fs.mkdir(this.dataDir, { recursive: true });
+    await this.loadAllProjects();
+  }
+
+  /**
+   * 创建新项目组
+   */
+  async createProject(name, category, options = {}) {
+    const project = new ProjectGroup(
+      options.id || `group-${Date.now()}`,
+      name,
+      category
+    );
+
+    if (options.description) {
+      project.description = options.description;
+    }
+
+    if (options.participants) {
+      project.participants = options.participants;
+    }
+
+    this.projects.set(project.id, project);
+    await this.saveProject(project);
+
+    console.log(`[ProjectManager] 创建项目组: ${project.id} - ${name}`);
+    return project;
+  }
+
+  /**
+   * 获取项目组
+   */
+  async getProject(projectId) {
+    if (this.projects.has(projectId)) {
+      return this.projects.get(projectId);
+    }
+
+    // 尝试从磁盘加载
+    return await this.loadProject(projectId);
+  }
+
+  /**
+   * 获取所有项目组
+   */
+  async listProjects(filters = {}) {
+    let projects = Array.from(this.projects.values());
+
+    // 按类别过滤
+    if (filters.category) {
+      projects = projects.filter(p => p.category === filters.category);
+    }
+
+    // 按状态过滤
+    if (filters.status) {
+      projects = projects.filter(p => p.status === filters.status);
+    }
+
+    return projects;
+  }
+
+  /**
+   * 按类别分组
+   */
+  async getProjectsByCategory() {
+    const projects = await this.listProjects();
+    const grouped = {};
+
+    projects.forEach(project => {
+      if (!grouped[project.category]) {
+        grouped[project.category] = [];
+      }
+      grouped[project.category].push(project);
+    });
+
+    return grouped;
+  }
+
+  /**
+   * 保存项目组到磁盘
+   */
+  async saveProject(project) {
+    const projectDir = path.join(this.dataDir, project.id);
+    await fs.mkdir(projectDir, { recursive: true });
+
+    const filePath = path.join(projectDir, 'project.json');
+    await fs.writeFile(filePath, JSON.stringify(project, null, 2));
+  }
+
+  /**
+   * 从磁盘加载项目组
+   */
+  async loadProject(projectId) {
+    const filePath = path.join(this.dataDir, projectId, 'project.json');
+
+    try {
+      const data = await fs.readFile(filePath, 'utf8');
+      const project = JSON.parse(data);
+
+      // 转换为 ProjectGroup 实例
+      const projectGroup = new ProjectGroup(project.id, project.name, project.category);
+      Object.assign(projectGroup, project);
+
+      this.projects.set(projectId, projectGroup);
+      return projectGroup;
+    } catch (error) {
+      console.error(`[ProjectManager] 加载项目失败: ${projectId}`, error);
+      return null;
+    }
+  }
+
+  /**
+   * 加载所有项目组
+   */
+  async loadAllProjects() {
+    try {
+      const files = await fs.readdir(this.dataDir);
+      const projectDirs = files.filter(f => f.startsWith('group-'));
+
+      for (const dir of projectDirs) {
+        await this.loadProject(dir);
+      }
+
+      console.log(`[ProjectManager] 已加载 ${this.projects.size} 个项目组`);
+    } catch (error) {
+      console.error('[ProjectManager] 加载项目组失败:', error);
+    }
+  }
+
+  /**
+   * 更新项目组
+   */
+  async updateProject(projectId, updates) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    Object.assign(project, updates);
+    await this.saveProject(project);
+    return project;
+  }
+
+  /**
+   * 删除项目组
+   */
+  async deleteProject(projectId) {
+    this.projects.delete(projectId);
+
+    const projectDir = path.join(this.dataDir, projectId);
+    await fs.rm(projectDir, { recursive: true, force: true });
+
+    console.log(`[ProjectManager] 已删除项目组: ${projectId}`);
+  }
+}
+
+module.exports = ProjectManager;
