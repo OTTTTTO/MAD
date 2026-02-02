@@ -9,7 +9,7 @@
 const http = require('http');
 const fs = require('fs').promises;
 const path = require('path');
-const { DiscussionOrchestrator } = require('../orchestrator.js');
+const { DiscussionOrchestrator, TagManager, FavoritesManager } = require('../orchestrator.js');
 
 const PORT = 18790;
 const WEB_DIR = path.join(__dirname, 'public');
@@ -20,6 +20,9 @@ const WEB_DIR = path.join(__dirname, 'public');
 async function createServer() {
   const orchestrator = new DiscussionOrchestrator();
   await orchestrator.initialize();
+
+  const tagManager = new TagManager();
+  const favoritesManager = new FavoritesManager();
 
   const server = http.createServer(async (req, res) => {
     // CORS
@@ -616,6 +619,199 @@ async function createServer() {
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.writeHead(200);
         res.end(JSON.stringify(allAgents, null, 2));
+        return;
+      }
+
+      // ===== 标签系统 API =====
+
+      // API: 获取所有标签
+      if (url.pathname === '/api/tags' && req.method === 'GET') {
+        const tags = tagManager.getAllTags();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(tags, null, 2));
+        return;
+      }
+
+      // API: 创建标签
+      if (url.pathname === '/api/tags' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { name, color, icon } = JSON.parse(body);
+            const tag = await tagManager.createTag(name, color, icon);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(tag, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 更新标签
+      if (url.pathname.startsWith('/api/tags/') && req.method === 'PUT') {
+        const tagId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const updates = JSON.parse(body);
+            const tag = await tagManager.updateTag(tagId, updates);
+            if (!tag) {
+              res.writeHead(404);
+              res.end(JSON.stringify({ error: 'Tag not found' }));
+              return;
+            }
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(tag, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 删除标签
+      if (url.pathname.startsWith('/api/tags/') && req.method === 'DELETE') {
+        const tagId = url.pathname.split('/')[3];
+        const success = await tagManager.deleteTag(tagId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success }, null, 2));
+        return;
+      }
+
+      // API: 获取讨论的建议标签
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/suggest-tags') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const history = orchestrator.getDiscussionHistory(discussionId);
+        const content = history.messages.map(m => m.content).join(' ');
+        const suggestions = tagManager.suggestTags(content);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(suggestions, null, 2));
+        return;
+      }
+
+      // ===== 收藏夹 API =====
+
+      // API: 获取所有收藏夹
+      if (url.pathname === '/api/favorites' && req.method === 'GET') {
+        const favorites = favoritesManager.getAllFavorites();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(favorites, null, 2));
+        return;
+      }
+
+      // API: 创建收藏夹
+      if (url.pathname === '/api/favorites' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { name, icon, description } = JSON.parse(body);
+            const favorite = await favoritesManager.createFavorite(name, icon, description);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(favorite, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 更新收藏夹
+      if (url.pathname.startsWith('/api/favorites/') && req.method === 'PUT') {
+        const favId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const updates = JSON.parse(body);
+            const favorite = await favoritesManager.updateFavorite(favId, updates);
+            if (!favorite) {
+              res.writeHead(404);
+              res.end(JSON.stringify({ error: 'Favorite not found' }));
+              return;
+            }
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(favorite, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 删除收藏夹
+      if (url.pathname.startsWith('/api/favorites/') && req.method === 'DELETE') {
+        const favId = url.pathname.split('/')[3];
+        const success = await favoritesManager.deleteFavorite(favId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success }, null, 2));
+        return;
+      }
+
+      // API: 添加讨论到收藏夹
+      if (url.pathname.startsWith('/api/favorites/') && url.pathname.endsWith('/add') && req.method === 'POST') {
+        const favId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { discussionId } = JSON.parse(body);
+            const success = await favoritesManager.addDiscussionToFavorite(favId, discussionId);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify({ success }, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 从收藏夹移除讨论
+      if (url.pathname.startsWith('/api/favorites/') && url.pathname.endsWith('/remove') && req.method === 'POST') {
+        const favId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { discussionId } = JSON.parse(body);
+            const success = await favoritesManager.removeDiscussionFromFavorite(favId, discussionId);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify({ success }, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 检查讨论是否收藏
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/favorited') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const isFavorited = favoritesManager.isDiscussionFavorited(discussionId);
+        const favorites = favoritesManager.getDiscussionFavorites(discussionId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ isFavorited, favorites }, null, 2));
         return;
       }
       }

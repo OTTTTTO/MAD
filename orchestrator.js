@@ -1945,6 +1945,270 @@ class AgentStats {
 }
 
 /**
+ * 标签管理器
+ */
+class TagManager {
+  constructor() {
+    this.tagsPath = path.join(__dirname, 'tags', 'index.json');
+    this.tags = [];
+    this.loadTags();
+  }
+
+  /**
+   * 加载标签
+   */
+  async loadTags() {
+    try {
+      const data = await fs.readFile(this.tagsPath, 'utf8');
+      const json = JSON.parse(data);
+      this.tags = json.tags || [];
+    } catch (error) {
+      console.error('[TagManager] Failed to load tags:', error);
+      this.tags = [];
+    }
+  }
+
+  /**
+   * 保存标签
+   */
+  async saveTags() {
+    try {
+      const data = JSON.stringify({ tags: this.tags }, null, 2);
+      await fs.writeFile(this.tagsPath, data, 'utf8');
+    } catch (error) {
+      console.error('[TagManager] Failed to save tags:', error);
+    }
+  }
+
+  /**
+   * 获取所有标签
+   */
+  getAllTags() {
+    return this.tags;
+  }
+
+  /**
+   * 根据 ID 获取标签
+   */
+  getTagById(id) {
+    return this.tags.find(tag => tag.id === id);
+  }
+
+  /**
+   * 创建标签
+   */
+  async createTag(name, color, icon) {
+    const id = `tag-${Date.now()}`;
+    const tag = {
+      id,
+      name,
+      color: color || '#6b7280',
+      icon: icon || '🏷️',
+      usageCount: 0,
+      createdAt: new Date().toISOString()
+    };
+    this.tags.push(tag);
+    await this.saveTags();
+    return tag;
+  }
+
+  /**
+   * 更新标签
+   */
+  async updateTag(id, updates) {
+    const index = this.tags.findIndex(tag => tag.id === id);
+    if (index === -1) return null;
+
+    this.tags[index] = { ...this.tags[index], ...updates };
+    await this.saveTags();
+    return this.tags[index];
+  }
+
+  /**
+   * 删除标签
+   */
+  async deleteTag(id) {
+    const index = this.tags.findIndex(tag => tag.id === id);
+    if (index === -1) return false;
+
+    this.tags.splice(index, 1);
+    await this.saveTags();
+    return true;
+  }
+
+  /**
+   * 增加标签使用次数
+   */
+  async incrementUsage(id) {
+    const tag = this.getTagById(id);
+    if (tag) {
+      tag.usageCount++;
+      await this.saveTags();
+    }
+  }
+
+  /**
+   * 根据讨论内容建议标签
+   */
+  suggestTags(content) {
+    const suggestions = [];
+    const contentLower = content.toLowerCase();
+
+    this.tags.forEach(tag => {
+      const tagNameLower = tag.name.toLowerCase();
+      if (contentLower.includes(tagNameLower)) {
+        suggestions.push(tag);
+      }
+    });
+
+    return suggestions;
+  }
+}
+
+/**
+ * 收藏夹管理器
+ */
+class FavoritesManager {
+  constructor() {
+    this.favoritesPath = path.join(__dirname, 'favorites', 'index.json');
+    this.favorites = [];
+    this.loadFavorites();
+  }
+
+  /**
+   * 加载收藏夹
+   */
+  async loadFavorites() {
+    try {
+      const data = await fs.readFile(this.favoritesPath, 'utf8');
+      const json = JSON.parse(data);
+      this.favorites = json.favorites || [];
+    } catch (error) {
+      console.error('[FavoritesManager] Failed to load favorites:', error);
+      this.favorites = [];
+    }
+  }
+
+  /**
+   * 保存收藏夹
+   */
+  async saveFavorites() {
+    try {
+      const data = JSON.stringify({ favorites: this.favorites }, null, 2);
+      await fs.writeFile(this.favoritesPath, data, 'utf8');
+    } catch (error) {
+      console.error('[FavoritesManager] Failed to save favorites:', error);
+    }
+  }
+
+  /**
+   * 获取所有收藏夹
+   */
+  getAllFavorites() {
+    return this.favorites;
+  }
+
+  /**
+   * 根据 ID 获取收藏夹
+   */
+  getFavoriteById(id) {
+    return this.favorites.find(fav => fav.id === id);
+  }
+
+  /**
+   * 创建收藏夹
+   */
+  async createFavorite(name, icon, description) {
+    const id = `fav-${Date.now()}`;
+    const favorite = {
+      id,
+      name,
+      icon: icon || '⭐',
+      description: description || '',
+      discussions: [],
+      createdAt: new Date().toISOString()
+    };
+    this.favorites.push(favorite);
+    await this.saveFavorites();
+    return favorite;
+  }
+
+  /**
+   * 更新收藏夹
+   */
+  async updateFavorite(id, updates) {
+    const index = this.favorites.findIndex(fav => fav.id === id);
+    if (index === -1) return null;
+
+    this.favorites[index] = { ...this.favorites[index], ...updates };
+    await this.saveFavorites();
+    return this.favorites[index];
+  }
+
+  /**
+   * 删除收藏夹
+   */
+  async deleteFavorite(id) {
+    const index = this.favorites.findIndex(fav => fav.id === id);
+    if (index === -1) return false;
+
+    this.favorites.splice(index, 1);
+    await this.saveFavorites();
+    return true;
+  }
+
+  /**
+   * 添加讨论到收藏夹
+   */
+  async addDiscussionToFavorite(favoriteId, discussionId) {
+    const favorite = this.getFavoriteById(favoriteId);
+    if (!favorite) return false;
+
+    if (!favorite.discussions.includes(discussionId)) {
+      favorite.discussions.push(discussionId);
+      await this.saveFavorites();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * 从收藏夹移除讨论
+   */
+  async removeDiscussionFromFavorite(favoriteId, discussionId) {
+    const favorite = this.getFavoriteById(favoriteId);
+    if (!favorite) return false;
+
+    const index = favorite.discussions.indexOf(discussionId);
+    if (index > -1) {
+      favorite.discussions.splice(index, 1);
+      await this.saveFavorites();
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * 检查讨论是否在收藏夹中
+   */
+  isDiscussionFavorited(discussionId) {
+    for (const fav of this.favorites) {
+      if (fav.discussions.includes(discussionId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 获取讨论所在的所有收藏夹
+   */
+  getDiscussionFavorites(discussionId) {
+    return this.favorites.filter(fav => fav.discussions.includes(discussionId));
+  }
+}
+
+/**
  * 导出
  */
 module.exports = {
@@ -1953,5 +2217,7 @@ module.exports = {
   DiscussionContext,
   AgentDefinition,
   AgentStats,
+  TagManager,
+  FavoritesManager,
   AGENT_ROLES
 };

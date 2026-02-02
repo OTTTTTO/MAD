@@ -1,0 +1,44 @@
+{
+  "tags": [
+    {
+      "id": "tag-001",
+      "name": "重要",
+      "color": "#ef4444",
+      "icon": "⭐",
+      "usageCount": 0,
+      "createdAt": "2026-02-02T00:00:00.000Z"
+    },
+    {
+      "id": "tag-002",
+      "name": "技术讨论",
+      "color": "#3b82f6",
+      "icon": "💻",
+      "usageCount": 0,
+      "createdAt": "2026-02-02T00:00:00.000Z"
+    },
+    {
+      "id": "tag-003",
+      "name": "需求分析",
+      "color": "#10b981",
+      "icon": "📋",
+      "usageCount": 0,
+      "createdAt": "2026-02-02T00:00:00.000Z"
+    },
+    {
+      "id": "tag-004",
+      "name": "创意",
+      "color": "#f59e0b",
+      "icon": "💡",
+      "usageCount": 0,
+      "createdAt": "2026-02-02T00:00:00.000Z"
+    },
+    {
+      "id": "tag-005",
+      "name": "待跟进",
+      "color": "#8b5cf6",
+      "icon": "🔔",
+      "usageCount": 0,
+      "createdAt": "2026-02-02T00:00:00.000Z"
+    }
+  ]
+}

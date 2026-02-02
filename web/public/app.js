@@ -2239,3 +2239,527 @@ async function deleteAgent(agentId) {
     updateStatus('删除失败');
   }
 }
+
+// ===== 标签系统功能 =====
+
+/**
+ * 加载所有标签
+ */
+async function loadTags() {
+  try {
+    const response = await fetch('/api/tags');
+    const tags = await response.json();
+
+    // 更新标签过滤器
+    updateTagFilters(tags);
+
+    return tags;
+  } catch (error) {
+    console.error('加载标签失败:', error);
+    return [];
+  }
+}
+
+/**
+ * 更新标签过滤器
+ */
+function updateTagFilters(tags) {
+  const tagFilterList = document.getElementById('tagFilterList');
+  if (!tagFilterList) return;
+
+  tagFilterList.innerHTML = tags.map(tag => `
+    <label class="tag-filter-item">
+      <input type="checkbox" value="${tag.id}" data-tag-name="${tag.name}">
+      <span class="tag-badge" style="background: ${tag.color};">${tag.icon} ${tag.name}</span>
+    </label>
+  `).join('');
+
+  // 添加事件监听
+  tagFilterList.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', () => {
+      filterDiscussionsByTags();
+    });
+  });
+}
+
+/**
+ * 根据标签过滤讨论
+ */
+function filterDiscussionsByTags() {
+  const checkedTags = Array.from(document.querySelectorAll('#tagFilterList input[type="checkbox"]:checked'))
+    .map(cb => cb.value);
+
+  // 重新加载讨论列表，应用标签过滤
+  loadDiscussions(checkedTags);
+}
+
+/**
+ * 清除标签过滤
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  const clearTagFilters = document.getElementById('clearTagFilters');
+  if (clearTagFilters) {
+    clearTagFilters.addEventListener('click', () => {
+      document.querySelectorAll('#tagFilterList input[type="checkbox"]').forEach(cb => {
+        cb.checked = false;
+      });
+      filterDiscussionsByTags();
+    });
+  }
+
+  // 标签管理按钮
+  const tagsManageBtn = document.getElementById('tagsManageBtn');
+  if (tagsManageBtn) {
+    tagsManageBtn.addEventListener('click', () => {
+      openTagsManageModal();
+    });
+  }
+
+  // 收藏夹管理按钮
+  const favoritesManageBtn = document.getElementById('favoritesManageBtn');
+  if (favoritesManageBtn) {
+    favoritesManageBtn.addEventListener('click', () => {
+      openFavoritesManageModal();
+    });
+  }
+
+  // 标签按钮
+  const tagsBtn = document.getElementById('tagsBtn');
+  if (tagsBtn) {
+    tagsBtn.addEventListener('click', () => {
+      toggleTagsPanel();
+    });
+  }
+
+  // 收藏按钮
+  const favoriteBtn = document.getElementById('favoriteBtn');
+  if (favoriteBtn) {
+    favoriteBtn.addEventListener('click', () => {
+      toggleFavoritesPanel();
+    });
+  }
+});
+
+/**
+ * 打开标签管理对话框
+ */
+async function openTagsManageModal() {
+  const modal = document.getElementById('tagsManageModal');
+  modal.style.display = 'flex';
+
+  await loadTagList();
+}
+
+/**
+ * 关闭标签管理对话框
+ */
+function closeTagsManageModal() {
+  document.getElementById('tagsManageModal').style.display = 'none';
+}
+
+/**
+ * 加载标签列表
+ */
+async function loadTagList() {
+  const tagList = document.getElementById('tagList');
+  tagList.innerHTML = '<div class="loading">加载中...</div>';
+
+  try {
+    const response = await fetch('/api/tags');
+    const tags = await response.json();
+
+    tagList.innerHTML = tags.length === 0
+      ? '<div class="empty-state">暂无标签</div>'
+      : tags.map(tag => `
+        <div class="tag-item">
+          <div class="tag-info">
+            <span class="tag-badge" style="background: ${tag.color};">${tag.icon} ${tag.name}</span>
+            <span class="tag-usage">使用 ${tag.usageCount} 次</span>
+          </div>
+          <div class="tag-actions">
+            <button class="btn btn-xs" onclick="deleteTag('${tag.id}')">🗑️ 删除</button>
+          </div>
+        </div>
+      `).join('');
+  } catch (error) {
+    console.error('加载标签列表失败:', error);
+    tagList.innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 打开创建标签对话框
+ */
+function openCreateTagModal() {
+  document.getElementById('createTagModal').style.display = 'flex';
+}
+
+/**
+ * 关闭创建标签对话框
+ */
+function closeCreateTagModal() {
+  document.getElementById('createTagModal').style.display = 'none';
+  document.getElementById('createTagForm').reset();
+}
+
+/**
+ * 设置标签颜色
+ */
+function setTagColor(color) {
+  document.getElementById('tagColor').value = color;
+}
+
+/**
+ * 提交创建标签
+ */
+async function submitCreateTag(event) {
+  event.preventDefault();
+
+  const name = document.getElementById('tagName').value.trim();
+  const color = document.getElementById('tagColor').value;
+  const icon = document.getElementById('tagIcon').value.trim() || '🏷️';
+
+  try {
+    updateStatus('创建标签...');
+
+    const response = await fetch('/api/tags', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, color, icon })
+    });
+
+    const tag = await response.json();
+
+    if (response.ok) {
+      updateStatus(`标签 "${tag.name}" 创建成功`);
+      closeCreateTagModal();
+      await loadTagList();
+      await loadTags(); // 更新过滤器
+    } else {
+      updateStatus(`创建失败：${tag.error}`);
+    }
+  } catch (error) {
+    console.error('创建标签失败:', error);
+    updateStatus('创建失败');
+  }
+}
+
+/**
+ * 删除标签
+ */
+async function deleteTag(tagId) {
+  if (!confirm('确定要删除这个标签吗？')) return;
+
+  try {
+    updateStatus('删除标签...');
+
+    const response = await fetch(`/api/tags/${tagId}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      updateStatus('标签删除成功');
+      await loadTagList();
+      await loadTags(); // 更新过滤器
+    } else {
+      updateStatus(`删除失败：${result.error}`);
+    }
+  } catch (error) {
+    console.error('删除标签失败:', error);
+    updateStatus('删除失败');
+  }
+}
+
+/**
+ * 切换标签面板
+ */
+async function toggleTagsPanel() {
+  const panel = document.getElementById('tagsPanel');
+  const isVisible = panel.style.display !== 'none';
+
+  if (isVisible) {
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'block';
+    await loadTagsForDiscussion();
+  }
+}
+
+/**
+ * 为当前讨论加载标签
+ */
+async function loadTagsForDiscussion() {
+  if (!currentDiscussionId) return;
+
+  const tagsContent = document.getElementById('tagsContent');
+  tagsContent.innerHTML = '<div class="loading">加载中...</div>';
+
+  try {
+    // 获取建议标签
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/suggest-tags`);
+    const suggestions = await response.json();
+
+    // 获取所有标签
+    const allTagsResponse = await fetch('/api/tags');
+    const allTags = await allTagsResponse.json();
+
+    tagsContent.innerHTML = `
+      <div class="tags-suggestions">
+        <h4>💡 建议标签</h4>
+        <div class="suggested-tags">
+          ${suggestions.length === 0
+            ? '<p class="text-muted">暂无建议标签</p>'
+            : suggestions.map(tag => `
+              <span class="tag-badge" style="background: ${tag.color};">${tag.icon} ${tag.name}</span>
+            `).join('')}
+        </div>
+      </div>
+      <div class="tags-all">
+        <h4>🏷️ 所有标签</h4>
+        <div class="all-tags">
+          ${allTags.map(tag => `
+            <span class="tag-badge clickable" style="background: ${tag.color};" onclick="applyTagToDiscussion('${tag.id}')">${tag.icon} ${tag.name}</span>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('加载标签失败:', error);
+    tagsContent.innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 应用标签到讨论（简化版：仅提示）
+ */
+function applyTagToDiscussion(tagId) {
+  alert('标签应用功能开发中...\n\n提示：您可以通过编辑讨论元数据来添加标签。');
+}
+
+// ===== 收藏夹功能 =====
+
+/**
+ * 打开收藏夹管理对话框
+ */
+async function openFavoritesManageModal() {
+  const modal = document.getElementById('favoritesManageModal');
+  modal.style.display = 'flex';
+
+  await loadFavoriteList();
+}
+
+/**
+ * 关闭收藏夹管理对话框
+ */
+function closeFavoritesManageModal() {
+  document.getElementById('favoritesManageModal').style.display = 'none';
+}
+
+/**
+ * 加载收藏夹列表
+ */
+async function loadFavoriteList() {
+  const favoriteList = document.getElementById('favoriteList');
+  favoriteList.innerHTML = '<div class="loading">加载中...</div>';
+
+  try {
+    const response = await fetch('/api/favorites');
+    const favorites = await response.json();
+
+    favoriteList.innerHTML = favorites.length === 0
+      ? '<div class="empty-state">暂无收藏夹</div>'
+      : favorites.map(fav => `
+        <div class="favorite-item">
+          <div class="favorite-info">
+            <span class="favorite-icon">${fav.icon}</span>
+            <div>
+              <div class="favorite-name">${fav.name}</div>
+              <div class="favorite-description">${fav.description || '无描述'}</div>
+              <div class="favorite-count">${fav.discussions.length} 个讨论</div>
+            </div>
+          </div>
+          <div class="favorite-actions">
+            <button class="btn btn-xs" onclick="viewFavorite('${fav.id}')">👁️ 查看</button>
+            <button class="btn btn-xs" onclick="deleteFavorite('${fav.id}')">🗑️ 删除</button>
+          </div>
+        </div>
+      `).join('');
+  } catch (error) {
+    console.error('加载收藏夹列表失败:', error);
+    favoriteList.innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 打开创建收藏夹对话框
+ */
+function openCreateFavoriteModal() {
+  document.getElementById('createFavoriteModal').style.display = 'flex';
+}
+
+/**
+ * 关闭创建收藏夹对话框
+ */
+function closeCreateFavoriteModal() {
+  document.getElementById('createFavoriteModal').style.display = 'none';
+  document.getElementById('createFavoriteForm').reset();
+}
+
+/**
+ * 提交创建收藏夹
+ */
+async function submitCreateFavorite(event) {
+  event.preventDefault();
+
+  const name = document.getElementById('favoriteName').value.trim();
+  const icon = document.getElementById('favoriteIcon').value.trim() || '⭐';
+  const description = document.getElementById('favoriteDescription').value.trim();
+
+  try {
+    updateStatus('创建收藏夹...');
+
+    const response = await fetch('/api/favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, icon, description })
+    });
+
+    const favorite = await response.json();
+
+    if (response.ok) {
+      updateStatus(`收藏夹 "${favorite.name}" 创建成功`);
+      closeCreateFavoriteModal();
+      await loadFavoriteList();
+    } else {
+      updateStatus(`创建失败：${favorite.error}`);
+    }
+  } catch (error) {
+    console.error('创建收藏夹失败:', error);
+    updateStatus('创建失败');
+  }
+}
+
+/**
+ * 删除收藏夹
+ */
+async function deleteFavorite(favoriteId) {
+  if (!confirm('确定要删除这个收藏夹吗？')) return;
+
+  try {
+    updateStatus('删除收藏夹...');
+
+    const response = await fetch(`/api/favorites/${favoriteId}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      updateStatus('收藏夹删除成功');
+      await loadFavoriteList();
+    } else {
+      updateStatus(`删除失败：${result.error}`);
+    }
+  } catch (error) {
+    console.error('删除收藏夹失败:', error);
+    updateStatus('删除失败');
+  }
+}
+
+/**
+ * 查看收藏夹
+ */
+function viewFavorite(favoriteId) {
+  alert('查看收藏夹功能开发中...\n\n收藏夹 ID: ' + favoriteId);
+}
+
+/**
+ * 切换收藏面板
+ */
+async function toggleFavoritesPanel() {
+  const panel = document.getElementById('favoritesPanel');
+  const isVisible = panel.style.display !== 'none';
+
+  if (isVisible) {
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'block';
+    await loadFavoritesForDiscussion();
+  }
+}
+
+/**
+ * 为当前讨论加载收藏夹
+ */
+async function loadFavoritesForDiscussion() {
+  if (!currentDiscussionId) return;
+
+  const favoritesContent = document.getElementById('favoritesContent');
+  favoritesContent.innerHTML = '<div class="loading">加载中...</div>';
+
+  try {
+    // 获取收藏状态
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/favorited`);
+    const { isFavorited, favorites } = await response.json();
+
+    // 获取所有收藏夹
+    const allFavoritesResponse = await fetch('/api/favorites');
+    const allFavorites = await allFavoritesResponse.json();
+
+    favoritesContent.innerHTML = `
+      <div class="favorites-status">
+        <h4>${isFavorited ? '⭐ 已收藏' : '☆ 未收藏'}</h4>
+        ${isFavorited && favorites.length > 0 ? `
+          <div class="favorited-in">
+            <p>收藏在：</p>
+            ${favorites.map(fav => `
+              <span class="favorite-badge">${fav.icon} ${fav.name}</span>
+            `).join('')}
+          </div>
+        ` : ''}
+      </div>
+      <div class="favorites-add">
+        <h4>➕ 添加到收藏夹</h4>
+        <div class="all-favorites">
+          ${allFavorites.map(fav => `
+            <button class="btn btn-sm" onclick="addToFavorite('${fav.id}')">${fav.icon} ${fav.name}</button>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  } catch (error) {
+    console.error('加载收藏夹失败:', error);
+    favoritesContent.innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 添加讨论到收藏夹
+ */
+async function addToFavorite(favoriteId) {
+  if (!currentDiscussionId) return;
+
+  try {
+    updateStatus('添加到收藏夹...');
+
+    const response = await fetch(`/api/favorites/${favoriteId}/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ discussionId: currentDiscussionId })
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      updateStatus('已添加到收藏夹');
+      await loadFavoritesForDiscussion();
+    } else {
+      updateStatus(`添加失败：${result.error || '已在收藏夹中'}`);
+    }
+  } catch (error) {
+    console.error('添加到收藏夹失败:', error);
+    updateStatus('添加失败');
+  }
+}

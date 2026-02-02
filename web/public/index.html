@@ -36,9 +36,22 @@
             <label><input type="checkbox" id="filterActive" checked> 进行中</label>
             <label><input type="checkbox" id="filterEnded" checked> 已结束</label>
           </div>
+          <div class="tag-filters" id="tagFilters">
+            <div class="tag-filter-header">
+              <span>🏷️ 标签过滤</span>
+              <button class="btn btn-xs" id="clearTagFilters">清除</button>
+            </div>
+            <div class="tag-filter-list" id="tagFilterList">
+              <!-- 标签过滤器将动态加载 -->
+            </div>
+          </div>
           <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
             <button id="newDiscussionBtn" class="btn btn-sm" style="flex: 1;">➕ 新建</button>
             <button id="marketBtn" class="btn btn-sm" style="flex: 1;">🏪 市场</button>
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button id="tagsManageBtn" class="btn btn-sm" style="flex: 1;">🏷️ 标签管理</button>
+            <button id="favoritesManageBtn" class="btn btn-sm" style="flex: 1;">⭐ 收藏夹</button>
           </div>
         </div>
         
@@ -62,6 +75,8 @@
             <button id="recommendBtn" class="btn btn-sm" style="display: none;">🤖 推荐</button>
             <button id="actionsBtn" class="btn btn-sm" style="display: none;">✅ 待办</button>
             <button id="similarBtn" class="btn btn-sm" style="display: none;">🔗 相似</button>
+            <button id="tagsBtn" class="btn btn-sm" style="display: none;">🏷️ 标签</button>
+            <button id="favoriteBtn" class="btn btn-sm" style="display: none;">⭐ 收藏</button>
             <button id="pinBtn" class="btn btn-sm" style="display: none;">📌 固定</button>
             <button id="exportBtn" class="btn btn-sm" style="display: none;">📥 导出</button>
           </div>
@@ -89,6 +104,28 @@
             <button class="btn btn-sm" onclick="toggleSimilarPanel()">✕</button>
           </div>
           <div class="similar-content" id="similarContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 标签面板 -->
+        <div id="tagsPanel" class="tags-panel" style="display: none;">
+          <div class="tags-header">
+            <h3>🏷️ 讨论标签</h3>
+            <button class="btn btn-sm" onclick="toggleTagsPanel()">✕</button>
+          </div>
+          <div class="tags-content" id="tagsContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 收藏面板 -->
+        <div id="favoritesPanel" class="favorites-panel" style="display: none;">
+          <div class="favorites-header">
+            <h3>⭐ 收藏夹</h3>
+            <button class="btn btn-sm" onclick="toggleFavoritesPanel()">✕</button>
+          </div>
+          <div class="favorites-content" id="favoritesContent">
             <div class="loading">加载中...</div>
           </div>
         </div>
@@ -214,6 +251,116 @@
           </div>
           <div class="form-actions">
             <button type="button" class="btn" onclick="closeCreateAgentModal()">取消</button>
+            <button type="submit" class="btn btn-primary">创建</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标签管理对话框 -->
+  <div id="tagsManageModal" class="modal" style="display: none;">
+    <div class="modal-content tags-manage-modal">
+      <div class="modal-header">
+        <h2>🏷️ 标签管理</h2>
+        <button class="modal-close" onclick="closeTagsManageModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="tag-manage-actions">
+          <button class="btn btn-primary" onclick="openCreateTagModal()">➕ 创建标签</button>
+        </div>
+        <div class="tag-list" id="tagList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeTagsManageModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建标签对话框 -->
+  <div id="createTagModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ 创建标签</h2>
+        <button class="modal-close" onclick="closeCreateTagModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createTagForm" onsubmit="submitCreateTag(event)">
+          <div class="form-group">
+            <label>标签名称 *</label>
+            <input type="text" id="tagName" required placeholder="例如：重要讨论" />
+          </div>
+          <div class="form-group">
+            <label>标签颜色</label>
+            <input type="color" id="tagColor" value="#6b7280" />
+            <div class="color-presets">
+              <button type="button" class="color-preset" style="background: #ef4444;" onclick="setTagColor('#ef4444')"></button>
+              <button type="button" class="color-preset" style="background: #3b82f6;" onclick="setTagColor('#3b82f6')"></button>
+              <button type="button" class="color-preset" style="background: #10b981;" onclick="setTagColor('#10b981')"></button>
+              <button type="button" class="color-preset" style="background: #f59e0b;" onclick="setTagColor('#f59e0b')"></button>
+              <button type="button" class="color-preset" style="background: #8b5cf6;" onclick="setTagColor('#8b5cf6')"></button>
+              <button type="button" class="color-preset" style="background: #6b7280;" onclick="setTagColor('#6b7280')"></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Emoji 图标</label>
+            <input type="text" id="tagIcon" placeholder="例如：⭐" maxlength="2" />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCreateTagModal()">取消</button>
+            <button type="submit" class="btn btn-primary">创建</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收藏夹管理对话框 -->
+  <div id="favoritesManageModal" class="modal" style="display: none;">
+    <div class="modal-content favorites-manage-modal">
+      <div class="modal-header">
+        <h2>⭐ 收藏夹管理</h2>
+        <button class="modal-close" onclick="closeFavoritesManageModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="favorite-manage-actions">
+          <button class="btn btn-primary" onclick="openCreateFavoriteModal()">➕ 创建收藏夹</button>
+        </div>
+        <div class="favorite-list" id="favoriteList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeFavoritesManageModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建收藏夹对话框 -->
+  <div id="createFavoriteModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ 创建收藏夹</h2>
+        <button class="modal-close" onclick="closeCreateFavoriteModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createFavoriteForm" onsubmit="submitCreateFavorite(event)">
+          <div class="form-group">
+            <label>收藏夹名称 *</label>
+            <input type="text" id="favoriteName" required placeholder="例如：重要讨论" />
+          </div>
+          <div class="form-group">
+            <label>Emoji 图标</label>
+            <input type="text" id="favoriteIcon" placeholder="例如：⭐" maxlength="2" />
+          </div>
+          <div class="form-group">
+            <label>描述</label>
+            <textarea id="favoriteDescription" rows="3" placeholder="描述这个收藏夹的用途..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCreateFavoriteModal()">取消</button>
             <button type="submit" class="btn btn-primary">创建</button>
           </div>
         </form>
