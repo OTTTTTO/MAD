@@ -26,13 +26,22 @@ document.addEventListener('DOMContentLoaded', () => {
 function initApp() {
   // 加载讨论列表
   loadDiscussions();
-  
+
   // 加载 Agent 统计
   loadAgentStats();
-  
+
   // 加载高亮数据
   loadHighlights();
-  
+
+  // 移动端菜单按钮
+  const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+  if (mobileMenuBtn) {
+    mobileMenuBtn.addEventListener('click', toggleSidebar);
+  }
+
+  // 创建遮罩层
+  createSidebarOverlay();
+
   // 刷新按钮
   document.getElementById('refreshBtn').addEventListener('click', () => {
     loadDiscussions();
@@ -270,20 +279,25 @@ async function loadDiscussions() {
  */
 function selectDiscussion(discussionId) {
   currentDiscussionId = discussionId;
-  
+
   // 更新 UI
   document.querySelectorAll('.discussion-item').forEach(item => {
     item.classList.remove('active');
   });
   const activeItem = document.querySelector(`[data-id="${discussionId}"]`);
   if (activeItem) activeItem.classList.add('active');
-  
+
   // 加载消息
   loadMessages(discussionId);
 
   // 显示按钮
   document.getElementById('exportBtn').style.display = 'block';
   document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
+
+  // 移动端：选择讨论后自动关闭侧边栏
+  if (window.innerWidth <= 768) {
+    closeSidebar();
+  }
 
   // 添加标签页
   const discussionTitle = document.getElementById('currentDiscussionTitle').textContent;
@@ -1696,6 +1710,49 @@ function initKeyboard() {
 
 // 页面卸载时停止刷新
 window.addEventListener('beforeunload', stopAutoRefresh);
+
+// ==================== 移动端侧边栏功能 ====================
+
+/**
+ * 创建侧边栏遮罩层
+ */
+function createSidebarOverlay() {
+  let overlay = document.querySelector('.sidebar-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.className = 'sidebar-overlay';
+    document.body.appendChild(overlay);
+
+    // 点击遮罩层关闭侧边栏
+    overlay.addEventListener('click', closeSidebar);
+  }
+}
+
+/**
+ * 切换侧边栏显示/隐藏
+ */
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+
+  if (sidebar && overlay) {
+    sidebar.classList.toggle('visible');
+    overlay.classList.toggle('visible');
+  }
+}
+
+/**
+ * 关闭侧边栏
+ */
+function closeSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.querySelector('.sidebar-overlay');
+
+  if (sidebar && overlay) {
+    sidebar.classList.remove('visible');
+    overlay.classList.remove('visible');
+  }
+}
 
 // ==================== 高亮和标注功能 ====================
 

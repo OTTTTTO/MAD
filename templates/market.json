@@ -290,8 +290,8 @@
       "version": "1.0.0",
       "createdAt": "2026-02-02",
       "downloads": 0,
-      "rating": 4.6,
-      "ratingCount": 5,
+      "rating": 5,
+      "ratingCount": 3,
       "icon": "💡",
       "config": {
         "topic": "新功能头脑风暴：{product}",
@@ -303,44 +303,117 @@
         "maxRounds": 8,
         "initialPrompt": "请大家自由发挥，提出创新的功能创意"
       },
-      "comments": []
+      "comments": [
+        {
+          "user": "TestUser",
+          "rating": 5,
+          "comment": "测试评分",
+          "date": "2026-02-02T05:10:51.796Z"
+        },
+        {
+          "user": "TestUser",
+          "rating": 5,
+          "comment": "测试评分",
+          "date": "2026-02-02T05:11:01.607Z"
+        },
+        {
+          "user": "TestUser",
+          "rating": 5,
+          "comment": "测试评分",
+          "date": "2026-02-02T05:11:29.463Z"
+        }
+      ],
+      "source": "market"
     }
   ],
   "categories": [
     {
-      "id": "product",
-      "name": "产品",
-      "icon": "📦",
-      "count": 4
+      "id": "产品",
+      "count": 3,
+      "name": "产品"
     },
     {
-      "id": "tech",
-      "name": "技术",
-      "icon": "💻",
-      "count": 3
+      "id": "技术",
+      "count": 4,
+      "name": "技术"
     },
     {
-      "id": "market",
-      "name": "市场",
-      "icon": "📈",
-      "count": 2
+      "id": "市场",
+      "count": 2,
+      "name": "市场"
     },
     {
-      "id": "management",
-      "name": "管理",
-      "icon": "👔",
-      "count": 1
+      "id": "管理",
+      "count": 1,
+      "name": "管理"
     }
   ],
   "stats": {
     "totalTemplates": 10,
+    "marketTemplates": 10,
+    "customTemplates": 0,
+    "userTemplates": 0,
     "totalDownloads": 2,
-    "averageRating": 4.55,
+    "averageRating": 4.59,
     "topRated": [
-      "market-007",
-      "market-002",
-      "market-006"
+      {
+        "id": "market-010",
+        "name": "新功能头脑风暴",
+        "rating": 5
+      },
+      {
+        "id": "market-007",
+        "name": "API 设计评审",
+        "rating": 4.9
+      },
+      {
+        "id": "market-002",
+        "name": "技术选型讨论",
+        "rating": 4.8
+      },
+      {
+        "id": "market-006",
+        "name": "团队协作优化",
+        "rating": 4.7
+      },
+      {
+        "id": "market-004",
+        "name": "Bug 根因分析",
+        "rating": 4.6
+      }
     ],
-    "mostDownloaded": []
+    "mostDownloaded": [
+      {
+        "id": "market-007",
+        "name": "API 设计评审",
+        "downloads": 2
+      },
+      {
+        "id": "market-001",
+        "name": "产品发布评审",
+        "downloads": 0
+      },
+      {
+        "id": "market-002",
+        "name": "技术选型讨论",
+        "downloads": 0
+      },
+      {
+        "id": "market-003",
+        "name": "用户反馈分析",
+        "downloads": 0
+      },
+      {
+        "id": "market-004",
+        "name": "Bug 根因分析",
+        "downloads": 0
+      }
+    ],
+    "byCategory": {
+      "技术": 4,
+      "产品": 3,
+      "市场": 2,
+      "管理": 1
+    }
   }
 }

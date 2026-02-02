@@ -59,9 +59,30 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .header-content h1 {
   font-size: 1.8rem;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0;
 }
 
 .header-content .subtitle {
@@ -562,44 +583,119 @@ body {
   color: var(--text-secondary);
 }
 
+/* 移动端菜单按钮 */
+.mobile-only {
+  display: none;
+}
+
+/* 遮罩层 */
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+.sidebar-overlay.visible {
+  display: block;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .header-content h1 {
     font-size: 1.3rem;
   }
-  
+
   .tagline {
     display: none;
   }
-  
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .mobile-only {
+    display: inline-block !important;
+  }
+
   .sidebar {
     position: fixed;
     left: 0;
     top: 0;
     height: 100vh;
+    width: 85%;
+    max-width: 320px;
     z-index: 1000;
     transform: translateX(-100%);
     transition: transform 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.5);
   }
-  
+
   .sidebar.visible {
     transform: translateX(0);
   }
-  
+
+  /* 遮罩层 */
+  .sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    display: none;
+  }
+
+  .sidebar-overlay.visible {
+    display: block;
+  }
+
   .message-area {
     width: 100%;
   }
-  
+
   .message-container {
     padding: 1rem;
   }
-  
+
   .message {
     padding: 1rem;
   }
-  
+
   .agent-level {
     display: none;
+  }
+
+  /* 移动端头部按钮调整 */
+  .header-actions {
+    gap: 0.5rem;
+  }
+
+  .header-actions .btn {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.85rem;
   }
 }
 

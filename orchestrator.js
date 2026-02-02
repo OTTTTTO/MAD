@@ -31,6 +31,15 @@ const { DiscussionCacheManager } = require('./cache/lru.js');
 const { DiscussionMessagePager, SnapshotPager } = require('./pagination/loader.js');
 const { DiscussionHistoryManager } = require('./history.js');
 
+// v2.6.0 新功能
+const { QualityScorer, RealtimeFeedback, ScoreVisualizer } = require('./quality-scoring.js');
+const { AgentPerformanceAnalyzer } = require('./agent-performance.js');
+const { exportToMarkdown } = require('./exporters/markdown.js');
+const { exportToJSON } = require('./exporters/json.js');
+const { batchExport, exportAll, exportSummaryReport } = require('./exporters/batch.js');
+const { TemplateMarket } = require('./templates/market-manager.js');
+const { DiscussionSuggestionSystem } = require('./suggestions.js');
+
 // 加载模板
 let templates = null;
 
@@ -240,6 +249,14 @@ class DiscussionOrchestrator {
     this.messagePager = null; // 消息分页管理器（延迟初始化）
     this.snapshotPager = null; // 快照分页管理器（延迟初始化）
     this.historyManager = null; // 历史管理器（延迟初始化）
+    
+    // v2.6.0 新功能管理器（延迟初始化）
+    this.qualityScorer = null; // 质量评分系统
+    this.realtimeFeedback = null; // 实时评分反馈
+    this.scoreVisualizer = null; // 评分可视化
+    this.agentPerformanceAnalyzer = null; // Agent 性能分析
+    this.templateMarket = null; // 模板市场
+    this.suggestionSystem = null; // 讨论建议系统
   }
 
   /**
@@ -273,10 +290,19 @@ class DiscussionOrchestrator {
       this.historyManager = new DiscussionHistoryManager(this);
       await this.historyManager.initialize();
       
+      // 初始化 v2.6.0 新功能
+      this.qualityScorer = new QualityScorer(this);
+      this.realtimeFeedback = new RealtimeFeedback(this.qualityScorer);
+      this.scoreVisualizer = new ScoreVisualizer();
+      this.agentPerformanceAnalyzer = new AgentPerformanceAnalyzer(this);
+      this.templateMarket = new TemplateMarket(this);
+      await this.templateMarket.initialize();
+      this.suggestionSystem = new DiscussionSuggestionSystem(this);
+      
       // 加载已保存的讨论记录
       await this.loadAllDiscussions();
       
-      console.log(`[Orchestrator] Initialized successfully (v2.5.3) - Loaded ${this.discussions.size} discussions`);
+      console.log(`[Orchestrator] Initialized successfully (v2.6.0) - Loaded ${this.discussions.size} discussions`);
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
       throw error;
@@ -339,8 +365,18 @@ class DiscussionOrchestrator {
     const discussionId = `disc-${Date.now()}`;
     
     // 选择参与角色
-    const selectedRoles = options.participants || 
-      this.selectParticipantsForTopic(topic);
+    let selectedRoles;
+    if (options.participants && Array.isArray(options.participants)) {
+      // 如果提供了参与者 ID 列表，转换为 AGENT_ROLES 对象
+      selectedRoles = options.participants.map(id => {
+        if (typeof id === 'string') {
+          return AGENT_ROLES[id] || AGENT_ROLES.coordinator;
+        }
+        return id;
+      });
+    } else {
+      selectedRoles = this.selectParticipantsForTopic(topic);
+    }
     
     const participants = selectedRoles.map(roleConfig => 
       new AgentDefinition(roleConfig)
@@ -2645,3 +2681,309 @@ module.exports = {
   DiscussionHistoryManager,
   AGENT_ROLES
 };
+/**
+ * MAD v2.6.0 新功能 API
+ * 
+ * 添加到 orchestrator.js 的末尾
+ */
+
+// ========== 讨论质量评分系统 ==========
+
+/**
+ * 计算讨论质量评分
+ */
+DiscussionOrchestrator.prototype.calculateQualityScore = async function(discussionId) {
+  if (!this.qualityScorer) {
+    await this.initialize();
+  }
+  return await this.qualityScorer.calculateScore(discussionId);
+};
+
+/**
+ * 获取评分历史
+ */
+DiscussionOrchestrator.prototype.getScoreHistory = function(discussionId) {
+  if (!this.qualityScorer) return [];
+  return this.qualityScorer.getScoreHistory(discussionId);
+};
+
+/**
+ * 获取评分趋势
+ */
+DiscussionOrchestrator.prototype.getScoreTrend = function(discussionId) {
+  if (!this.qualityScorer) return null;
+  return this.qualityScorer.getScoreTrend(discussionId);
+};
+
+/**
+ * 获取评分统计
+ */
+DiscussionOrchestrator.prototype.getScoreStatistics = function(discussionId) {
+  if (!this.qualityScorer) return null;
+  return this.qualityScorer.getScoreStatistics(discussionId);
+};
+
+/**
+ * 启动实时评分
+ */
+DiscussionOrchestrator.prototype.startRealtimeScoring = function(discussionId, callback) {
+  if (!this.realtimeFeedback) {
+    this.initialize();
+  }
+  return this.realtimeFeedback.start(discussionId, callback);
+};
+
+/**
+ * 停止实时评分
+ */
+DiscussionOrchestrator.prototype.stopRealtimeScoring = function(discussionId, callback) {
+  if (!this.realtimeFeedback) return;
+  return this.realtimeFeedback.stop(discussionId, callback);
+};
+
+/**
+ * 生成评分趋势图数据
+ */
+DiscussionOrchestrator.prototype.generateScoreTrendData = function(discussionId) {
+  if (!this.scoreVisualizer) return null;
+  const history = this.getScoreHistory(discussionId);
+  return this.scoreVisualizer.generateTrendData(history);
+};
+
+/**
+ * 生成评分雷达图数据
+ */
+DiscussionOrchestrator.prototype.generateScoreRadarData = function(discussionId) {
+  if (!this.scoreVisualizer) return null;
+  const scores = this.qualityScorer ? this.qualityScorer.scoreHistory.get(discussionId)?.slice(-1)[0] : null;
+  if (!scores) return null;
+  return this.scoreVisualizer.generateRadarData(scores);
+};
+
+// ========== Agent 性能分析系统 ==========
+
+/**
+ * 分析 Agent 性能
+ */
+DiscussionOrchestrator.prototype.analyzeAgentPerformance = async function(agentName, options = {}) {
+  if (!this.agentPerformanceAnalyzer) {
+    await this.initialize();
+  }
+  return await this.agentPerformanceAnalyzer.analyzePerformance(agentName, options);
+};
+
+/**
+ * 对比多个 Agent 性能
+ */
+DiscussionOrchestrator.prototype.compareAgents = async function(agentNames, options = {}) {
+  if (!this.agentPerformanceAnalyzer) {
+    await this.initialize();
+  }
+  return await this.agentPerformanceAnalyzer.compareAgents(agentNames, options);
+};
+
+/**
+ * 获取性能排行榜
+ */
+DiscussionOrchestrator.prototype.getAgentLeaderboard = async function(options = {}) {
+  if (!this.agentPerformanceAnalyzer) {
+    await this.initialize();
+  }
+  return await this.agentPerformanceAnalyzer.getLeaderboard(options);
+};
+
+// ========== 导出功能增强 ==========
+
+/**
+ * 导出为 Markdown
+ */
+DiscussionOrchestrator.prototype.exportToMarkdown = async function(discussionId, options = {}) {
+  const discussion = this.discussions.get(discussionId);
+  if (!discussion) {
+    throw new Error(`Discussion ${discussionId} not found`);
+  }
+  return await exportToMarkdown(discussion, options);
+};
+
+/**
+ * 导出为 JSON
+ */
+DiscussionOrchestrator.prototype.exportToJSON = async function(discussionId, options = {}) {
+  const discussion = this.discussions.get(discussionId);
+  if (!discussion) {
+    throw new Error(`Discussion ${discussionId} not found`);
+  }
+  return await exportToJSON(discussion, options);
+};
+
+/**
+ * 批量导出讨论
+ */
+DiscussionOrchestrator.prototype.batchExportDiscussions = async function(discussionIds, options = {}) {
+  if (!this.agentPerformanceAnalyzer) {
+    await this.initialize();
+  }
+  return await batchExport(discussionIds, { ...options, orchestrator: this });
+};
+
+/**
+ * 导出所有讨论
+ */
+DiscussionOrchestrator.prototype.exportAllDiscussions = async function(options = {}) {
+  if (!this.agentPerformanceAnalyzer) {
+    await this.initialize();
+  }
+  return await exportAll(this, options);
+};
+
+/**
+ * 导出摘要报告
+ */
+DiscussionOrchestrator.prototype.exportSummaryReport = async function(discussionIds, options = {}) {
+  if (!this.agentPerformanceAnalyzer) {
+    await this.initialize();
+  }
+  return await exportSummaryReport(discussionIds, { ...options, orchestrator: this });
+};
+
+// ========== 模板市场 ==========
+
+/**
+ * 搜索模板
+ */
+DiscussionOrchestrator.prototype.searchTemplates = async function(query, options = {}) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.searchTemplates(query, options);
+};
+
+/**
+ * 获取模板详情
+ */
+DiscussionOrchestrator.prototype.getTemplate = async function(templateId) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.getTemplate(templateId);
+};
+
+/**
+ * 评分模板
+ */
+DiscussionOrchestrator.prototype.rateTemplate = async function(templateId, rating, comment, user) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.rateTemplate(templateId, rating, comment, user);
+};
+
+/**
+ * 下载模板
+ */
+DiscussionOrchestrator.prototype.downloadTemplate = async function(templateId) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.downloadTemplate(templateId);
+};
+
+/**
+ * 分享模板
+ */
+DiscussionOrchestrator.prototype.shareTemplate = async function(templateId, options = {}) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.shareTemplate(templateId, options);
+};
+
+/**
+ * 创建用户自定义模板
+ */
+DiscussionOrchestrator.prototype.createUserTemplate = async function(templateData, userId) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.createUserTemplate(templateData, userId);
+};
+
+/**
+ * 更新用户模板
+ */
+DiscussionOrchestrator.prototype.updateUserTemplate = async function(templateId, updates) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.updateUserTemplate(templateId, updates);
+};
+
+/**
+ * 删除用户模板
+ */
+DiscussionOrchestrator.prototype.deleteUserTemplate = async function(templateId) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.deleteUserTemplate(templateId);
+};
+
+/**
+ * 推荐模板
+ */
+DiscussionOrchestrator.prototype.recommendTemplates = async function(options = {}) {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.recommendTemplates(options);
+};
+
+/**
+ * 获取市场统计
+ */
+DiscussionOrchestrator.prototype.getMarketStats = async function() {
+  if (!this.templateMarket) {
+    await this.initialize();
+  }
+  return await this.templateMarket.getMarketStats();
+};
+
+// ========== 讨论建议系统 ==========
+
+/**
+ * 生成讨论建议
+ */
+DiscussionOrchestrator.prototype.generateSuggestions = async function(discussionId, options = {}) {
+  if (!this.suggestionSystem) {
+    await this.initialize();
+  }
+  return await this.suggestionSystem.generateSuggestions(discussionId, options);
+};
+
+/**
+ * 忽略建议
+ */
+DiscussionOrchestrator.prototype.dismissSuggestion = function(discussionId, suggestionId) {
+  if (!this.suggestionSystem) return;
+  return this.suggestionSystem.dismissSuggestion(discussionId, suggestionId);
+};
+
+/**
+ * 应用建议
+ */
+DiscussionOrchestrator.prototype.applySuggestion = async function(discussionId, suggestionId) {
+  if (!this.suggestionSystem) {
+    await this.initialize();
+  }
+  return await this.suggestionSystem.applySuggestion(discussionId, suggestionId);
+};
+
+/**
+ * 获取建议统计
+ */
+DiscussionOrchestrator.prototype.getSuggestionStats = function(discussionId) {
+  if (!this.suggestionSystem) return null;
+  return this.suggestionSystem.getSuggestionStats(discussionId);
+};
+
+module.exports = { DiscussionOrchestrator, DiscussionConfig, AGENT_ROLES };
