@@ -39,6 +39,7 @@ const { exportToJSON } = require('./src/features/exporters/json.js');
 const { batchExport, exportAll, exportSummaryReport } = require('./src/features/exporters/batch.js');
 const { TemplateMarket } = require('./src/features/templates/market-manager.js');
 const { DiscussionSuggestionSystem } = require('./src/core/suggestions.js');
+const { ParticipantsManager } = require('./src/core/participants.js');
 
 // 加载模板
 let templates = null;
@@ -257,6 +258,7 @@ class DiscussionOrchestrator {
     this.agentPerformanceAnalyzer = null; // Agent 性能分析
     this.templateMarket = null; // 模板市场
     this.suggestionSystem = null; // 讨论建议系统
+    this.participantsManager = new ParticipantsManager(this); // 参与者管理器
   }
 
   /**

@@ -12,7 +12,10 @@
     "health": "node scripts/health-check.js",
     "validate": "node scripts/validate-config.js",
     "analyze": "node scripts/analyze-discussion.js --latest",
-    "monitor": "node scripts/performance-monitor.js"
+    "monitor": "node scripts/performance-monitor.js",
+    "install:mads": "node scripts/install.js",
+    "doctor": "node scripts/doctor.js",
+    "check": "npm run doctor"
   },
   "dependencies": {
     "pdfkit": "^0.17.2",
