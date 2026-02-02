@@ -781,7 +781,14 @@ class DiscussionOrchestrator {
       status: ctx.status,
       participants: ctx.participants.length,
       messageCount: ctx.messages.length,
-      createdAt: ctx.createdAt
+      createdAt: ctx.createdAt,
+      // v2.6.3: 添加参与者 emoji 和最后消息预览
+      participantEmojis: ctx.participants.map(p => p.emoji).filter(e => e),
+      lastMessage: ctx.messages.length > 0 ? {
+        agentEmoji: ctx.messages[ctx.messages.length - 1].agentEmoji,
+        content: ctx.messages[ctx.messages.length - 1].content.substring(0, 50),
+        timestamp: ctx.messages[ctx.messages.length - 1].timestamp
+      } : null
     }));
   }
 

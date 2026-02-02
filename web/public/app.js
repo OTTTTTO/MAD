@@ -242,17 +242,31 @@ async function loadDiscussions() {
   try {
     const response = await fetch('/api/discussions');
     const discussions = await response.json();
-    
+
     const listContainer = document.getElementById('discussionList');
-    
+
     if (discussions.length === 0) {
       listContainer.innerHTML = '<div class="empty-state">暂无讨论</div>';
       updateStatus('无讨论组');
       return;
     }
-    
-    listContainer.innerHTML = discussions.map(d => `
-      <div class="discussion-item ${d.id === currentDiscussionId ? 'active' : ''}" 
+
+    listContainer.innerHTML = discussions.map(d => {
+      // v2.6.3: 构建参与者 emoji 显示
+      const participantEmojis = d.participantEmojis && d.participantEmojis.length > 0
+        ? d.participantEmojis.slice(0, 4).join(' ') + (d.participantEmojis.length > 4 ? ' …' : '')
+        : '';
+
+      // v2.6.3: 构建最后消息预览
+      const lastMessagePreview = d.lastMessage
+        ? `<div class="last-message">
+            <span class="agent-emoji">${d.lastMessage.agentEmoji}</span>
+            <span class="message-preview">${escapeHtml(d.lastMessage.content)}${d.lastMessage.content.length >= 50 ? '…' : ''}</span>
+           </div>`
+        : '<div class="last-message"><span class="message-preview">暂无消息</span></div>';
+
+      return `
+      <div class="discussion-item ${d.id === currentDiscussionId ? 'active' : ''}"
            data-id="${d.id}"
            onclick="selectDiscussion('${d.id}')">
         <div class="topic">${escapeHtml(d.topic)}</div>
@@ -263,11 +277,14 @@ async function loadDiscussions() {
           <span>💬 ${d.messageCount} 条消息</span>
           <span>⏱️ ${formatDuration(d.duration)}</span>
         </div>
+        ${participantEmojis ? `<div class="participants">${participantEmojis}</div>` : ''}
+        ${lastMessagePreview}
       </div>
-    `).join('');
-    
+    `;
+    }).join('');
+
     updateStats(`${discussions.length} 个讨论组`);
-    
+
   } catch (error) {
     console.error('加载讨论列表失败:', error);
     updateStatus('加载失败');

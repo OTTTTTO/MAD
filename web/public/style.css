@@ -208,6 +208,38 @@ body {
   font-weight: 600;
 }
 
+/* v2.6.3: 参与者显示 */
+.discussion-item .participants {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+  opacity: 0.9;
+}
+
+/* v2.6.3: 最后消息预览 */
+.discussion-item .last-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 4px;
+  font-size: 0.85rem;
+}
+
+.discussion-item .last-message .agent-emoji {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.discussion-item .last-message .message-preview {
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+
 .status-active {
   background: rgba(74, 222, 128, 0.2);
   color: var(--success);
