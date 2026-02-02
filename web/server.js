@@ -274,6 +274,93 @@ async function createServer() {
         }
       }
 
+      // ==================== 参与者管理 API ====================
+
+      // API: 获取所有可用的 Agents
+      if (url.pathname === '/api/agents') {
+        try {
+          const agents = orchestrator.getAvailableAgents();
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(agents, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 获取当前讨论的参与者列表
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/participants')) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const participants = orchestrator.getParticipants(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(participants, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 添加 Agent 到讨论
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.includes('/participants/') && req.method === 'POST') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const agentId = parts[5];
+        try {
+          const result = orchestrator.addParticipant(discussionId, agentId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true, participant: result }, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: error.message }));
+          return;
+        }
+      }
+
+      // API: 从讨论中移除 Agent
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.includes('/participants/') && req.method === 'DELETE') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const agentId = parts[5];
+        try {
+          const result = orchestrator.removeParticipant(discussionId, agentId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify({ success: true, participant: result }, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ success: false, error: error.message }));
+          return;
+        }
+      }
+
+      // API: 获取参与者统计信息
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/participant-stats')) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const stats = orchestrator.getParticipantStats(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(stats, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // ==================== 质量评分 API ====================
+
       // API: 获取讨论质量评分
       if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/quality')) {
         const discussionId = url.pathname.split('/')[3];

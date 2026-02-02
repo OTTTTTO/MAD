@@ -459,6 +459,16 @@ function selectDiscussion(discussionId) {
   loadMessages(discussionId);
 
   // 显示按钮
+  document.getElementById('statsBtn').style.display = 'block';
+  document.getElementById('recommendBtn').style.display = 'block';
+  document.getElementById('actionsBtn').style.display = 'block';
+  document.getElementById('similarBtn').style.display = 'block';
+  document.getElementById('tagsBtn').style.display = 'block';
+  document.getElementById('favoriteBtn').style.display = 'block';
+  document.getElementById('mentionsBtn').style.display = 'block';
+  document.getElementById('participantsBtn').style.display = 'block';
+  document.getElementById('searchBtn').style.display = 'block';
+  document.getElementById('pinBtn').style.display = 'block';
   document.getElementById('exportBtn').style.display = 'block';
   document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
 }
@@ -3239,6 +3249,138 @@ function toggleSearchPanel() {
 }
 
 /**
+ * 切换参与者管理面板
+ */
+async function toggleParticipantsPanel() {
+  const panel = document.getElementById('participantsPanel');
+  const isVisible = panel.style.display !== 'none';
+
+  if (isVisible) {
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'block';
+    await loadParticipants();
+  }
+}
+
+/**
+ * 加载参与者列表
+ */
+async function loadParticipants() {
+  if (!currentDiscussionId) return;
+
+  const currentParticipants = document.getElementById('currentParticipants');
+  const availableAgents = document.getElementById('availableAgents');
+
+  currentParticipants.innerHTML = '<div class="loading">加载中...</div>';
+  availableAgents.innerHTML = '<div class="loading">加载中...</div>';
+
+  try {
+    // 加载当前参与者
+    const participantsRes = await fetch(`/api/discussion/${currentDiscussionId}/participants`);
+    const participants = await participantsRes.json();
+
+    // 加载可用 Agents
+    const agentsRes = await fetch('/api/agents');
+    const allAgents = await agentsRes.json();
+
+    // 渲染当前参与者
+    currentParticipants.innerHTML = participants.length === 0
+      ? '<div class="empty-state">暂无参与者</div>'
+      : participants.map(p => `
+        <div class="participant-item">
+          <div class="participant-info">
+            <span class="participant-emoji">${p.emoji}</span>
+            <span class="participant-name">${p.name}</span>
+            <span class="participant-role">${p.role}</span>
+          </div>
+          <div class="participant-actions">
+            ${participants.length > 2 ? `<button class="btn btn-xs btn-danger" onclick="removeParticipant('${p.id}')" title="移除参与者">✕</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+
+    // 渲染可用 Agents（排除已参与的）
+    const currentIds = participants.map(p => p.id);
+    const availableList = allAgents.filter(a => !currentIds.includes(a.id));
+
+    availableAgents.innerHTML = availableList.length === 0
+      ? '<div class="empty-state">所有 Agent 已参与讨论</div>'
+      : availableList.map(a => `
+        <div class="agent-item">
+          <div class="agent-info">
+            <span class="agent-emoji">${a.emoji}</span>
+            <span class="agent-name">${a.name}</span>
+            <span class="agent-role">${a.role}</span>
+          </div>
+          <div class="expertise-tags">
+            ${a.expertise.map(e => `<span class="tag tag-sm">${e}</span>`).join('')}
+          </div>
+          <div class="agent-actions">
+            <button class="btn btn-xs btn-primary" onclick="addParticipant('${a.id}')" title="添加到讨论">➕ 添加</button>
+          </div>
+        </div>
+      `).join('');
+  } catch (error) {
+    console.error('加载参与者失败:', error);
+    currentParticipants.innerHTML = '<div class="error">加载失败</div>';
+    availableAgents.innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 添加参与者到讨论
+ */
+async function addParticipant(agentId) {
+  if (!currentDiscussionId) return;
+
+  try {
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/participants/${agentId}`, {
+      method: 'POST'
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      showToast(`已添加 ${result.participant.emoji} ${result.participant.name} 到讨论`, 'success');
+      await loadParticipants();
+      await loadDiscussion(); // 刷新讨论内容
+    } else {
+      showToast(result.error || '添加失败', 'error');
+    }
+  } catch (error) {
+    console.error('添加参与者失败:', error);
+    showToast('添加参与者失败', 'error');
+  }
+}
+
+/**
+ * 从讨论中移除参与者
+ */
+async function removeParticipant(agentId) {
+  if (!currentDiscussionId) return;
+
+  if (!confirm('确定要移除这个参与者吗？')) return;
+
+  try {
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/participants/${agentId}`, {
+      method: 'DELETE'
+    });
+    const result = await response.json();
+
+    if (result.success) {
+      showToast(`已移除 ${result.participant.emoji} ${result.participant.name}`, 'success');
+      await loadParticipants();
+      await loadDiscussion(); // 刷新讨论内容
+    } else {
+      showToast(result.error || '移除失败', 'error');
+    }
+  } catch (error) {
+    console.error('移除参与者失败:', error);
+    showToast('移除参与者失败', 'error');
+  }
+}
+
+/**
  * 执行消息搜索
  */
 async function performMessageSearch() {
@@ -3373,6 +3515,14 @@ document.addEventListener('DOMContentLoaded', () => {
   if (mentionsBtn) {
     mentionsBtn.addEventListener('click', () => {
       toggleMentionsPanel();
+    });
+  }
+
+  // 参与者按钮
+  const participantsBtn = document.getElementById('participantsBtn');
+  if (participantsBtn) {
+    participantsBtn.addEventListener('click', () => {
+      toggleParticipantsPanel();
     });
   }
 

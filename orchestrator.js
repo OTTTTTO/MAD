@@ -1228,6 +1228,72 @@ class DiscussionOrchestrator {
       }, {});
   }
 
+  // ==================== 参与者管理 API ====================
+
+  /**
+   * 获取所有可用的 Agents
+   */
+  getAvailableAgents() {
+    return this.participantsManager.getAvailableAgents();
+  }
+
+  /**
+   * 获取当前讨论的参与者列表
+   */
+  getParticipants(discussionId) {
+    return this.participantsManager.getParticipants(discussionId);
+  }
+
+  /**
+   * 添加 Agent 到讨论
+   */
+  addParticipant(discussionId, agentId) {
+    const result = this.participantsManager.addParticipant(discussionId, agentId);
+    
+    // 触发实时更新
+    if (this.realtimeManager) {
+      this.realtimeManager.emit('participant_added', {
+        discussionId,
+        agent: result
+      });
+    }
+    
+    return result;
+  }
+
+  /**
+   * 从讨论中移除 Agent
+   */
+  removeParticipant(discussionId, agentId) {
+    const result = this.participantsManager.removeParticipant(discussionId, agentId);
+    
+    // 触发实时更新
+    if (this.realtimeManager) {
+      this.realtimeManager.emit('participant_removed', {
+        discussionId,
+        agent: result
+      });
+    }
+    
+    return result;
+  }
+
+  /**
+   * 批量添加多个 Agents
+   */
+  addParticipants(discussionId, agentIds) {
+    return this.participantsManager.addParticipants(discussionId, agentIds);
+  }
+
+  /**
+   * 获取参与者统计信息
+   */
+  getParticipantStats(discussionId) {
+    return this.participantsManager.getParticipantStats(discussionId);
+  }
+
+  // ==================== 质量评分 API ====================
+
   /**
    * 计算讨论质量评分
    */
