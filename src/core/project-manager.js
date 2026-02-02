@@ -167,6 +167,68 @@ class ProjectManager {
 
     console.log(`[ProjectManager] 已删除项目组: ${projectId}`);
   }
+
+  /**
+   * 搜索项目组
+   */
+  async searchProjects(keyword, options = {}) {
+    const projects = await this.listProjects();
+    const lowerKeyword = keyword.toLowerCase();
+    const results = [];
+
+    for (const project of projects) {
+      let score = 0;
+      const highlights = [];
+
+      // 搜索项目名称
+      if (project.name.toLowerCase().includes(lowerKeyword)) {
+        score += 10;
+        highlights.push({ field: 'name', text: project.name });
+      }
+
+      // 搜索描述
+      if (project.description && project.description.toLowerCase().includes(lowerKeyword)) {
+        score += 5;
+        highlights.push({ field: 'description', text: project.description });
+      }
+
+      // 搜索类别
+      if (project.category.toLowerCase().includes(lowerKeyword)) {
+        score += 3;
+        highlights.push({ field: 'category', text: project.category });
+      }
+
+      // 搜索标记
+      if (project.markers && project.markers.length > 0) {
+        for (const marker of project.markers) {
+          if (marker.title && marker.title.toLowerCase().includes(lowerKeyword)) {
+            score += 2;
+            highlights.push({ field: 'marker', text: marker.title });
+          }
+          if (marker.summary && marker.summary.toLowerCase().includes(lowerKeyword)) {
+            score += 1;
+            highlights.push({ field: 'marker', text: marker.summary });
+          }
+        }
+      }
+
+      // 只返回有匹配的结果
+      if (score > 0) {
+        results.push({
+          project,
+          score,
+          highlights
+        });
+      }
+    }
+
+    // 按得分排序
+    results.sort((a, b) => b.score - a.score);
+
+    // 限制结果数量
+    const limit = options.limit || 10;
+    return results.slice(0, limit);
+  }
 }
 
 module.exports = ProjectManager;

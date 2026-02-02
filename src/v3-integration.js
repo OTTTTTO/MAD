@@ -288,6 +288,13 @@ class V3Integration {
     const suggestions = await this.markerDetector.analyzeDiscussion(messages);
     return suggestions;
   }
+
+  /**
+   * v3.6.0: 搜索项目组
+   */
+  async searchProjects(keyword, options = {}) {
+    return await this.projectManager.searchProjects(keyword, options);
+  }
 }
 
 module.exports = V3Integration;
