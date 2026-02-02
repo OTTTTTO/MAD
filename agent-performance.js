@@ -69,7 +69,7 @@ class AgentPerformanceAnalyzer {
     const timeRangeMs = this.parseTimeRange(timeRange);
 
     return allDiscussions.filter(d => {
-      const participated = (d.participants || []).some(p => p.role === agentName);
+      const participated = (d.participants || []).some(p => p.id === agentName);
       const inTimeRange = (now - d.createdAt) <= timeRangeMs;
       return participated && inTimeRange;
     });
