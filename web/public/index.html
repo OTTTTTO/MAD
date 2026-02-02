@@ -42,6 +42,18 @@
             <label><input type="checkbox" id="filterActive" checked> 进行中</label>
             <label><input type="checkbox" id="filterEnded" checked> 已结束</label>
           </div>
+          <!-- v2.6.5: 排序选项 -->
+          <div class="sort-options">
+            <label for="sortSelect">📊 排序：</label>
+            <select id="sortSelect" class="sort-select">
+              <option value="time-desc">最新创建</option>
+              <option value="time-asc">最早创建</option>
+              <option value="messages-desc">消息数（多→少）</option>
+              <option value="messages-asc">消息数（少→多）</option>
+              <option value="duration-desc">持续时间（长→短）</option>
+              <option value="duration-asc">持续时间（短→长）</option>
+            </select>
+          </div>
           <div class="tag-filters" id="tagFilters">
             <div class="tag-filter-header">
               <span>🏷️ 标签过滤</span>

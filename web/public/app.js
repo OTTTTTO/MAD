@@ -275,6 +275,19 @@ function initApp() {
     }, 300);
   });
 
+  // v2.6.5: 排序选择器事件监听
+  const sortSelect = document.getElementById('sortSelect');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', () => {
+      const query = searchInput.value.trim();
+      if (query.length >= 2) {
+        performSearch(query);
+      } else {
+        loadDiscussions();
+      }
+    });
+  }
+
   document.getElementById('filterActive').addEventListener('change', () => {
     const query = searchInput.value.trim();
     if (query.length >= 2) {
@@ -316,6 +329,12 @@ async function performSearch(query) {
 
     const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&status=${statusParam || ''}`);
     const results = await response.json();
+
+    // v2.6.5: 应用排序到搜索结果
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect && results.discussions) {
+      results.discussions = sortDiscussions(results.discussions, sortSelect.value);
+    }
 
     displaySearchResults(results, query);
     updateStatus(`找到 ${results.messages.length} 条结果`);
@@ -366,7 +385,14 @@ async function loadAgentStats() {
 async function loadDiscussions() {
   try {
     const response = await fetch('/api/discussions');
-    const discussions = await response.json();
+    let discussions = await response.json();
+
+    // v2.6.5: 排序功能
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+      const sortValue = sortSelect.value;
+      discussions = sortDiscussions(discussions, sortValue);
+    }
 
     const listContainer = document.getElementById('discussionList');
 
@@ -435,6 +461,49 @@ function selectDiscussion(discussionId) {
   // 显示按钮
   document.getElementById('exportBtn').style.display = 'block';
   document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
+}
+
+/**
+ * v2.6.5: 排序讨论列表
+ * @param {Array} discussions - 讨论数组
+ * @param {string} sortValue - 排序选项
+ * @returns {Array} 排序后的讨论数组
+ */
+function sortDiscussions(discussions, sortValue) {
+  const sorted = [...discussions]; // 创建副本，避免修改原数组
+
+  switch (sortValue) {
+    case 'time-desc':
+      // 最新创建（按创建时间降序）
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      break;
+    case 'time-asc':
+      // 最早创建（按创建时间升序）
+      sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      break;
+    case 'messages-desc':
+      // 消息数从多到少
+      sorted.sort((a, b) => (b.messageCount || 0) - (a.messageCount || 0));
+      break;
+    case 'messages-asc':
+      // 消息数从少到多
+      sorted.sort((a, b) => (a.messageCount || 0) - (b.messageCount || 0));
+      break;
+    case 'duration-desc':
+      // 持续时间从长到短
+      sorted.sort((a, b) => (b.duration || 0) - (a.duration || 0));
+      break;
+    case 'duration-asc':
+      // 持续时间从短到长
+      sorted.sort((a, b) => (a.duration || 0) - (b.duration || 0));
+      break;
+    default:
+      // 默认按最新创建
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }
+
+  return sorted;
+}
 
   // 移动端：选择讨论后自动关闭侧边栏
   if (window.innerWidth <= 768) {

@@ -159,6 +159,44 @@ body {
   cursor: pointer;
 }
 
+/* v2.6.5: 排序选项样式 */
+.sort-options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-dark);
+  border-radius: 6px;
+}
+
+.sort-options label {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.sort-select {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: border-color 0.2s;
+}
+
+.sort-select:hover {
+  border-color: var(--primary-color);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
 .discussion-list {
   flex: 1;
   overflow-y: auto;
