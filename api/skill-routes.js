@@ -7,12 +7,16 @@ const express = require('express');
 const SmartAnalyzer = require('../core/smart-analyzer.js');
 const ProjectManager = require('../core/project-manager.js');
 const ExpertManager = require('../core/expert-manager.js');
+const MarkerDetector = require('../core/marker-detector.js');
+const MarkerGenerator = require('../core/marker-generator.js');
 
 function createSkillRoutes(orchestrator) {
   const router = express.Router();
   const smartAnalyzer = new SmartAnalyzer();
   const projectManager = new ProjectManager();
   const expertManager = new ExpertManager();
+  const markerDetector = new MarkerDetector();
+  const markerGenerator = new MarkerGenerator(markerDetector);
 
   // 初始化
   Promise.all([
@@ -170,6 +174,151 @@ function createSkillRoutes(orchestrator) {
         success: true,
         messages: project.messages,
         total: project.messages.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * v3.3.0: 获取项目的标记建议
+   * GET /api/skills/projects/:id/marker-suggestions
+   */
+  router.get('/projects/:id/marker-suggestions', async (req, res) => {
+    try {
+      const project = await projectManager.getProject(req.params.id);
+
+      if (!project) {
+        return res.status(404).json({
+          error: '项目组不存在'
+        });
+      }
+
+      const suggestions = await markerDetector.analyzeDiscussion(project.messages);
+
+      res.json({
+        success: true,
+        suggestions
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * v3.3.0: 检测并添加标记
+   * POST /api/skills/projects/:id/detect-markers
+   */
+  router.post('/projects/:id/detect-markers', async (req, res) => {
+    try {
+      const { minConfidence = 0.7, maxMarkers = 5 } = req.body;
+
+      const project = await projectManager.getProject(req.params.id);
+
+      if (!project) {
+        return res.status(404).json({
+          error: '项目组不存在'
+        });
+      }
+
+      const suggestions = await markerDetector.analyzeDiscussion(project.messages);
+      const filteredSuggestions = suggestions
+        .filter(s => s.confidence >= minConfidence)
+        .slice(0, maxMarkers);
+
+      const addedMarkers = [];
+
+      for (const suggestion of filteredSuggestions) {
+        const message = project.messages.find(m => m.id === suggestion.messageId);
+
+        if (message) {
+          const marker = await markerGenerator.generateMarker(message, suggestion, project.id);
+          project.addMarker(marker);
+          addedMarkers.push(marker);
+        }
+      }
+
+      await projectManager.saveProject(project);
+
+      res.json({
+        success: true,
+        addedMarkers,
+        total: addedMarkers.length
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * v3.3.0: 优化项目标记
+   * POST /api/skills/projects/:id/optimize-markers
+   */
+  router.post('/projects/:id/optimize-markers', async (req, res) => {
+    try {
+      const project = await projectManager.getProject(req.params.id);
+
+      if (!project) {
+        return res.status(404).json({
+          error: '项目组不存在'
+        });
+      }
+
+      // 检测当前阶段
+      const phase = await markerDetector.detectDiscussionPhase(project.messages);
+
+      // 生成阶段标记
+      const phaseMarker = await markerGenerator.generatePhaseMarker(phase, project.messages, project.id);
+      project.addMarker(phaseMarker);
+
+      // 检测并添加内容标记
+      const contentMarkers = await markerGenerator.detectAndAddMarkers(
+        project.id,
+        orchestrator.v3?.flowManager,
+        projectManager,
+        { minConfidence: 0.7, maxMarkers: 3 }
+      );
+
+      await projectManager.saveProject(project);
+
+      res.json({
+        success: true,
+        phase,
+        phaseMarker,
+        contentMarkers
+      });
+    } catch (error) {
+      res.status(500).json({
+        error: error.message
+      });
+    }
+  });
+
+  /**
+   * v3.3.0: 生成项目总结
+   * GET /api/skills/projects/:id/summary
+   */
+  router.get('/projects/:id/summary', async (req, res) => {
+    try {
+      const project = await projectManager.getProject(req.params.id);
+
+      if (!project) {
+        return res.status(404).json({
+          error: '项目组不存在'
+        });
+      }
+
+      const summary = await markerDetector.generateSmartSummary(project.messages);
+
+      res.json({
+        success: true,
+        summary
       });
     } catch (error) {
       res.status(500).json({

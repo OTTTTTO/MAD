@@ -8,6 +8,8 @@ const ExpertManager = require('./core/expert-manager.js');
 const SmartAnalyzer = require('./core/smart-analyzer.js');
 const ProjectFlowManager = require('./core/project-flow.js');
 const ProgressManager = require('./core/progress-manager.js');
+const MarkerDetector = require('./core/marker-detector.js');
+const MarkerGenerator = require('./core/marker-generator.js');
 
 class V3Integration {
   constructor(orchestrator) {
@@ -19,6 +21,10 @@ class V3Integration {
     this.smartAnalyzer = new SmartAnalyzer();
     this.flowManager = new ProjectFlowManager();
     this.progressManager = new ProgressManager();
+
+    // v3.3.0: 智能标记
+    this.markerDetector = new MarkerDetector();
+    this.markerGenerator = new MarkerGenerator(this.markerDetector);
   }
 
   /**
@@ -231,6 +237,56 @@ class V3Integration {
    */
   async getProjectMessages(projectId, options = {}) {
     return await this.flowManager.getMessages(projectId, options);
+  }
+
+  /**
+   * v3.3.0: 检测并添加标记
+   */
+  async detectAndAddMarkers(projectId, options = {}) {
+    return await this.markerGenerator.detectAndAddMarkers(
+      projectId,
+      this.flowManager,
+      this.projectManager,
+      options
+    );
+  }
+
+  /**
+   * v3.3.0: 优化标记
+   */
+  async optimizeMarkers(projectId) {
+    return await this.markerGenerator.optimizeMarkers(
+      projectId,
+      this.flowManager,
+      this.projectManager
+    );
+  }
+
+  /**
+   * v3.3.0: 生成项目总结
+   */
+  async generateProjectSummary(projectId) {
+    const messages = await this.flowManager.getMessages(projectId);
+    const summary = await this.markerDetector.generateSmartSummary(messages);
+    return summary;
+  }
+
+  /**
+   * v3.3.0: 检测讨论阶段
+   */
+  async detectDiscussionPhase(projectId) {
+    const messages = await this.flowManager.getMessages(projectId);
+    const phase = await this.markerDetector.detectDiscussionPhase(messages);
+    return phase;
+  }
+
+  /**
+   * v3.3.0: 获取标记建议
+   */
+  async getMarkerSuggestions(projectId) {
+    const messages = await this.flowManager.getMessages(projectId);
+    const suggestions = await this.markerDetector.analyzeDiscussion(messages);
+    return suggestions;
   }
 }
 
