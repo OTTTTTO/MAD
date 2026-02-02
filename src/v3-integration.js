@@ -386,6 +386,27 @@ class V3Integration {
   async cloneProject(projectId, newName = null) {
     return await this.projectManager.cloneProject(projectId, newName);
   }
+
+  /**
+   * v3.6.0: 设置项目备注
+   */
+  async setProjectNotes(projectId, notes) {
+    return await this.projectManager.setProjectNotes(projectId, notes);
+  }
+
+  /**
+   * v3.6.0: 追加项目备注
+   */
+  async appendProjectNotes(projectId, text) {
+    return await this.projectManager.appendProjectNotes(projectId, text);
+  }
+
+  /**
+   * v3.6.0: 获取项目备注
+   */
+  async getProjectNotes(projectId) {
+    return await this.projectManager.getProjectNotes(projectId);
+  }
 }
 
 module.exports = V3Integration;

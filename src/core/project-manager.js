@@ -625,6 +625,48 @@ class ProjectManager {
 
     return clonedProject;
   }
+
+  /**
+   * 设置项目备注
+   */
+  async setProjectNotes(projectId, notes) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    project.setNotes(notes);
+    await this.saveProject(project);
+
+    return project;
+  }
+
+  /**
+   * 追加项目备注
+   */
+  async appendProjectNotes(projectId, text) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    project.appendNotes(text);
+    await this.saveProject(project);
+
+    return project;
+  }
+
+  /**
+   * 获取项目备注
+   */
+  async getProjectNotes(projectId) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    return project.getNotes();
+  }
 }
 
 module.exports = ProjectManager;

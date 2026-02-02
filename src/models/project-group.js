@@ -18,6 +18,7 @@ class ProjectGroup {
     this.markers = [];
     this.participants = [];
     this.tags = [];  // 项目标签
+    this.notes = ''; // 项目备注
     this.stats = {
       totalMessages: 0,
       totalMarkers: 0,
@@ -80,6 +81,32 @@ class ProjectGroup {
    */
   getTags() {
     return [...this.tags];
+  }
+
+  /**
+   * 设置备注
+   */
+  setNotes(notes) {
+    this.notes = notes;
+    this.stats.updatedAt = Date.now();
+  }
+
+  /**
+   * 获取备注
+   */
+  getNotes() {
+    return this.notes;
+  }
+
+  /**
+   * 追加备注
+   */
+  appendNotes(text) {
+    const timestamp = new Date().toLocaleString('zh-CN');
+    const separator = this.notes ? '\n\n' : '';
+
+    this.notes += separator + `--- ${timestamp} ---\n${text}`;
+    this.stats.updatedAt = Date.now();
   }
 }
 

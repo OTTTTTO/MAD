@@ -40,6 +40,12 @@
 - **清空数据：** 消息流、标记、统计数据
 - **自定义名称：** 可指定新项目名称，默认为 "原项目名 (副本)"
 
+#### 项目备注
+- **设置备注：** 为项目设置备注文本
+- **追加备注：** 自动添加时间戳，追加备注内容
+- **获取备注：** 读取项目备注
+- **数据模型：** ProjectGroup 新增 notes 属性和相关方法
+
 #### 实现细节
 - 新增 `ProjectManager.searchProjects()` 方法
 - 新增 `ProjectManager.getStatistics()` 方法
@@ -65,8 +71,15 @@
 - 新增 `V3Integration.getActiveProjects()` 接口
 - 新增 `V3Integration.getCompletedProjects()` 接口
 - 新增 `ProjectManager.cloneProject()` 方法
+- 新增 `ProjectManager.setProjectNotes()` 方法
+- 新增 `ProjectManager.appendProjectNotes()` 方法
+- 新增 `ProjectManager.getProjectNotes()` 方法
 - 新增 `V3Integration.cloneProject()` 接口
+- 新增 `V3Integration.setProjectNotes()` 接口
+- 新增 `V3Integration.appendProjectNotes()` 接口
+- 新增 `V3Integration.getProjectNotes()` 接口
 - ProjectGroup 新增 `tags` 属性和 `addTag()`, `removeTag()`, `hasTag()`, `getTags()` 方法
+- ProjectGroup 新增 `notes` 属性和 `setNotes()`, `getNotes()`, `appendNotes()` 方法
 
 #### 使用示例
 ```javascript
@@ -104,6 +117,12 @@ const completed = await v3.getCompletedProjects();
 
 // 克隆项目
 const cloned = await v3.cloneProject('group-xxx');
+
+// 设置备注
+await v3.setProjectNotes('group-xxx', '重要项目，优先处理');
+
+// 追加备注
+await v3.appendProjectNotes('group-xxx', '已完成第一阶段');
 ```
 
 ### 📚 文档更新
@@ -114,18 +133,20 @@ const cloned = await v3.cloneProject('group-xxx');
 - README 新增使用示例（场景 8：导出项目）
 - README 新增使用示例（场景 9：归档项目）
 - README 新增使用示例（场景 10：克隆项目）
+- README 新增使用示例（场景 11：项目备注）
 - 说明搜索范围和权重
 - 说明统计指标含义
 - 说明标签用途和场景
 - 说明导出格式和内容
 - 说明归档用途和场景
 - 说明克隆用途和保留的属性
+- 说明备注用途和时间戳
 
 ### 📊 统计
 
 - **新增文件：** 0 个
-- **修改文件：** 2 个（project-manager.js, v3-integration.js）
-- **新增代码：** 约 320 行
+- **修改文件：** 3 个（project-group.js, project-manager.js, v3-integration.js）
+- **新增代码：** 约 370 行
 - **测试状态：** ✅ 通过
 
 ---
