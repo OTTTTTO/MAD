@@ -57,6 +57,24 @@ async function createServer() {
         return;
       }
 
+      // v3.0 项目组视图
+      if (url.pathname === '/project-view' || url.pathname === '/project-view.html') {
+        const html = await fs.readFile(path.join(WEB_DIR, 'project-view.html'), 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.writeHead(200);
+        res.end(html);
+        return;
+      }
+
+      // v3.0 原型界面
+      if (url.pathname === '/index-v3' || url.pathname === '/index-v3.html') {
+        const html = await fs.readFile(path.join(WEB_DIR, 'index-v3.html'), 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.writeHead(200);
+        res.end(html);
+        return;
+      }
+
       // CSS
       if (url.pathname === '/style.css') {
         const css = await fs.readFile(path.join(WEB_DIR, 'style.css'), 'utf8');
