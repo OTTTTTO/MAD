@@ -23,6 +23,9 @@ Multi-Agent Discussion 是一个 OpenClaw Skill，让多个专业 Agent 在虚�
 - ✅ **Agent 统计** - Karma 系统和等级机制（v1.1.0+）
 - ✅ **导出功能** - 支持 Markdown/JSON 导出（v1.1.1+）
 - ✅ **实时推送** - WebSocket 实时更新（v1.2.0+）
+- ✅ **讨论模板市场** - 10+ 预置模板，一键创建讨论（v2.0.0+）
+- ✅ **Agent 自定义** - 创建自己的 Agent 角色（v2.0.0+）
+- ✅ **相似度检测** - 查找相似讨论，避免重复工作（v2.0.0+）
 
 ## 🚀 快速开始
 
@@ -133,6 +136,61 @@ npm run start:ws
 形成评审意见
 ```
 
+### 场景 4：使用模板市场（v2.0.0+）
+
+```bash
+# 访问 Web 界面
+# http://localhost:18790
+
+# 点击"市场"按钮，浏览 10+ 预置模板
+# 可用模板：
+# - 产品发布评审
+# - 技术选型讨论
+# - API 设计评审
+# - Bug 根因分析
+# - 竞品分析
+# - 等等...
+
+# 一键使用模板创建讨论
+```
+
+### 场景 5：自定义 Agent（v2.0.0+）
+
+```javascript
+// 通过 Web 界面创建自定义 Agent
+// 或通过 API 创建
+
+await orchestrator.createCustomAgent({
+  name: '安全专家',
+  emoji: '🔒',
+  systemPrompt: '你是安全专家，专注于信息安全...',
+  triggerKeywords: ['安全', '漏洞', '加密'],
+  expertise: ['安全', '漏洞分析', '加密'],
+  speakProbability: 0.6
+});
+
+// 在讨论中使用自定义 Agent
+await orchestrator.createDiscussion('评估系统安全性', {
+  participants: ['custom-001', 'technical', 'testing']
+});
+```
+
+### 场景 6：查找相似讨论（v2.0.0+）
+
+```javascript
+// 查找与当前讨论相似的其他讨论
+const similar = orchestrator.findSimilarDiscussions(
+  discussionId,
+  0.3,  // 相似度阈值
+  10    // 最多返回 10 个
+);
+
+// 相似讨论可用于：
+// - 参考历史讨论结果
+// - 避免重复讨论
+// - 合并相关讨论
+```
+
 ## 🎭 可用角色
 
 | 角色 | Emoji | 职责 |
@@ -165,7 +223,30 @@ const orchestrator = new DiscussionOrchestrator(config);
 
 ## 📊 版本历史
 
-### v1.9.0 (2026-02-02) - **最新版本**
+### v2.0.0 (2026-02-02) - **重大更新** 🎉
+- ✨ 讨论相似度检测
+  - TF-IDF 文本向量化算法
+  - 余弦相似度计算
+  - 相似讨论查找和推荐
+  - 共同关键词提取
+  - 讨论合并功能
+- ✨ 讨论模板市场
+  - 10 个高质量预置模板
+  - 模板浏览和搜索
+  - 分类过滤（产品/技术/市场/管理）
+  - 模板评分和评论系统
+  - 一键使用模板创建讨论
+- ✨ Agent 自定义
+  - 创建完全自定义的 Agent 角色
+  - 系统提示词编辑器
+  - 触发关键词和专长标签设置
+  - 发言概率控制
+  - Agent 测试功能
+  - 3 个预置自定义 Agent
+- 🐛 修复创建讨论时的参与者选择问题
+- 📝 完整的测试套件
+
+### v1.9.0 (2026-02-02)
 - ✨ 智能推荐参与者
   - 基于讨论主题自动推荐相关 Agent
   - 显示推荐理由和匹配度
