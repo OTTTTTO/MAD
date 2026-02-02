@@ -1,0 +1,49 @@
+{
+  "description": "MAD 项目配置示例文件",
+  "note": "复制此文件为 config.json 并根据需要修改配置",
+
+  "discussion": {
+    "maxRounds": 10,
+    "minParticipants": 3,
+    "timeout": 300000,
+    "conflictThreshold": 0.6
+  },
+
+  "agents": {
+    "defaultModel": "glm-4.7",
+    "maxThinkingTime": 60000,
+    "enableKarma": true,
+    "karmaDecay": 0.95
+  },
+
+  "templates": {
+    "autoLoad": true,
+    "customPath": "./templates/custom",
+    "enableRating": true
+  },
+
+  "export": {
+    "formats": ["markdown", "json"],
+    "outputPath": "./exports",
+    "includeTimestamp": true
+  },
+
+  "web": {
+    "port": 3000,
+    "enableWebSocket": true,
+    "enableRealtime": true
+  },
+
+  "github": {
+    "enableMonitor": false,
+    "repoOwner": "OTTTTTO",
+    "repoName": "MAD",
+    "checkInterval": 600000
+  },
+
+  "logging": {
+    "level": "info",
+    "enableFileLog": true,
+    "logPath": "./logs"
+  }
+}
