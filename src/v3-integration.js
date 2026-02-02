@@ -295,6 +295,13 @@ class V3Integration {
   async searchProjects(keyword, options = {}) {
     return await this.projectManager.searchProjects(keyword, options);
   }
+
+  /**
+   * v3.6.0: 获取项目统计信息
+   */
+  async getStatistics() {
+    return await this.projectManager.getStatistics();
+  }
 }
 
 module.exports = V3Integration;

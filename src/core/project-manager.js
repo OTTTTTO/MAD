@@ -229,6 +229,54 @@ class ProjectManager {
     const limit = options.limit || 10;
     return results.slice(0, limit);
   }
+
+  /**
+   * 获取项目统计信息
+   */
+  async getStatistics() {
+    const projects = await this.listProjects();
+    const stats = {
+      total: projects.length,
+      byStatus: {},
+      byCategory: {},
+      totalMessages: 0,
+      totalMarkers: 0,
+      totalParticipants: 0,
+      activeProjects: 0
+    };
+
+    for (const project of projects) {
+      // 按状态统计
+      if (!stats.byStatus[project.status]) {
+        stats.byStatus[project.status] = 0;
+      }
+      stats.byStatus[project.status]++;
+
+      // 按类别统计
+      if (!stats.byCategory[project.category]) {
+        stats.byCategory[project.category] = 0;
+      }
+      stats.byCategory[project.category]++;
+
+      // 统计消息数
+      stats.totalMessages += project.messages?.length || 0;
+
+      // 统计标记数
+      stats.totalMarkers += project.markers?.length || 0;
+
+      // 统计参与者数
+      stats.totalParticipants += project.participants?.length || 0;
+
+      // 统计活跃项目（最近 24 小时内有更新）
+      const lastUpdate = project.stats?.updatedAt || 0;
+      const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+      if (lastUpdate > oneDayAgo) {
+        stats.activeProjects++;
+      }
+    }
+
+    return stats;
+  }
 }
 
 module.exports = ProjectManager;

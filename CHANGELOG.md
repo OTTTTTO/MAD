@@ -10,28 +10,39 @@
 - **高亮显示：** 展示匹配的文本片段
 - **结果限制：** 支持限制返回结果数量（默认 10 个）
 
+#### 项目统计
+- **全局统计：** 项目总数、活跃项目数、消息数、标记数、参与者数
+- **分类统计：** 按状态、类别统计项目分布
+- **活跃检测：** 自动统计最近 24 小时内有更新的项目
+
 #### 实现细节
 - 新增 `ProjectManager.searchProjects()` 方法
+- 新增 `ProjectManager.getStatistics()` 方法
 - 新增 `V3Integration.searchProjects()` 接口
-- 支持多字段搜索（名称、描述、类别、标记）
-- 自动按得分排序
+- 新增 `V3Integration.getStatistics()` 接口
 
 #### 使用示例
 ```javascript
+// 搜索项目
 const results = await v3.searchProjects('微服务');
-// 返回：[{ project, score, highlights }, ...]
+
+// 获取统计
+const stats = await v3.getStatistics();
+// { total, activeProjects, byStatus, byCategory, ... }
 ```
 
 ### 📚 文档更新
 
 - README 新增使用示例（场景 5：搜索项目组）
+- README 新增使用示例（场景 6：获取项目统计）
 - 说明搜索范围和权重
+- 说明统计指标含义
 
 ### 📊 统计
 
 - **新增文件：** 0 个
 - **修改文件：** 2 个（project-manager.js, v3-integration.js）
-- **新增代码：** 约 50 行
+- **新增代码：** 约 90 行
 - **测试状态：** ✅ 通过
 
 ---
