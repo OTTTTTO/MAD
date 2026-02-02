@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/mad",
-  "version": "2.7.0",
+  "version": "2.7.6",
   "description": "MAD (Multi-Agent Discussion) - 让多个专业 Agent 在虚拟讨论组中协同工作",
   "homepage": "https://github.com/OTTTTTO/mad",
   "main": "orchestrator.js",
@@ -8,7 +8,8 @@
     "start": "node web/server.js",
     "start:ws": "node web/websocket.js",
     "test": "node test/basic.test.js",
-    "demo": "node quick-start.js"
+    "demo": "node quick-start.js",
+    "health": "node scripts/health-check.js"
   },
   "dependencies": {
     "pdfkit": "^0.17.2",
