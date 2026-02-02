@@ -176,6 +176,28 @@ async function createServer() {
         }
       }
 
+      // API: 获取讨论质量评分
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/quality')) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const context = orchestrator.discussions.get(discussionId);
+          if (!context) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: 'Discussion not found' }));
+            return;
+          }
+          const quality = orchestrator.calculateDiscussionQuality(context);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(quality, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
       // 404
         const query = url.searchParams.get('q') || '';
         const status = url.searchParams.get('status') || null;

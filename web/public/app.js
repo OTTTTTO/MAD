@@ -8,6 +8,8 @@ let wsConnected = false;
 let currentTheme = 'dark';
 let openTabs = new Map(); // <discussionId, {title, pinned}>
 let activeTabId = null;
+let highlights = new Map(); // <messageId, {color, annotation, highlightedBy, highlightedAt}>
+let reasoningVisibility = new Map(); // <messageId, boolean> 控制思维链展开/折叠
 
 // 初始化
 document.addEventListener('DOMContentLoaded', () => {
@@ -27,6 +29,9 @@ function initApp() {
   
   // 加载 Agent 统计
   loadAgentStats();
+  
+  // 加载高亮数据
+  loadHighlights();
   
   // 刷新按钮
   document.getElementById('refreshBtn').addEventListener('click', () => {
@@ -55,7 +60,6 @@ function initApp() {
     openTemplateModal();
   });
   
-  let searchTimeout = null;
   let searchTimeout = null;
   
   searchInput.addEventListener('input', (e) => {
@@ -277,16 +281,31 @@ async function loadMessages(discussionId) {
       const karma = stats.karma || 0;
       const level = stats.level || '🌱 新手';
       
+      // 检查是否有高亮
+      const highlight = highlights.get(msg.id);
+      const highlightClass = highlight ? 'highlighted' : '';
+      const highlightStyle = highlight ? `style="--highlight-color: ${getHighlightColor(highlight.color)};"` : '';
+      
+      // 检查是否有思维链
+      const hasReasoning = msg.reasoning && msg.reasoning.length > 0;
+      const reasoningData = hasReasoning ? `data-reasoning="${escapeHtml(JSON.stringify(msg.reasoning))}"` : '';
+      
       return `
-        <div class="message">
+        <div class="message ${highlightClass}" data-message-id="${msg.id}" ${highlightStyle} ${reasoningData}>
           <div class="message-header">
             <span class="agent-emoji">${participant.emoji}</span>
             <span class="agent-name">${participant.role}</span>
             <span class="agent-karma">⭐ ${karma}</span>
             <span class="agent-level">${level}</span>
             <span class="message-time">${formatTime(msg.timestamp)}</span>
+            <div class="message-actions">
+              ${hasReasoning ? `<button class="action-btn reasoning-btn" onclick="toggleReasoning('${msg.id}')" title="查看思维链">🧠</button>` : ''}
+              <button class="action-btn highlight-btn ${highlight ? 'active' : ''}" onclick="toggleHighlight('${msg.id}')" title="${highlight ? '取消高亮' : '高亮'}">🟨</button>
+              <button class="action-btn copy-btn" onclick="copyMessage('${msg.id}')" title="复制">📋</button>
+            </div>
           </div>
           <div class="message-content">${formatContent(msg.content)}</div>
+          ${highlight && highlight.annotation ? `<div class="message-annotation"><span class="annotation-label">📝 标注：</span>${escapeHtml(highlight.annotation)}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -329,6 +348,42 @@ function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
+}
+
+/**
+ * 获取高亮颜色
+ */
+function getHighlightColor(colorName) {
+  const colorMap = {
+    'yellow': '#fef08a',
+    'blue': '#93c5fd',
+    'green': '#86efac',
+    'pink': '#f9a8d4',
+    'orange': '#fdba74'
+  };
+  return colorMap[colorName] || '#fef08a';
+}
+
+/**
+ * 复制消息内容
+ */
+function copyMessage(messageId) {
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return;
+  
+  const contentEl = messageEl.querySelector('.message-content');
+  if (!contentEl) return;
+  
+  // 获取纯文本内容
+  const text = contentEl.textContent;
+  
+  // 复制到剪贴板
+  navigator.clipboard.writeText(text).then(() => {
+    updateStatus('已复制到剪贴板');
+  }).catch(err => {
+    console.error('复制失败:', err);
+    updateStatus('复制失败');
+  });
 }
 
 /**
@@ -521,16 +576,26 @@ function appendMessage(message) {
   const karma = stats.karma || 0;
   const level = stats.level || '🌱 新手';
   
+  // 检查是否有高亮
+  const highlight = highlights.get(message.id);
+  const highlightClass = highlight ? 'highlighted' : '';
+  const highlightStyle = highlight ? `style="--highlight-color: ${getHighlightColor(highlight.color)};"` : '';
+  
   const messageHtml = `
-    <div class="message" style="animation: slideIn 0.3s ease-out">
+    <div class="message ${highlightClass}" data-message-id="${message.id}" ${highlightStyle} style="animation: slideIn 0.3s ease-out">
       <div class="message-header">
         <span class="agent-emoji">${participant.emoji}</span>
         <span class="agent-name">${participant.role}</span>
         <span class="agent-karma">⭐ ${karma}</span>
         <span class="agent-level">${level}</span>
         <span class="message-time">${formatTime(message.timestamp)}</span>
+        <div class="message-actions">
+          <button class="action-btn highlight-btn" onclick="toggleHighlight('${message.id}')" title="高亮">🟨</button>
+          <button class="action-btn copy-btn" onclick="copyMessage('${message.id}')" title="复制">📋</button>
+        </div>
       </div>
       <div class="message-content">${formatContent(message.content)}</div>
+      ${highlight && highlight.annotation ? `<div class="message-annotation"><span class="annotation-label">📝 标注：</span>${escapeHtml(highlight.annotation)}</div>` : ''}
     </div>
   `;
   
@@ -809,7 +874,110 @@ function displayStats(stats) {
           `).join('')}
       </div>
     </div>
+    
+    <div class="stat-card" style="grid-column: 1 / -1;">
+      <h3>⭐ 质量评分</h3>
+      <div id="qualityScoreContent">加载中...</div>
+    </div>
   `;
+  
+  // 加载质量评分
+  loadQualityScore();
+}
+
+/**
+ * 加载质量评分
+ */
+async function loadQualityScore() {
+  if (!currentDiscussionId) return;
+  
+  try {
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/quality`);
+    const quality = await response.json();
+    
+    displayQualityScore(quality);
+  } catch (error) {
+    console.error('加载质量评分失败:', error);
+    document.getElementById('qualityScoreContent').innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 显示质量评分
+ */
+function displayQualityScore(quality) {
+  const container = document.getElementById('qualityScoreContent');
+  if (!container) return;
+  
+  const totalScore = quality.total * 10; // 转换为 10 分制
+  const ratingClass = getRatingClass(quality.rating);
+  
+  container.innerHTML = `
+    <div class="quality-score-container">
+      <div class="quality-total">
+        <div class="quality-score ${ratingClass}">
+          <div class="score-number">${totalScore.toFixed(1)}</div>
+          <div class="score-max">/ 10</div>
+        </div>
+        <div class="quality-rating ${ratingClass}">${quality.rating}</div>
+      </div>
+      
+      <div class="quality-dimensions">
+        <div class="dimension">
+          <div class="dimension-label">
+            <span>💡 创新性</span>
+            <span class="dimension-score">${(quality.innovation * 10).toFixed(1)}/10</span>
+          </div>
+          <div class="dimension-bar">
+            <div class="dimension-fill" style="width: ${quality.innovation * 100}%"></div>
+          </div>
+        </div>
+        
+        <div class="dimension">
+          <div class="dimension-label">
+            <span>📋 完整性</span>
+            <span class="dimension-score">${(quality.completeness * 10).toFixed(1)}/10</span>
+          </div>
+          <div class="dimension-bar">
+            <div class="dimension-fill" style="width: ${quality.completeness * 100}%"></div>
+          </div>
+        </div>
+        
+        <div class="dimension">
+          <div class="dimension-label">
+            <span>🔧 可行性</span>
+            <span class="dimension-score">${(quality.feasibility * 10).toFixed(1)}/10</span>
+          </div>
+          <div class="dimension-bar">
+            <div class="dimension-fill" style="width: ${quality.feasibility * 100}%"></div>
+          </div>
+        </div>
+        
+        <div class="dimension">
+          <div class="dimension-label">
+            <span>💰 价值性</span>
+            <span class="dimension-score">${(quality.value * 10).toFixed(1)}/10</span>
+          </div>
+          <div class="dimension-bar">
+            <div class="dimension-fill" style="width: ${quality.value * 100}%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * 获取评级样式类
+ */
+function getRatingClass(rating) {
+  switch (rating) {
+    case '优秀': return 'rating-excellent';
+    case '良好': return 'rating-good';
+    case '一般': return 'rating-average';
+    case '需改进': return 'rating-poor';
+    default: return '';
+  }
 }
 
 /**
@@ -983,3 +1151,325 @@ function initKeyboard() {
 
 // 页面卸载时停止刷新
 window.addEventListener('beforeunload', stopAutoRefresh);
+
+// ==================== 高亮和标注功能 ====================
+
+/**
+ * 加载高亮数据
+ */
+function loadHighlights() {
+  const saved = localStorage.getItem('mad-highlights');
+  if (saved) {
+    try {
+      highlights = new Map(JSON.parse(saved));
+    } catch (e) {
+      console.error('Failed to load highlights:', e);
+      highlights = new Map();
+    }
+  }
+}
+
+/**
+ * 保存高亮数据
+ */
+function saveHighlights() {
+  localStorage.setItem('mad-highlights', JSON.stringify(Array.from(highlights.entries())));
+}
+
+/**
+ * 切换消息高亮
+ */
+function toggleHighlight(messageId) {
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return;
+  
+  if (highlights.has(messageId)) {
+    // 移除高亮
+    highlights.delete(messageId);
+    messageEl.classList.remove('highlighted');
+    messageEl.style.removeProperty('--highlight-color');
+    const annotationEl = messageEl.querySelector('.message-annotation');
+    if (annotationEl) annotationEl.remove();
+  } else {
+    // 添加高亮
+    showColorPicker(messageId);
+  }
+  
+  saveHighlights();
+}
+
+/**
+ * 显示颜色选择器
+ */
+function showColorPicker(messageId) {
+  const existingPicker = document.getElementById('highlightColorPicker');
+  if (existingPicker) existingPicker.remove();
+  
+  const picker = document.createElement('div');
+  picker.id = 'highlightColorPicker';
+  picker.className = 'color-picker';
+  picker.innerHTML = `
+    <div class="color-picker-title">选择高亮颜色</div>
+    <div class="color-options">
+      <button class="color-btn" data-color="yellow" style="background: #fef08a;" title="黄色"></button>
+      <button class="color-btn" data-color="blue" style="background: #93c5fd;" title="蓝色"></button>
+      <button class="color-btn" data-color="green" style="background: #86efac;" title="绿色"></button>
+      <button class="color-btn" data-color="pink" style="background: #f9a8d4;" title="粉色"></button>
+      <button class="color-btn" data-color="orange" style="background: #fdba74;" title="橙色"></button>
+    </div>
+    <div class="annotation-input">
+      <input type="text" id="annotationText" placeholder="添加标注（可选）" maxlength="200" />
+    </div>
+    <div class="color-picker-actions">
+      <button class="btn btn-sm" id="cancelHighlight">取消</button>
+      <button class="btn btn-sm btn-primary" id="confirmHighlight">确定</button>
+    </div>
+  `;
+  
+  document.body.appendChild(picker);
+  
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  const rect = messageEl.getBoundingClientRect();
+  picker.style.top = `${rect.bottom + 10}px`;
+  picker.style.left = `${rect.left}px`;
+  
+  // 颜色选择事件
+  picker.querySelectorAll('.color-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      picker.querySelectorAll('.color-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+    });
+  });
+  
+  // 确定高亮
+  picker.querySelector('#confirmHighlight').addEventListener('click', () => {
+    const selectedColor = picker.querySelector('.color-btn.selected');
+    if (!selectedColor) {
+      alert('请选择一个颜色');
+      return;
+    }
+    
+    const color = selectedColor.dataset.color;
+    const annotation = document.getElementById('annotationText').value.trim();
+    
+    applyHighlight(messageId, color, annotation);
+    picker.remove();
+  });
+  
+  // 取消
+  picker.querySelector('#cancelHighlight').addEventListener('click', () => {
+    picker.remove();
+  });
+  
+  // 默认选中第一个颜色
+  picker.querySelector('.color-btn').classList.add('selected');
+}
+
+/**
+ * 应用高亮
+ */
+function applyHighlight(messageId, color, annotation) {
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return;
+  
+  const colorMap = {
+    'yellow': '#fef08a',
+    'blue': '#93c5fd',
+    'green': '#86efac',
+    'pink': '#f9a8d4',
+    'orange': '#fdba74'
+  };
+  
+  const bgColor = colorMap[color] || '#fef08a';
+  
+  // 保存高亮数据
+  highlights.set(messageId, {
+    color,
+    annotation,
+    highlightedBy: 'user',
+    highlightedAt: new Date().toISOString()
+  });
+  
+  // 应用样式
+  messageEl.classList.add('highlighted');
+  messageEl.style.setProperty('--highlight-color', bgColor);
+  
+  // 添加标注
+  if (annotation) {
+    let annotationEl = messageEl.querySelector('.message-annotation');
+    if (!annotationEl) {
+      annotationEl = document.createElement('div');
+      annotationEl.className = 'message-annotation';
+      messageEl.appendChild(annotationEl);
+    }
+    annotationEl.innerHTML = `<span class="annotation-label">📝 标注：</span>${escapeHtml(annotation)}`;
+  } else {
+    const annotationEl = messageEl.querySelector('.message-annotation');
+    if (annotationEl) annotationEl.remove();
+  }
+  
+  // 更新按钮状态
+  const highlightBtn = messageEl.querySelector('.highlight-btn');
+  if (highlightBtn) {
+    highlightBtn.classList.add('active');
+    highlightBtn.title = '取消高亮';
+  }
+  
+  saveHighlights();
+}
+
+/**
+ * 移除高亮
+ */
+function removeHighlight(messageId) {
+  highlights.delete(messageId);
+  
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (messageEl) {
+    messageEl.classList.remove('highlighted');
+    messageEl.style.removeProperty('--highlight-color');
+    const annotationEl = messageEl.querySelector('.message-annotation');
+    if (annotationEl) annotationEl.remove();
+    
+    const highlightBtn = messageEl.querySelector('.highlight-btn');
+    if (highlightBtn) {
+      highlightBtn.classList.remove('active');
+      highlightBtn.title = '高亮';
+    }
+  }
+  
+  saveHighlights();
+}
+
+// ==================== 思维链可视化功能 ====================
+
+/**
+ * 切换思维链显示
+ */
+function toggleReasoning(messageId) {
+  const isVisible = reasoningVisibility.get(messageId) || false;
+  reasoningVisibility.set(messageId, !isVisible);
+  
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return;
+  
+  let reasoningEl = messageEl.querySelector('.reasoning-chain');
+  
+  if (!isVisible) {
+    // 展开思维链
+    if (!reasoningEl) {
+      // 从服务器获取思维链数据
+      fetchReasoningData(messageId).then(reasoning => {
+        if (reasoning && reasoning.length > 0) {
+          reasoningEl = createReasoningChain(messageId, reasoning);
+          messageEl.appendChild(reasoningEl);
+        }
+      });
+    } else {
+      reasoningEl.style.display = 'block';
+    }
+  } else {
+    // 折叠思维链
+    if (reasoningEl) {
+      reasoningEl.style.display = 'none';
+    }
+  }
+}
+
+/**
+ * 获取思维链数据
+ */
+async function fetchReasoningData(messageId) {
+  // 这里从当前加载的消息数据中获取
+  // 如果需要实时获取，可以调用 API
+  const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageEl) return null;
+  
+  // 从 DOM 元素的数据属性中获取思维链
+  const reasoningData = messageEl.dataset.reasoning;
+  if (reasoningData) {
+    try {
+      return JSON.parse(reasoningData);
+    } catch (e) {
+      console.error('Failed to parse reasoning data:', e);
+      return null;
+    }
+  }
+  
+  return null;
+}
+
+/**
+ * 创建思维链可视化
+ */
+function createReasoningChain(messageId, reasoning) {
+  const container = document.createElement('div');
+  container.className = 'reasoning-chain';
+  
+  const header = document.createElement('div');
+  header.className = 'reasoning-header';
+  header.innerHTML = `
+    <span class="reasoning-title">🧠 思维链</span>
+    <button class="reasoning-close" onclick="toggleReasoning('${messageId}')">✕</button>
+  `;
+  container.appendChild(header);
+  
+  const stepsContainer = document.createElement('div');
+  stepsContainer.className = 'reasoning-steps';
+  
+  // 创建步骤树
+  let currentStep = null;
+  let depth = 0;
+  
+  reasoning.forEach((step, index) => {
+    const stepEl = document.createElement('div');
+    stepEl.className = 'reasoning-step';
+    stepEl.dataset.step = step.step || index + 1;
+    
+    const confidenceStars = step.confidence 
+      ? '⭐'.repeat(Math.round(step.confidence * 5)) 
+      : '';
+    
+    stepEl.innerHTML = `
+      <div class="step-number">${step.step || index + 1}</div>
+      <div class="step-content">
+        <div class="step-thought">${escapeHtml(step.thought)}</div>
+        ${step.confidence ? `<div class="step-confidence">置信度: ${Math.round(step.confidence * 100)}% ${confidenceStars}</div>` : ''}
+        ${step.timestamp ? `<div class="step-time">${formatTime(step.timestamp)}</div>` : ''}
+      </div>
+    `;
+    
+    stepsContainer.appendChild(stepEl);
+  });
+  
+  container.appendChild(stepsContainer);
+  
+  return container;
+}
+
+/**
+ * 显示思维链（从 API 获取）
+ */
+async function showReasoning(messageId) {
+  try {
+    const response = await fetch(`/api/message/${messageId}/reasoning`);
+    const data = await response.json();
+    
+    if (data.reasoning && data.reasoning.length > 0) {
+      const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
+      if (!messageEl) return;
+      
+      let reasoningEl = messageEl.querySelector('.reasoning-chain');
+      if (reasoningEl) {
+        reasoningEl.remove();
+      }
+      
+      reasoningEl = createReasoningChain(messageId, data.reasoning);
+      messageEl.appendChild(reasoningEl);
+      
+      reasoningVisibility.set(messageId, true);
+    }
+  } catch (error) {
+    console.error('Failed to load reasoning:', error);
+  }
+}

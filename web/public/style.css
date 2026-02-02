@@ -740,3 +740,399 @@ body {
   font-size: 0.85rem;
   color: var(--text-secondary);
 }
+
+/* ==================== 高亮和标注样式 ==================== */
+
+/* 高亮消息 */
+.message.highlighted {
+  background: var(--highlight-color);
+  border-radius: 8px;
+  padding: 1rem;
+  margin: 0.5rem 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.2s;
+}
+
+.message.highlighted:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 消息操作按钮 */
+.message-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.action-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s;
+  opacity: 0.6;
+}
+
+.message:hover .action-btn {
+  opacity: 1;
+}
+
+.action-btn:hover {
+  background: var(--bg-card);
+  transform: scale(1.1);
+}
+
+.action-btn.highlight-btn.active {
+  background: var(--warning);
+  border-color: var(--warning);
+  opacity: 1;
+}
+
+/* 消息标注 */
+.message-annotation {
+  margin-top: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid var(--primary-color);
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.annotation-label {
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-right: 0.5rem;
+}
+
+/* 颜色选择器 */
+.color-picker {
+  position: fixed;
+  background: var(--bg-card);
+  border: 2px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  z-index: 10000;
+  min-width: 250px;
+}
+
+.color-picker-title {
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text-primary);
+}
+
+.color-options {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.color-btn {
+  width: 40px;
+  height: 40px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.color-btn:hover {
+  transform: scale(1.1);
+}
+
+.color-btn.selected {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(255, 107, 107, 0.3);
+}
+
+.annotation-input input {
+  width: 100%;
+  padding: 0.5rem;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  margin-bottom: 0.75rem;
+}
+
+.annotation-input input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.color-picker-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+.btn-primary {
+  background: var(--primary-color);
+}
+
+/* 深色主题下的高亮消息适配 */
+[data-theme="dark"] .message-annotation {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 浅色主题下的高亮消息适配 */
+[data-theme="light"] .message.highlighted {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .color-picker {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ==================== 思维链可视化样式 ==================== */
+
+/* 思维链容器 */
+.reasoning-chain {
+  margin-top: 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  overflow: hidden;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 1000px;
+  }
+}
+
+/* 思维链头部 */
+.reasoning-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: var(--bg-dark);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.reasoning-title {
+  font-weight: 600;
+  color: var(--secondary-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reasoning-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.2rem;
+  padding: 0.25rem;
+  opacity: 0.6;
+  transition: all 0.2s;
+}
+
+.reasoning-close:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+/* 思维链步骤 */
+.reasoning-steps {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reasoning-step {
+  display: flex;
+  gap: 0.75rem;
+  position: relative;
+}
+
+.reasoning-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 1.25rem;
+  top: 2.5rem;
+  bottom: -0.75rem;
+  width: 2px;
+  background: var(--border-color);
+}
+
+.step-number {
+  width: 2.5rem;
+  height: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 50%;
+  font-weight: 600;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.step-content {
+  flex: 1;
+  padding: 0.75rem;
+  background: var(--bg-dark);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.step-thought {
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin-bottom: 0.5rem;
+}
+
+.step-confidence {
+  font-size: 0.85rem;
+  color: var(--warning);
+  margin-bottom: 0.25rem;
+}
+
+.step-time {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* 深色主题适配 */
+[data-theme="dark"] .reasoning-step:not(:last-child)::after {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 浅色主题适配 */
+[data-theme="light"] .reasoning-chain {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .step-content {
+  background: #f8f9fa;
+}
+
+/* ==================== 质量评分样式 ==================== */
+
+.quality-score-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.quality-total {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.quality-score {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.score-number {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.score-max {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+}
+
+.quality-rating {
+  padding: 0.5rem 1.5rem;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 1.1rem;
+  text-align: center;
+  min-width: 100px;
+}
+
+.rating-excellent {
+  background: var(--success);
+  color: white;
+}
+
+.rating-good {
+  background: var(--secondary-color);
+  color: white;
+}
+
+.rating-average {
+  background: var(--warning);
+  color: #333;
+}
+
+.rating-poor {
+  background: var(--error);
+  color: white;
+}
+
+.quality-dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.dimension {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dimension-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+}
+
+.dimension-score {
+  font-weight: 600;
+  color: var(--primary-color);
+}
+
+.dimension-bar {
+  height: 8px;
+  background: var(--bg-dark);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.dimension-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  border-radius: 4px;
+  transition: width 0.5s ease-out;
+}
+
+/* 深色主题适配 */
+[data-theme="dark"] .dimension-bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* 浅色主题适配 */
+[data-theme="light"] .dimension-bar {
+  background: #e9ecef;
+}
+
+
+

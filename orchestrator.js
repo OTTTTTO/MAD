@@ -72,7 +72,8 @@ class DiscussionContext {
       content,
       timestamp: Date.now(),
       round: this.rounds,
-      metadata
+      metadata,
+      reasoning: metadata.reasoning || null // 支持思维链数据
     };
     this.messages.push(message);
     this.updatedAt = Date.now();
@@ -958,6 +959,155 @@ class DiscussionOrchestrator {
         obj[word] = count;
         return obj;
       }, {});
+  }
+
+  /**
+   * 计算讨论质量评分
+   */
+  calculateDiscussionQuality(context) {
+    const messages = context.messages;
+    
+    if (messages.length === 0) {
+      return {
+        innovation: 0,
+        completeness: 0,
+        feasibility: 0,
+        value: 0,
+        total: 0,
+        rating: '无数据'
+      };
+    }
+
+    // 计算创新性
+    const innovation = this.calculateInnovation(messages, context);
+    
+    // 计算完整性
+    const completeness = this.calculateCompleteness(messages);
+    
+    // 计算可行性
+    const feasibility = this.calculateFeasibility(messages);
+    
+    // 计算价值性
+    const value = this.calculateValue(messages);
+    
+    // 总分（加权平均）
+    const total = (
+      innovation * 0.3 +
+      completeness * 0.25 +
+      feasibility * 0.25 +
+      value * 0.2
+    );
+    
+    // 评级
+    const rating = this.getQualityRating(total);
+    
+    return {
+      innovation: Math.round(innovation * 100) / 100,
+      completeness: Math.round(completeness * 100) / 100,
+      feasibility: Math.round(feasibility * 100) / 100,
+      value: Math.round(value * 100) / 100,
+      total: Math.round(total * 100) / 100,
+      rating
+    };
+  }
+
+  /**
+   * 计算创新性
+   */
+  calculateInnovation(messages, context) {
+    const uniqueIdeas = new Set();
+    const agentCount = new Set();
+    
+    messages.forEach(msg => {
+      // 提取关键词作为观点
+      const words = this.extractKeywords(msg.content);
+      words.forEach(word => uniqueIdeas.add(word));
+      agentCount.add(msg.role);
+    });
+    
+    // 创新性 = 观点多样性 + Agent 多样性
+    const ideaScore = Math.min(uniqueIdeas.size / 20, 1); // 最多 20 个独特观点
+    const agentScore = Math.min(agentCount.size / 6, 1); // 最多 6 个 Agent
+    
+    return (ideaScore * 0.6 + agentScore * 0.4);
+  }
+
+  /**
+   * 计算完整性
+   */
+  calculateCompleteness(messages) {
+    const content = messages.map(m => m.content).join(' ');
+    
+    // 检查是否包含关键要素
+    const hasProblemDefinition = /问题|需求|目标|挑战/.test(content);
+    const hasSolution = /方案|建议|解决|实现/.test(content);
+    const hasRiskAssessment = /风险|挑战|难点|注意/.test(content);
+    const hasConclusion = /结论|总结|决定|共识/.test(content);
+    
+    const score = (
+      (hasProblemDefinition ? 1 : 0) * 0.3 +
+      (hasSolution ? 1 : 0) * 0.3 +
+      (hasRiskAssessment ? 1 : 0) * 0.2 +
+      (hasConclusion ? 1 : 0) * 0.2
+    );
+    
+    return score;
+  }
+
+  /**
+   * 计算可行性
+   */
+  calculateFeasibility(messages) {
+    const content = messages.map(m => m.content).join(' ');
+    
+    // 统计关键词提及次数
+    const technicalMentions = (content.match(/技术|实现|可行|开发|代码/g) || []).length;
+    const riskMentions = (content.match(/风险|挑战|难点|问题/g) || []).length;
+    
+    // 有技术考虑 + 有风险识别 = 高可行性
+    const technicalScore = Math.min(technicalMentions * 0.1, 0.6);
+    const riskScore = Math.min(riskMentions * 0.05, 0.4);
+    
+    return technicalScore + riskScore;
+  }
+
+  /**
+   * 计算价值性
+   */
+  calculateValue(messages) {
+    const content = messages.map(m => m.content).join(' ');
+    
+    // 统计关键词提及次数
+    const businessMentions = (content.match(/价值|收益|用户|市场|商业/g) || []).length;
+    const actionableItems = (content.match(/下一步|行动|计划|建议/g) || []).length;
+    
+    const businessScore = Math.min(businessMentions * 0.1, 0.5);
+    const actionScore = Math.min(actionableItems * 0.2, 0.5);
+    
+    return businessScore + actionScore;
+  }
+
+  /**
+   * 提取关键词
+   */
+  extractKeywords(content) {
+    const stopWords = new Set(['的', '了', '是', '在', '我', '有', '和', '就', '不', '人', '都', '一', '一个', '上', '也', '很', '到', '说', '要', '去', '你', '会', '着', '没有', '看', '好', '自己', '这']);
+    
+    return content
+      .toLowerCase()
+      .replace(/[^\u4e00-\u9fa5a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter(w => w.length > 1 && !stopWords.has(w));
+  }
+
+  /**
+   * 获取质量评级
+   */
+  getQualityRating(score) {
+    if (score >= 0.85) return '优秀';
+    if (score >= 0.7) return '良好';
+    if (score >= 0.5) return '一般';
+    return '需改进';
   }
 }
 
