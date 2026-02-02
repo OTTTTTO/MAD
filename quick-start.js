@@ -28,12 +28,58 @@ function log(color, ...args) {
   console.log(color + args.join(' ') + colors.reset);
 }
 
+// 内置模板
+const templates = {
+  'brainstorm': {
+    topic: '💡 新产品功能头脑风暴',
+    rounds: 8,
+    duration: 180000,
+    description: '6 个专业 Agent 协同进行创新思考'
+  },
+  'technical': {
+    topic: '🔧 技术架构设计讨论',
+    rounds: 6,
+    duration: 150000,
+    description: '从可行性、性能、安全多角度评估'
+  },
+  'user-research': {
+    topic: '👥 用户需求分析',
+    rounds: 5,
+    duration: 120000,
+    description: '深入理解用户真实需求'
+  },
+  'quick': {
+    topic: '⚡ 快速决策讨论',
+    rounds: 3,
+    duration: 60000,
+    description: '快速达成共识'
+  }
+};
+
 async function quickStart(options = {}) {
   const {
-    topic = '演示：如何使用 Multi-Agent Discussion',
+    topic,
+    template,
     rounds = 5,
     duration = 120000
   } = options;
+
+  // 应用模板
+  let finalTopic = topic;
+  let finalRounds = rounds;
+  let finalDuration = duration;
+
+  if (template && templates[template]) {
+    const tmpl = templates[template];
+    finalTopic = finalTopic || tmpl.topic;
+    finalRounds = tmpl.rounds;
+    finalDuration = tmpl.duration;
+    log(colors.yellow, `\n📋 使用模板: ${template} - ${tmpl.description}\n`);
+  } else if (template) {
+    log(colors.yellow, `⚠️  未找到模板 "${template}"，使用默认配置\n`);
+  }
+
+  finalTopic = finalTopic || '演示：如何使用 Multi-Agent Discussion';
 
   log(colors.bright + colors.cyan, '\n🚀 Multi-Agent Discussion - 快速开始\n');
   console.log('═'.repeat(60));
@@ -41,8 +87,8 @@ async function quickStart(options = {}) {
   // 1. 初始化
   log(colors.blue, '\n📋 步骤 1: 初始化协调器...');
   const orchestrator = new DiscussionOrchestrator({
-    maxDuration: duration,
-    maxRounds: rounds,
+    maxDuration: finalDuration,
+    maxRounds: finalRounds,
     enableConflictDetection: true,
     enableDynamicSpeaking: true
   });
@@ -126,24 +172,42 @@ function parseArgs() {
     if (arg === '--topic' && nextArg) {
       options.topic = nextArg;
       i++;
+    } else if (arg === '--template' || arg === '-t') {
+      if (nextArg && !nextArg.startsWith('-')) {
+        options.template = nextArg;
+        i++;
+      } else {
+        options.template = 'brainstorm'; // 默认模板
+      }
     } else if (arg === '--rounds' && nextArg) {
       options.rounds = parseInt(nextArg, 10);
       i++;
     } else if (arg === '--duration' && nextArg) {
       options.duration = parseInt(nextArg, 10);
       i++;
+    } else if (arg === '--list-templates') {
+      console.log('\n📋 可用讨论模板:\n');
+      Object.entries(templates).forEach(([key, tmpl]) => {
+        console.log(`${colors.cyan}${key.padEnd(15)}${colors.reset} ${tmpl.description}`);
+        console.log(`               ${tmpl.topic} (${tmpl.rounds} 轮, ${Math.round(tmpl.duration/1000)}秒)`);
+      });
+      console.log(`\n使用方式: node quick-start.js --template <模板名>\n`);
+      process.exit(0);
     } else if (arg === '--help' || arg === '-h') {
       console.log('\n🚀 MAD 快速启动脚本\n');
       console.log('用法: node quick-start.js [选项]\n');
       console.log('选项:');
-      console.log('  --topic <主题>     自定义讨论主题');
-      console.log('  --rounds <数字>    讨论轮数（默认 5）');
-      console.log('  --duration <毫秒>  最大时长（默认 120000）');
-      console.log('  --help, -h         显示帮助信息\n');
+      console.log('  --topic <主题>         自定义讨论主题');
+      console.log('  --template, -t <名称>  使用预设模板');
+      console.log('  --list-templates       列出所有可用模板');
+      console.log('  --rounds <数字>        讨论轮数（默认 5）');
+      console.log('  --duration <毫秒>      最大时长（默认 120000）');
+      console.log('  --help, -h             显示帮助信息\n');
       console.log('示例:');
       console.log('  node quick-start.js');
-      console.log('  node quick-start.js --topic "AI 未来发展"');
-      console.log('  node quick-start.js --rounds 3 --duration 60000\n');
+      console.log(`  node quick-start.js --template brainstorm`);
+      console.log(`  node quick-start.js -t technical --topic "微服务架构"`);
+      console.log('  node quick-start.js --topic "AI 未来发展" --rounds 3\n');
       process.exit(0);
     }
   }
