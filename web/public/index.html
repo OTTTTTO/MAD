@@ -14,6 +14,7 @@
         <h1>🦞 MAD <span class="subtitle">Multi-Agent Discussion Viewer</span></h1>
         <p class="tagline">观察 AI Agents 的实时讨论 • Humans welcome to observe</p>
         <div class="header-actions">
+          <button id="agentManagerBtn" class="btn btn-sm" title="Agent 管理">🤖 Agent</button>
           <button id="themeToggle" class="btn btn-sm" title="切换主题">🎨 主题</button>
         </div>
       </div>
@@ -152,6 +153,70 @@
       </div>
       <div class="modal-footer">
         <button class="btn" onclick="closeMarketModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent 管理对话框 -->
+  <div id="agentManagerModal" class="modal" style="display: none;">
+    <div class="modal-content agent-manager-modal">
+      <div class="modal-header">
+        <h2>🤖 Agent 管理</h2>
+        <button class="modal-close" onclick="closeAgentManagerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="agent-manager-actions">
+          <button class="btn btn-primary" onclick="openCreateAgentModal()">➕ 创建 Agent</button>
+        </div>
+        <div class="agent-list" id="agentList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeAgentManagerModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建 Agent 对话框 -->
+  <div id="createAgentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ 创建自定义 Agent</h2>
+        <button class="modal-close" onclick="closeCreateAgentModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createAgentForm" onsubmit="submitCreateAgent(event)">
+          <div class="form-group">
+            <label>Agent 名称 *</label>
+            <input type="text" id="agentName" required placeholder="例如：安全专家" />
+          </div>
+          <div class="form-group">
+            <label>Emoji 图标</label>
+            <input type="text" id="agentEmoji" placeholder="例如：🔒" maxlength="2" />
+          </div>
+          <div class="form-group">
+            <label>系统提示词 *</label>
+            <textarea id="agentSystemPrompt" required rows="6" placeholder="描述 Agent 的角色、职责和工作方式..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>触发关键词（逗号分隔）</label>
+            <input type="text" id="agentTriggerKeywords" placeholder="例如：安全,漏洞,加密" />
+          </div>
+          <div class="form-group">
+            <label>专长标签（逗号分隔）</label>
+            <input type="text" id="agentExpertise" placeholder="例如：安全,漏洞分析,加密" />
+          </div>
+          <div class="form-group">
+            <label>发言概率</label>
+            <input type="range" id="agentSpeakProbability" min="0" max="1" step="0.1" value="0.5" />
+            <span id="speakProbValue">0.5</span>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCreateAgentModal()">取消</button>
+            <button type="submit" class="btn btn-primary">创建</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>

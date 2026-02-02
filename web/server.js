@@ -437,7 +437,7 @@ async function createServer() {
           try {
             const { templateId, params } = JSON.parse(body);
             const result = await orchestrator.createDiscussionFromMarket(templateId, params);
-            
+
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             res.writeHead(200);
             res.end(JSON.stringify(result, null, 2));
@@ -447,6 +447,123 @@ async function createServer() {
           }
         });
         return;
+      }
+
+      // API: 获取自定义 Agent 列表
+      if (url.pathname === '/api/agents/custom') {
+        const data = await orchestrator.getCustomAgents();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(data, null, 2));
+        return;
+      }
+
+      // API: 获取单个自定义 Agent
+      if (url.pathname.startsWith('/api/agents/custom/')) {
+        const agentId = url.pathname.split('/')[4];
+        const agent = await orchestrator.getCustomAgent(agentId);
+
+        if (!agent) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: 'Agent not found' }));
+          return;
+        }
+
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(agent, null, 2));
+        return;
+      }
+
+      // API: 创建自定义 Agent
+      if (url.pathname === '/api/agents/custom' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const agentData = JSON.parse(body);
+            const agent = await orchestrator.createCustomAgent(agentData);
+
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(agent, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 更新自定义 Agent
+      if (url.pathname.startsWith('/api/agents/custom/') && req.method === 'PUT') {
+        const agentId = url.pathname.split('/')[4];
+
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const updates = JSON.parse(body);
+            const agent = await orchestrator.updateCustomAgent(agentId, updates);
+
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(agent, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 删除自定义 Agent
+      if (url.pathname.startsWith('/api/agents/custom/') && req.method === 'DELETE') {
+        const agentId = url.pathname.split('/')[4];
+
+        try {
+          const result = await orchestrator.deleteCustomAgent(agentId);
+
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 测试 Agent
+      if (url.pathname.startsWith('/api/agents/custom/') && url.pathname.endsWith('/test')) {
+        const agentId = url.pathname.split('/')[4];
+
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const { testMessage } = JSON.parse(body);
+            const result = await orchestrator.testCustomAgent(agentId, testMessage);
+
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 获取所有可用 Agent
+      if (url.pathname === '/api/agents/all') {
+        const allAgents = await orchestrator.loadAllAgents();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(allAgents, null, 2));
+        return;
+      }
       }
             const result = await orchestrator.createDiscussionFromTemplate(templateId, params);
             res.setHeader('Content-Type', 'application/json; charset=utf-8');

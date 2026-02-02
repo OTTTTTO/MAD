@@ -80,6 +80,16 @@ function initApp() {
     openMarketModal();
   });
 
+  // Agent 管理按钮
+  document.getElementById('agentManagerBtn').addEventListener('click', () => {
+    openAgentManagerModal();
+  });
+
+  // 发言概率滑块
+  document.getElementById('agentSpeakProbability').addEventListener('input', (e) => {
+    document.getElementById('speakProbValue').textContent = e.target.value;
+  });
+
   let searchTimeout = null;
   
   searchInput.addEventListener('input', (e) => {
@@ -2016,4 +2026,216 @@ async function useMarketTemplate(templateId) {
 function viewMarketTemplate(templateId) {
   // 简化版：直接使用模板
   useMarketTemplate(templateId);
+}
+
+/**
+ * 打开 Agent 管理器
+ */
+async function openAgentManagerModal() {
+  const modal = document.getElementById('agentManagerModal');
+  modal.style.display = 'flex';
+
+  await loadCustomAgents();
+}
+
+/**
+ * 关闭 Agent 管理器
+ */
+function closeAgentManagerModal() {
+  document.getElementById('agentManagerModal').style.display = 'none';
+}
+
+/**
+ * 加载自定义 Agent 列表
+ */
+async function loadCustomAgents() {
+  try {
+    updateStatus('加载 Agent...');
+
+    const response = await fetch('/api/agents/custom');
+    const data = await response.json();
+
+    displayCustomAgents(data.agents);
+
+    updateStatus(`已加载 ${data.agents.length} 个自定义 Agent`);
+  } catch (error) {
+    console.error('加载 Agent 失败:', error);
+    updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示自定义 Agent 列表
+ */
+function displayCustomAgents(agents) {
+  const container = document.getElementById('agentList');
+
+  if (!agents || agents.length === 0) {
+    container.innerHTML = '<div class="empty-state">暂无自定义 Agent<br><button class="btn btn-primary" onclick="openCreateAgentModal()">创建第一个 Agent</button></div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="agent-grid">
+      ${agents.map(agent => `
+        <div class="agent-card ${agent.enabled ? '' : 'disabled'}">
+          <div class="agent-card-header">
+            <div class="agent-icon">${agent.emoji || '🤖'}</div>
+            <div class="agent-info">
+              <div class="agent-name">${escapeHtml(agent.name)}</div>
+              <div class="agent-id">${escapeHtml(agent.id)}</div>
+            </div>
+          </div>
+          <div class="agent-card-body">
+            <div class="agent-prompt-preview">${escapeHtml(agent.systemPrompt.substring(0, 100))}...</div>
+            <div class="agent-tags">
+              ${(agent.expertise || []).slice(0, 3).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+            </div>
+          </div>
+          <div class="agent-card-footer">
+            <div class="agent-meta">
+              <span>发言: ${Math.round((agent.speakProbability || 0.5) * 100)}%</span>
+              <span>作者: ${escapeHtml(agent.author || 'Unknown')}</span>
+            </div>
+            <div class="agent-actions">
+              <button class="btn btn-sm" onclick="testAgent('${agent.id}')">测试</button>
+              <button class="btn btn-sm" onclick="editAgent('${agent.id}')">编辑</button>
+              <button class="btn btn-sm btn-danger" onclick="deleteAgent('${agent.id}')">删除</button>
+            </div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/**
+ * 打开创建 Agent 对话框
+ */
+function openCreateAgentModal() {
+  document.getElementById('createAgentModal').style.display = 'flex';
+  // 重置表单
+  document.getElementById('createAgentForm').reset();
+  document.getElementById('speakProbValue').textContent = '0.5';
+}
+
+/**
+ * 关闭创建 Agent 对话框
+ */
+function closeCreateAgentModal() {
+  document.getElementById('createAgentModal').style.display = 'none';
+}
+
+/**
+ * 提交创建 Agent
+ */
+async function submitCreateAgent(event) {
+  event.preventDefault();
+
+  const name = document.getElementById('agentName').value.trim();
+  const emoji = document.getElementById('agentEmoji').value.trim() || '🤖';
+  const systemPrompt = document.getElementById('agentSystemPrompt').value.trim();
+  const triggerKeywords = document.getElementById('agentTriggerKeywords').value.split(',').map(k => k.trim()).filter(k => k);
+  const expertise = document.getElementById('agentExpertise').value.split(',').map(k => k.trim()).filter(k => k);
+  const speakProbability = parseFloat(document.getElementById('agentSpeakProbability').value);
+
+  try {
+    updateStatus('创建 Agent...');
+
+    const response = await fetch('/api/agents/custom', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name,
+        emoji,
+        systemPrompt,
+        triggerKeywords,
+        expertise,
+        speakProbability,
+        author: 'User'
+      })
+    });
+
+    const agent = await response.json();
+
+    if (response.ok) {
+      updateStatus(`Agent "${agent.name}" 创建成功`);
+      closeCreateAgentModal();
+      await loadCustomAgents();
+    } else {
+      updateStatus(`创建失败：${agent.error}`);
+    }
+  } catch (error) {
+    console.error('创建 Agent 失败:', error);
+    updateStatus('创建失败');
+  }
+}
+
+/**
+ * 测试 Agent
+ */
+async function testAgent(agentId) {
+  try {
+    updateStatus('测试 Agent...');
+
+    const response = await fetch(`/api/agents/custom/${agentId}/test`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        testMessage: '请简单介绍一下你自己。'
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      alert(`Agent: ${result.agentName}\n\n测试消息: ${result.testMessage}\n\n回复: ${result.response || '无回复'}`);
+      updateStatus('测试完成');
+    } else {
+      updateStatus(`测试失败：${result.error}`);
+    }
+  } catch (error) {
+    console.error('测试 Agent 失败:', error);
+    updateStatus('测试失败');
+  }
+}
+
+/**
+ * 编辑 Agent（简化版：仅提示）
+ */
+function editAgent(agentId) {
+  alert('编辑功能开发中...\n\nAgent ID: ' + agentId + '\n\n提示：您可以通过删除并重新创建来修改 Agent。');
+}
+
+/**
+ * 删除 Agent
+ */
+async function deleteAgent(agentId) {
+  if (!confirm('确定要删除这个 Agent 吗？')) {
+    return;
+  }
+
+  try {
+    updateStatus('删除 Agent...');
+
+    const response = await fetch(`/api/agents/custom/${agentId}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      updateStatus('Agent 删除成功');
+      await loadCustomAgents();
+    } else {
+      updateStatus(`删除失败：${result.error}`);
+    }
+  } catch (error) {
+    console.error('删除 Agent 失败:', error);
+    updateStatus('删除失败');
+  }
 }

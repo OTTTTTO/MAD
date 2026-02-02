@@ -1647,6 +1647,187 @@ class DiscussionOrchestrator {
       template
     };
   }
+
+  /**
+   * 获取自定义 Agent 列表
+   */
+  async getCustomAgents() {
+    try {
+      const indexPath = path.join(__dirname, 'agents', 'custom', 'index.json');
+      const data = await fs.readFile(indexPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('[Orchestrator] Failed to load custom agents:', error);
+      return { agents: [], stats: { totalAgents: 0, enabledAgents: 0 } };
+    }
+  }
+
+  /**
+   * 获取单个自定义 Agent
+   */
+  async getCustomAgent(agentId) {
+    const data = await this.getCustomAgents();
+    return data.agents.find(a => a.id === agentId) || null;
+  }
+
+  /**
+   * 创建自定义 Agent
+   */
+  async createCustomAgent(agentData) {
+    const indexPath = path.join(__dirname, 'agents', 'custom', 'index.json');
+    const data = await this.getCustomAgents();
+
+    // 生成 ID
+    const newId = `custom-${Date.now()}`;
+
+    // 验证数据
+    if (!agentData.name || !agentData.systemPrompt) {
+      throw new Error('Agent name and systemPrompt are required');
+    }
+
+    // 创建 Agent
+    const newAgent = {
+      id: newId,
+      name: agentData.name,
+      emoji: agentData.emoji || '🤖',
+      agentId: 'main',
+      systemPrompt: agentData.systemPrompt,
+      triggerKeywords: agentData.triggerKeywords || [],
+      expertise: agentData.expertise || [],
+      personality: agentData.personality || {
+        openness: 0.7,
+        rigor: 0.7,
+        creativity: 0.7
+      },
+      responseRequired: agentData.responseRequired || false,
+      speakProbability: agentData.speakProbability || 0.5,
+      custom: true,
+      author: agentData.author || 'User',
+      createdAt: new Date().toISOString().split('T')[0],
+      enabled: true
+    };
+
+    // 添加到列表
+    data.agents.push(newAgent);
+    data.stats.totalAgents = data.agents.length;
+    data.stats.enabledAgents = data.agents.filter(a => a.enabled).length;
+
+    // 保存
+    await fs.writeFile(indexPath, JSON.stringify(data, null, 2), 'utf8');
+
+    return newAgent;
+  }
+
+  /**
+   * 更新自定义 Agent
+   */
+  async updateCustomAgent(agentId, updates) {
+    const indexPath = path.join(__dirname, 'agents', 'custom', 'index.json');
+    const data = await this.getCustomAgents();
+    const agent = data.agents.find(a => a.id === agentId);
+
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
+
+    // 更新字段
+    Object.keys(updates).forEach(key => {
+      if (key !== 'id' && key !== 'createdAt') {
+        agent[key] = updates[key];
+      }
+    });
+
+    // 保存
+    await fs.writeFile(indexPath, JSON.stringify(data, null, 2), 'utf8');
+
+    return agent;
+  }
+
+  /**
+   * 删除自定义 Agent
+   */
+  async deleteCustomAgent(agentId) {
+    const indexPath = path.join(__dirname, 'agents', 'custom', 'index.json');
+    const data = await this.getCustomAgents();
+    const index = data.agents.findIndex(a => a.id === agentId);
+
+    if (index === -1) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
+
+    // 删除
+    data.agents.splice(index, 1);
+    data.stats.totalAgents = data.agents.length;
+    data.stats.enabledAgents = data.agents.filter(a => a.enabled).length;
+
+    // 保存
+    await fs.writeFile(indexPath, JSON.stringify(data, null, 2), 'utf8');
+
+    return { success: true };
+  }
+
+  /**
+   * 测试 Agent（发送测试消息）
+   */
+  async testCustomAgent(agentId, testMessage = '请简单介绍一下你自己。') {
+    const agent = await this.getCustomAgent(agentId);
+    if (!agent) {
+      throw new Error(`Agent ${agentId} not found`);
+    }
+
+    // 创建临时测试讨论
+    const { discussionId } = await this.createDiscussion(`Agent 测试：${agent.name}`, {
+      participants: [agent]
+    });
+
+    // 发送测试消息
+    await this.agentSpeak(discussionId, agentId, testMessage);
+
+    // 获取回复
+    const context = this.discussions.get(discussionId);
+    const messages = context.messages.filter(m => m.role === agentId);
+
+    // 清理测试讨论
+    await this.deleteDiscussion(discussionId);
+
+    return {
+      agentId,
+      agentName: agent.name,
+      testMessage,
+      response: messages.length > 0 ? messages[messages.length - 1].content : null
+    };
+  }
+
+  /**
+   * 加载所有可用 Agent（包括自定义）
+   */
+  async loadAllAgents() {
+    const customAgents = await this.getCustomAgents();
+
+    // 合并预定义和自定义 Agent
+    const allAgents = {
+      ...AGENT_ROLES
+    };
+
+    // 添加自定义 Agent
+    for (const agent of customAgents.agents) {
+      if (agent.enabled) {
+        allAgents[agent.id] = {
+          id: agent.id,
+          role: agent.name,
+          emoji: agent.emoji,
+          agentId: agent.agentId,
+          systemPrompt: agent.systemPrompt,
+          triggerKeywords: agent.triggerKeywords,
+          responseRequired: agent.responseRequired,
+          speakProbability: agent.speakProbability,
+          custom: true
+        };
+      }
+    }
+
+    return allAgents;
+  }
 }
 
 /**
