@@ -1,0 +1,60 @@
+{
+  "id": "1770005702976",
+  "name": "测试归档功能",
+  "category": "general",
+  "messages": [
+    {
+      "id": "msg-1",
+      "role": "coordinator",
+      "content": "这个讨论将被归档。",
+      "timestamp": 1770005702978,
+      "round": 0,
+      "metadata": {
+        "agentRole": "主协调员"
+      },
+      "reasoning": null,
+      "mentions": [],
+      "replyTo": null,
+      "quotes": []
+    }
+  ],
+  "markers": [],
+  "participants": [
+    {
+      "id": "coordinator",
+      "role": "主协调员",
+      "emoji": "💡",
+      "systemPrompt": "你是讨论协调员，负责引导讨论方向、识别分歧、总结共识",
+      "agentId": "main",
+      "triggerKeywords": [],
+      "responseRequired": false,
+      "speakProbability": 0.3,
+      "personality": "balanced"
+    }
+  ],
+  "tags": [
+    "历史讨论",
+    "general",
+    "active"
+  ],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 1,
+    "totalMarkers": 0,
+    "totalTokens": 3,
+    "progress": 50,
+    "createdAt": 1770005702976,
+    "updatedAt": 1770005702978
+  },
+  "status": "active",
+  "description": "测试归档功能",
+  "metadata": {
+    "originalDiscussionId": "disc-1770005702976",
+    "originalCreatedAt": 1770005702976,
+    "convertedAt": 1770049020214,
+    "originalFilePath": "/home/otto/.openclaw/multi-agent-discuss/discussions/disc-1770005702976.json",
+    "originalMessageCount": 1,
+    "originalMarkerCount": 0
+  }
+}

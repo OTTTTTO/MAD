@@ -1,60 +1,7 @@
 {
-  "id": {
-    "id": "disc-1770005344406",
-    "name": "测试搜索和分页功能",
-    "category": "general",
-    "description": "测试搜索和分页功能",
-    "status": "active",
-    "participants": [
-      {
-        "emoji": "🤖",
-        "agentId": "main",
-        "triggerKeywords": [],
-        "responseRequired": false,
-        "speakProbability": 0.5,
-        "personality": "balanced"
-      },
-      {
-        "emoji": "🤖",
-        "agentId": "main",
-        "triggerKeywords": [],
-        "responseRequired": false,
-        "speakProbability": 0.5,
-        "personality": "balanced"
-      },
-      {
-        "emoji": "🤖",
-        "agentId": "main",
-        "triggerKeywords": [],
-        "responseRequired": false,
-        "speakProbability": 0.5,
-        "personality": "balanced"
-      }
-    ],
-    "tags": [
-      "历史讨论",
-      "general",
-      "active"
-    ],
-    "messages": [],
-    "markers": [],
-    "stats": {
-      "totalMessages": 0,
-      "totalMarkers": 0,
-      "totalTokens": 0,
-      "progress": 50,
-      "createdAt": 1770005344406,
-      "updatedAt": 1770005344406
-    },
-    "metadata": {
-      "originalDiscussionId": "disc-1770005344406",
-      "originalCreatedAt": 1770005344406,
-      "convertedAt": 1770048831961,
-      "originalFilePath": "/home/otto/.openclaw/multi-agent-discuss/discussions/disc-1770005344406.json",
-      "originalMessageCount": 0,
-      "originalMarkerCount": 0
-    }
-  },
+  "id": "disc-1770005344406",
+  "name": "测试搜索和分页功能",
+  "category": "general",
   "messages": [],
   "markers": [],
   "participants": [],

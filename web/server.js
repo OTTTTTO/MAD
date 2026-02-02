@@ -1578,7 +1578,8 @@ async function createServer() {
       if (url.pathname === '/api/projects' || url.pathname === '/api/projects/list') {
         try {
           const ProjectManager = require('../src/core/project-manager.js');
-          const pm = new ProjectManager();
+          const projectDataDir = path.join(__dirname, '../data/projects');
+          const pm = new ProjectManager(projectDataDir);
           await pm.init();
           const projects = await pm.listProjects();
           res.setHeader('Content-Type', 'application/json');
@@ -1596,7 +1597,8 @@ async function createServer() {
       if (url.pathname.startsWith('/api/projects/statistics')) {
         try {
           const ProjectManager = require('../src/core/project-manager.js');
-          const pm = new ProjectManager();
+          const projectDataDir = path.join(__dirname, '../data/projects');
+          const pm = new ProjectManager(projectDataDir);
           await pm.init();
           const stats = await pm.getStatistics();
           res.setHeader('Content-Type', 'application/json');
@@ -1614,7 +1616,8 @@ async function createServer() {
       if (url.pathname.startsWith('/api/projects/search')) {
         try {
           const ProjectManager = require('../src/core/project-manager.js');
-          const pm = new ProjectManager();
+          const projectDataDir = path.join(__dirname, '../data/projects');
+          const pm = new ProjectManager(projectDataDir);
           await pm.init();
           const query = url.searchParams.get('q') || '';
           const limit = parseInt(url.searchParams.get('limit')) || 10;
@@ -1635,7 +1638,8 @@ async function createServer() {
         try {
           const projectId = url.pathname.split('/')[3];
           const ProjectManager = require('../src/core/project-manager.js');
-          const pm = new ProjectManager();
+          const projectDataDir = path.join(__dirname, '../data/projects');
+          const pm = new ProjectManager(projectDataDir);
           await pm.init();
           const project = await pm.loadProject(projectId);
           if (!project) {

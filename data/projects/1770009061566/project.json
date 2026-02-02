@@ -1,0 +1,121 @@
+{
+  "id": "1770009061566",
+  "name": "测试讨论：新功能评估",
+  "category": "general",
+  "messages": [
+    {
+      "id": "msg-1",
+      "role": "coordinator",
+      "content": "请从技术角度评估这个新功能",
+      "timestamp": 1770009061569,
+      "round": 0,
+      "metadata": {
+        "agentRole": "主协调员"
+      },
+      "reasoning": null,
+      "mentions": [],
+      "replyTo": null,
+      "quotes": []
+    },
+    {
+      "id": "msg-2",
+      "role": "technical",
+      "content": "从技术实现角度看，这个功能可行，但需要注意性能优化",
+      "timestamp": 1770009061570,
+      "round": 0,
+      "metadata": {
+        "agentRole": "技术可行性"
+      },
+      "reasoning": null,
+      "mentions": [],
+      "replyTo": null,
+      "quotes": []
+    },
+    {
+      "id": "msg-3",
+      "role": "testing",
+      "content": "我同意 @技术可行性 的观点，同时建议增加单元测试覆盖率",
+      "timestamp": 1770009061571,
+      "round": 0,
+      "metadata": {
+        "agentRole": "测试"
+      },
+      "reasoning": null,
+      "mentions": [],
+      "replyTo": null,
+      "quotes": []
+    }
+  ],
+  "markers": [],
+  "participants": [
+    {
+      "id": "coordinator",
+      "role": "主协调员",
+      "emoji": "💡",
+      "systemPrompt": "你是讨论协调员，负责引导讨论方向、识别分歧、总结共识",
+      "agentId": "main",
+      "triggerKeywords": [],
+      "responseRequired": false,
+      "speakProbability": 0.3,
+      "personality": "balanced"
+    },
+    {
+      "id": "technical",
+      "role": "技术可行性",
+      "emoji": "🔧",
+      "systemPrompt": "你是技术架构专家，评估技术实现方案、难点、工作量",
+      "agentId": "main",
+      "triggerKeywords": [
+        "技术",
+        "实现",
+        "开发",
+        "架构",
+        "代码"
+      ],
+      "responseRequired": false,
+      "speakProbability": 0.7,
+      "personality": "balanced"
+    },
+    {
+      "id": "testing",
+      "role": "测试",
+      "emoji": "🧪",
+      "systemPrompt": "你是测试专家，考虑质量保障、测试策略、风险控制",
+      "agentId": "main",
+      "triggerKeywords": [
+        "测试",
+        "质量",
+        "风险",
+        "验证"
+      ],
+      "responseRequired": false,
+      "speakProbability": 0.5,
+      "personality": "balanced"
+    }
+  ],
+  "tags": [
+    "历史讨论",
+    "general",
+    "active"
+  ],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 3,
+    "totalMarkers": 0,
+    "totalTokens": 18,
+    "progress": 50,
+    "createdAt": 1770009061566,
+    "updatedAt": 1770009061571
+  },
+  "status": "active",
+  "description": "测试讨论：新功能评估",
+  "metadata": {
+    "originalDiscussionId": "disc-1770009061566",
+    "originalCreatedAt": 1770009061566,
+    "convertedAt": 1770049020223,
+    "originalFilePath": "/home/otto/.openclaw/multi-agent-discuss/discussions/disc-1770009061566.json",
+    "originalMessageCount": 3,
+    "originalMarkerCount": 0
+  }
+}
