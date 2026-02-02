@@ -29,6 +29,7 @@ const { RealtimeManager } = require('./realtime.js');
 const { GlobalSearchManager } = require('./search/global.js');
 const { DiscussionCacheManager } = require('./cache/lru.js');
 const { DiscussionMessagePager, SnapshotPager } = require('./pagination/loader.js');
+const { DiscussionHistoryManager } = require('./history.js');
 
 // 加载模板
 let templates = null;
@@ -236,6 +237,7 @@ class DiscussionOrchestrator {
     this.cacheManager = null; // 缓存管理器（延迟初始化）
     this.messagePager = null; // 消息分页管理器（延迟初始化）
     this.snapshotPager = null; // 快照分页管理器（延迟初始化）
+    this.historyManager = null; // 历史管理器（延迟初始化）
   }
 
   /**
@@ -265,7 +267,11 @@ class DiscussionOrchestrator {
       this.messagePager = new DiscussionMessagePager(this);
       this.snapshotPager = new SnapshotPager(this);
       
-      console.log('[Orchestrator] Initialized successfully (v2.5.0)');
+      // 初始化 v2.5.2 历史管理器
+      this.historyManager = new DiscussionHistoryManager(this);
+      await this.historyManager.initialize();
+      
+      console.log('[Orchestrator] Initialized successfully (v2.5.2)');
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
       throw error;
@@ -2430,6 +2436,68 @@ DiscussionOrchestrator.prototype.getSnapshotsPaginated = async function(discussi
 };
 
 /**
+ * v2.5.2 便利方法 - 历史管理
+ */
+DiscussionOrchestrator.prototype.getHistoryStats = function() {
+  if (!this.historyManager) return null;
+  return this.historyManager.getHistoryStats();
+};
+
+DiscussionOrchestrator.prototype.getOldDiscussions = function(days = 30) {
+  if (!this.historyManager) return [];
+  return this.historyManager.getOldDiscussions(days);
+};
+
+DiscussionOrchestrator.prototype.archiveDiscussion = async function(discussionId) {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.archiveDiscussion(discussionId);
+};
+
+DiscussionOrchestrator.prototype.archiveOldDiscussions = async function(days = 30) {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.archiveOldDiscussions(days);
+};
+
+DiscussionOrchestrator.prototype.deleteDiscussion = async function(discussionId) {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.deleteDiscussion(discussionId);
+};
+
+DiscussionOrchestrator.prototype.clearEndedDiscussions = async function() {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.clearEndedDiscussions();
+};
+
+DiscussionOrchestrator.prototype.getArchiveList = async function() {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.getArchiveList();
+};
+
+DiscussionOrchestrator.prototype.restoreFromArchive = async function(discussionId) {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.restoreFromArchive(discussionId);
+};
+
+DiscussionOrchestrator.prototype.getStorageUsage = async function() {
+  if (!this.historyManager) {
+    await this.initialize();
+  }
+  return this.historyManager.getStorageUsage();
+};
+
+/**
  * 导出
  */
 module.exports = {
@@ -2449,5 +2517,6 @@ module.exports = {
   DiscussionCacheManager,
   DiscussionMessagePager,
   SnapshotPager,
+  DiscussionHistoryManager,
   AGENT_ROLES
 };

@@ -223,6 +223,27 @@ const orchestrator = new DiscussionOrchestrator(config);
 
 ## 📊 版本历史
 
+### v2.5.2 (2026-02-02)
+- 📜 **讨论历史管理**
+  - 历史统计（总数、状态、时间分布）
+  - 旧讨论查找和列表
+  - 讨论归档功能
+  - 讨论删除功能
+  - 归档恢复功能
+  - 存储使用情况查看
+- 🔧 **新增 API**
+  - GET /api/history/stats - 历史统计
+  - GET /api/history/old - 旧讨论列表
+  - POST /api/discussion/:id/archive - 归档讨论
+  - POST /api/history/archive-batch - 批量归档
+  - DELETE /api/discussion/:id - 删除讨论
+  - POST /api/history/clear-ended - 清理已结束讨论
+  - GET /api/history/archives - 归档列表
+  - POST /api/history/restore/:id - 恢复归档
+  - GET /api/history/storage - 存储使用情况
+- 📁 新增文件：history.js
+- 📁 新增目录：archive/（归档存储）
+
 ### v2.5.1 (2026-02-02)
 - ⌨️ **键盘快捷键支持**
   - 12 个预定义快捷键（搜索、新建、帮助等）

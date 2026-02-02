@@ -957,6 +957,129 @@ async function createServer() {
         return;
       }
 
+      // ===== v2.5.2 历史管理 API =====
+
+      // API: 获取历史统计
+      if (url.pathname === '/api/history/stats' && req.method === 'GET') {
+        const stats = orchestrator.getHistoryStats();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(stats, null, 2));
+        return;
+      }
+
+      // API: 获取旧讨论列表
+      if (url.pathname === '/api/history/old' && req.method === 'GET') {
+        const days = parseInt(url.searchParams.get('days')) || 30;
+        const discussions = orchestrator.getOldDiscussions(days);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(discussions, null, 2));
+        return;
+      }
+
+      // API: 归档讨论
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/archive') && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const result = await orchestrator.archiveDiscussion(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 批量归档旧讨论
+      if (url.pathname === '/api/history/archive-batch' && req.method === 'POST') {
+        const days = parseInt(url.searchParams.get('days')) || 30;
+        try {
+          const result = await orchestrator.archiveOldDiscussions(days);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 删除讨论
+      if (url.pathname.startsWith('/api/discussion/') && req.method === 'DELETE') {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const result = await orchestrator.deleteDiscussion(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 清理已结束的讨论
+      if (url.pathname === '/api/history/clear-ended' && req.method === 'POST') {
+        try {
+          const result = await orchestrator.clearEndedDiscussions();
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 获取归档列表
+      if (url.pathname === '/api/history/archives' && req.method === 'GET') {
+        try {
+          const archives = await orchestrator.getArchiveList();
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(archives, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 恢复归档
+      if (url.pathname.startsWith('/api/history/restore/') && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[4];
+        try {
+          const result = await orchestrator.restoreFromArchive(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: 获取存储使用情况
+      if (url.pathname === '/api/history/storage' && req.method === 'GET') {
+        try {
+          const usage = await orchestrator.getStorageUsage();
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(usage, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
       // ===== v2.5.0 分页加载 API =====
 
       // API: 获取讨论消息（分页）
