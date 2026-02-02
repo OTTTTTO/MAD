@@ -9,9 +9,10 @@
 const http = require('http');
 const fs = require('fs').promises;
 const path = require('path');
-const { DiscussionOrchestrator, TagManager, FavoritesManager } = require('../orchestrator.js');
+const { DiscussionOrchestrator, TagManager, FavoritesManager, SnapshotManager, RestoreManager, BranchManager } = require('../orchestrator.js');
 const { parseMentions, validateMentions, highlightMentions } = require('../mention.js');
 const { createReply, getReplies, getReplyTree } = require('../reply.js');
+const { compareSnapshots, formatDiffHTML } = require('../version/diff.js');
 
 const PORT = 18790;
 const WEB_DIR = path.join(__dirname, 'public');
@@ -25,6 +26,11 @@ async function createServer() {
 
   const tagManager = new TagManager();
   const favoritesManager = new FavoritesManager();
+
+  // 版本管理器（已在 orchestrator 中初始化）
+  const snapshotManager = orchestrator.snapshotManager;
+  const restoreManager = orchestrator.restoreManager;
+  const branchManager = orchestrator.branchManager;
 
   const server = http.createServer(async (req, res) => {
     // CORS
@@ -899,6 +905,159 @@ async function createServer() {
         res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.writeHead(200);
         res.end(JSON.stringify(mentions, null, 2));
+        return;
+      }
+
+      // ===== 版本控制 API =====
+
+      // API: 创建快照
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/snapshot') && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { description, tags, type } = JSON.parse(body);
+            const snapshot = await orchestrator.snapshotManager.createSnapshot(discussionId, {
+              description,
+              tags,
+              type
+            });
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(snapshot, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 获取快照列表
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/snapshots') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const snapshots = await orchestrator.snapshotManager.getSnapshots(discussionId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(snapshots, null, 2));
+        return;
+      }
+
+      // API: 获取快照详情
+      if (url.pathname.startsWith('/api/snapshot/') && req.method === 'GET') {
+        const snapshotId = url.pathname.split('/')[3];
+        const snapshot = await orchestrator.snapshotManager.getSnapshot(snapshotId);
+        if (!snapshot) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: 'Snapshot not found' }));
+          return;
+        }
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(snapshot, null, 2));
+        return;
+      }
+
+      // API: 删除快照
+      if (url.pathname.startsWith('/api/snapshot/') && req.method === 'DELETE') {
+        const snapshotId = url.pathname.split('/')[3];
+        const success = await orchestrator.snapshotManager.deleteSnapshot(snapshotId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success }, null, 2));
+        return;
+      }
+
+      // API: 比较版本
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/compare') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const fromSnapshotId = url.searchParams.get('from');
+        const toSnapshotId = url.searchParams.get('to');
+
+        if (!fromSnapshotId || !toSnapshotId) {
+          res.writeHead(400);
+          res.end(JSON.stringify({ error: 'Missing from or to parameter' }));
+          return;
+        }
+
+        const snapshot1 = await orchestrator.snapshotManager.getSnapshot(fromSnapshotId);
+        const snapshot2 = await orchestrator.snapshotManager.getSnapshot(toSnapshotId);
+
+        if (!snapshot1 || !snapshot2) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: 'Snapshot not found' }));
+          return;
+        }
+
+        const changes = compareSnapshots(snapshot1, snapshot2);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(changes, null, 2));
+        return;
+      }
+
+      // API: 恢复快照
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/restore') && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { snapshotId, mode } = JSON.parse(body);
+            const result = await orchestrator.restoreManager.restore(discussionId, snapshotId, { mode });
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 创建分支
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/branch') && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { name, description, snapshotId } = JSON.parse(body);
+            const branch = await orchestrator.branchManager.createBranch(discussionId, {
+              name,
+              description,
+              snapshotId
+            });
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(branch, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 获取分支列表
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/branches') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const branches = await orchestrator.branchManager.getBranches(discussionId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(branches, null, 2));
+        return;
+      }
+
+      // API: 删除分支
+      if (url.pathname.startsWith('/api/branch/') && req.method === 'DELETE') {
+        const branchId = url.pathname.split('/')[3];
+        const success = await orchestrator.branchManager.deleteBranch(branchId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ success }, null, 2));
         return;
       }
 
