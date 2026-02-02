@@ -471,6 +471,17 @@ function selectDiscussion(discussionId) {
   document.getElementById('pinBtn').style.display = 'block';
   document.getElementById('exportBtn').style.display = 'block';
   document.getElementById('clearBtn').style.display = 'block';  // v2.5.4
+
+  // 移动端：选择讨论后自动关闭侧边栏
+  if (window.innerWidth <= 768) {
+    closeSidebar();
+  }
+
+  // 添加标签页
+  const discussionTitle = document.getElementById('currentDiscussionTitle').textContent;
+  if (discussionTitle && discussionTitle !== '选择一个讨论组') {
+    addTab(discussionId, discussionTitle);
+  }
 }
 
 /**
@@ -513,18 +524,6 @@ function sortDiscussions(discussions, sortValue) {
   }
 
   return sorted;
-}
-
-  // 移动端：选择讨论后自动关闭侧边栏
-  if (window.innerWidth <= 768) {
-    closeSidebar();
-  }
-
-  // 添加标签页
-  const discussionTitle = document.getElementById('currentDiscussionTitle').textContent;
-  if (discussionTitle && discussionTitle !== '选择一个讨论组') {
-    addTab(discussionId, discussionTitle);
-  }
 }
 
 /**
