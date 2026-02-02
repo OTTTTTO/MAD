@@ -6,6 +6,10 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenClaw](https://img.shields.io/badge/OpenClaw-Skill-blue)](https://openclaw.ai)
+[![Version](https://img.shields.io/badge/version-2.6.2-green)](https://github.com/OTTTTTO/MAD)
+[![Language](https://img.shields.io/badge/lang-中文-blue)](#) [![English](https://img.shields.io/badge/lang-English-red)](./README_EN.md)
+
+**语言 / Language:** 🇨🇳 [中文](./README.md) | 🇬🇧 [English](./README_EN.md)
 
 ## 📖 简介
 
@@ -228,7 +232,32 @@ const orchestrator = new DiscussionOrchestrator(config);
 
 ## 📊 版本历史
 
-### v2.5.2 (2026-02-02)
+### v2.6.2 (2026-02-02)
+- 🐛 **Bug 修复**
+  - 修复移动端侧边栏无法显示的问题
+  - 添加汉堡菜单按钮
+  - 优化移动端布局
+  - 修复页面刷新导致的抖动问题（智能滚动）
+- 📱 **移动端优化**
+  - 添加移动端侧边栏切换功能
+  - 遮罩层支持
+  - 自动关闭侧边栏（选择讨论后）
+- 📖 **文档完善**
+  - 添加英文版 README (README_EN.md)
+  - 添加语言切换入口
+  - 更新版本历史
+
+### v2.6.1 (2026-02-02)
+- 🔧 **性能优化**
+  - 优化大量讨论时的查询效率
+  - 改进 WebSocket 连接稳定性
+  - 优化消息加载性能
+- 🐛 **Bug 修复**
+  - 修复 WebSocket 断线重连问题
+  - 修复标签页切换时的状态丢失
+  - 修复搜索结果显示不完整
+
+### v2.6.0 (2026-02-02) - **智能分析与增强** 🎉
 - 📜 **讨论历史管理**
   - 历史统计（总数、状态、时间分布）
   - 旧讨论查找和列表
@@ -517,97 +546,6 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 
 - [OpenClaw](https://openclaw.ai) - 强大的 Agent 框架
 - 所有贡献者
-
----
-
-## 📜 版本历史
-
-### v2.6.0 (2026-02-02) - **智能分析与增强** 🎉
-- 📊 **讨论质量评分系统**
-  - 多维度评分：参与度、创新性、协作度、完整性
-  - 实时评分反馈和趋势分析
-  - 评分可视化（雷达图、趋势图）
-  - 评分历史和统计
-- 🤖 **Agent 性能分析**
-  - 每个 Agent 的详细发言统计
-  - 响应时间分析
-  - 贡献度评估（观点、问题、共识、协作）
-  - 质量趋势分析
-  - 性能排行榜和对比
-- 📦 **讨论导出增强**
-  - 新增 Markdown 导出（格式化文档）
-  - 新增 JSON 导出（结构化数据）
-  - 批量导出功能（支持多种格式）
-  - 导出预设配置
-  - 摘要报告生成
-- 🛒 **模板市场增强**
-  - 模板评分和评论系统
-  - 模板分享功能（链接/JSON/Markdown）
-  - 智能模板推荐
-  - 用户自定义模板管理
-  - 市场统计数据
-- 💡 **智能建议系统**
-  - 基于讨论状态的改进建议
-  - 最佳实践提示
-  - 历史模式识别
-  - 建议应用和跟踪
-- 🔧 **新增 API**: 30+ 新接口
-- 📁 新增文件：quality-scoring.js, agent-performance.js, suggestions.js
-- 📁 新增文件：exporters/markdown.js, exporters/json.js, exporters/batch.js
-- 📁 新增文件：templates/market-manager.js
-
-### v2.7.0 - 团队协作，无缝集成 (2026-02-02)
-
-**企业级协作和集成能力**
-
-#### 新功能
-- ✅ **权限管理系统** - 完整的 RBAC + ACL 实现
-  - 6 种预定义角色
-  - 40+ 细粒度权限
-  - 条件访问控制
-  
-- ✅ **外部集成** - Git、Slack 开箱即用
-  - 讨论自动创建 Git 分支
-  - 讨论结论生成 PR
-  - Slack 实时通知
-  
-- ✅ **自动化工作流** - 8 种预置模板
-  - 事件触发工作流
-  - 定时任务支持
-  - 可视化执行历史
-  
-- ✅ **高级分析** - 深入的数据洞察
-  - 趋势分析和预测
-  - Agent 行为分析
-  - 知识图谱和社区发现
-  
-- ✅ **实时协作增强** - 多人协作无障碍
-  - 在线状态同步
-  - 光标位置同步
-  - 冲突自动解决
-
-#### 技术亮点
-- 新增 60+ API
-- 新增 19 个文件，6000+ 行代码
-- 5 个全新子系统
-
-### v2.6.0 - AI 智能功能 (2026-02-01)
-
-**AI 摘要生成和多语言支持**
-
-- ✅ AI 智能摘要生成器
-- ✅ 多语言支持 (i18n)
-- ✅ 情感分析
-- ✅ 智能推荐
-
-### v2.5.0 - UI/UX 改进 (2026-02-01)
-
-**用户界面和体验提升**
-
-- ✅ 全新的 Web UI
-- ✅ 响应式设计
-- ✅ 暗色模式
-- ✅ 性能优化
 
 ---
 
