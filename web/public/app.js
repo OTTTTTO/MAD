@@ -1232,10 +1232,23 @@ async function toggleRecommendations() {
  */
 async function loadRecommendations(discussionId) {
   try {
+    if (!discussionId) {
+      throw new Error('未选择讨论组');
+    }
+
     updateStatus('加载推荐...');
 
     const response = await fetch(`/api/discussion/${discussionId}/recommendations`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const recommendations = await response.json();
+
+    if (recommendations.error) {
+      throw new Error(recommendations.error);
+    }
 
     displayRecommendations(recommendations);
 
@@ -1243,6 +1256,10 @@ async function loadRecommendations(discussionId) {
   } catch (error) {
     console.error('加载推荐失败:', error);
     updateStatus('加载失败');
+    const container = document.getElementById('recommendContent');
+    if (container) {
+      container.innerHTML = `<div class="error">⚠️ ${error.message}</div>`;
+    }
   }
 }
 
@@ -1318,10 +1335,23 @@ async function toggleActions() {
  */
 async function loadActions(discussionId) {
   try {
+    if (!discussionId) {
+      throw new Error('未选择讨论组');
+    }
+
     updateStatus('加载待办事项...');
 
     const response = await fetch(`/api/discussion/${discussionId}/actions`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const actions = await response.json();
+
+    if (actions.error) {
+      throw new Error(actions.error);
+    }
 
     displayActions(actions);
 
@@ -1329,6 +1359,10 @@ async function loadActions(discussionId) {
   } catch (error) {
     console.error('加载待办事项失败:', error);
     updateStatus('加载失败');
+    const container = document.getElementById('actionsContent');
+    if (container) {
+      container.innerHTML = `<div class="error">⚠️ ${error.message}</div>`;
+    }
   }
 }
 
@@ -1407,13 +1441,26 @@ async function toggleSimilarPanel() {
  */
 async function loadSimilarDiscussions(discussionId) {
   try {
+    if (!discussionId) {
+      throw new Error('未选择讨论组');
+    }
+
     updateStatus('查找相似讨论...');
 
     const threshold = 0.1; // 相似度阈值
     const limit = 10; // 最多显示 10 个
 
     const response = await fetch(`/api/discussion/${discussionId}/similar?threshold=${threshold}&limit=${limit}`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const similar = await response.json();
+
+    if (similar.error) {
+      throw new Error(similar.error);
+    }
 
     displaySimilarDiscussions(similar);
 
@@ -1421,6 +1468,10 @@ async function loadSimilarDiscussions(discussionId) {
   } catch (error) {
     console.error('加载相似讨论失败:', error);
     updateStatus('加载失败');
+    const container = document.getElementById('similarContent');
+    if (container) {
+      container.innerHTML = `<div class="error">⚠️ ${error.message}</div>`;
+    }
   }
 }
 
@@ -1587,10 +1638,23 @@ function exportActions() {
  */
 async function loadStats(discussionId) {
   try {
+    if (!discussionId) {
+      throw new Error('未选择讨论组');
+    }
+
     updateStatus('加载统计...');
 
     const response = await fetch(`/api/discussion/${discussionId}/stats`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
     const stats = await response.json();
+
+    if (!stats || stats.error) {
+      throw new Error(stats.error || '统计数据无效');
+    }
 
     displayStats(stats);
 
@@ -1598,6 +1662,10 @@ async function loadStats(discussionId) {
   } catch (error) {
     console.error('加载统计失败:', error);
     updateStatus('加载失败');
+    const container = document.getElementById('statsContent');
+    if (container) {
+      container.innerHTML = `<div class="error">⚠️ ${error.message}</div>`;
+    }
   }
 }
 
