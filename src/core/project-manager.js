@@ -7,6 +7,110 @@ const fs = require('fs').promises;
 const path = require('path');
 const { ProjectGroup } = require('../models/project-group.js');
 
+/**
+ * 导出项目组为 Markdown
+ */
+async function exportProjectToMarkdown(project, outputPath) {
+  const lines = [];
+
+  // 标题
+  lines.push(`# ${project.name}\n`);
+  lines.push(`**类别:** ${project.category}\n`);
+  lines.push(`**状态:** ${project.status}\n`);
+  lines.push(`**创建时间:** ${new Date(project.stats.createdAt).toLocaleString('zh-CN')}\n`);
+  lines.push(`**更新时间:** ${new Date(project.stats.updatedAt).toLocaleString('zh-CN')}\n`);
+
+  if (project.description) {
+    lines.push(`\n## 描述\n\n${project.description}\n`);
+  }
+
+  // 标签
+  if (project.tags && project.tags.length > 0) {
+    lines.push(`\n**标签:** ${project.tags.map(t => `\`${t}\``).join(', ')}\n`);
+  }
+
+  // 参与者
+  if (project.participants && project.participants.length > 0) {
+    lines.push(`\n## 参与者\n\n`);
+    project.participants.forEach(p => {
+      lines.push(`- ${p.emoji || '👤'} ${p.name} (${p.role})\n`);
+    });
+  }
+
+  // 统计
+  lines.push(`\n## 统计\n\n`);
+  lines.push(`- 消息数: ${project.stats.totalMessages}\n`);
+  lines.push(`- 标记数: ${project.stats.totalMarkers}\n`);
+  lines.push(`- Tokens: ${project.stats.totalTokens}\n`);
+  lines.push(`- 进度: ${project.stats.progress}%\n`);
+
+  // 标记
+  if (project.markers && project.markers.length > 0) {
+    lines.push(`\n## 标记\n\n`);
+    project.markers.forEach(marker => {
+      const emoji = {
+        'milestone': '🏆',
+        'decision': '🎯',
+        'problem': '⚠️',
+        'solution': '💡'
+      }[marker.type] || '📍';
+
+      lines.push(`### ${emoji} ${marker.title}\n`);
+      lines.push(`*${new Date(marker.timestamp).toLocaleString('zh-CN')}*\n`);
+
+      if (marker.summary) {
+        lines.push(`\n${marker.summary}\n`);
+      }
+
+      if (marker.conclusions && marker.conclusions.length > 0) {
+        lines.push(`\n**结论:**\n`);
+        marker.conclusions.forEach(c => {
+          lines.push(`- ${c}\n`);
+        });
+      }
+
+      if (marker.tags && marker.tags.length > 0) {
+        lines.push(`\n**标签:** ${marker.tags.join(', ')}\n`);
+      }
+
+      lines.push(`\n`);
+    });
+  }
+
+  // 消息
+  if (project.messages && project.messages.length > 0) {
+    lines.push(`\n## 消息流\n\n`);
+
+    project.messages.forEach((msg, index) => {
+      const emoji = msg.role === 'system' ? '🤖' :
+                    msg.role === 'marker' ? '📍' :
+                    msg.isMarker ? '📍' : '💬';
+
+      const time = msg.timestamp ? new Date(msg.timestamp).toLocaleString('zh-CN') : '';
+      const role = msg.role || '未知';
+
+      lines.push(`### ${emoji} ${role} ${time ? `*(${time})*` : ''}\n`);
+      lines.push(`${msg.content}\n`);
+      lines.push(`\n`);
+    });
+  }
+
+  // 写入文件
+  const content = lines.join('');
+  await fs.writeFile(outputPath, content, 'utf8');
+
+  return outputPath;
+}
+
+/**
+ * 导出项目组为 JSON
+ */
+async function exportProjectToJSON(project, outputPath) {
+  const data = JSON.stringify(project, null, 2);
+  await fs.writeFile(outputPath, data, 'utf8');
+  return outputPath;
+}
+
 class ProjectManager {
   constructor(dataDir) {
     this.dataDir = dataDir || path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss', 'projects');
@@ -346,6 +450,66 @@ class ProjectManager {
     await this.saveProject(project);
 
     return project;
+  }
+
+  /**
+   * 导出项目组
+   */
+  async exportProject(projectId, format = 'markdown', outputDir = null) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    // 确定输出目录
+    const dir = outputDir || path.join(this.dataDir, 'exports');
+    await fs.mkdir(dir, { recursive: true });
+
+    // 生成文件名
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+    const safeName = project.name.replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').slice(0, 30);
+    const baseFilename = `${safeName}-${timestamp}`;
+
+    let outputPath;
+    if (format === 'json') {
+      outputPath = path.join(dir, `${baseFilename}.json`);
+      await exportProjectToJSON(project, outputPath);
+    } else {
+      // 默认 markdown
+      outputPath = path.join(dir, `${baseFilename}.md`);
+      await exportProjectToMarkdown(project, outputPath);
+    }
+
+    return {
+      path: outputPath,
+      format,
+      projectId: project.id,
+      projectName: project.name
+    };
+  }
+
+  /**
+   * 批量导出项目组
+   */
+  async exportAllProjects(format = 'markdown', outputDir = null) {
+    const projects = await this.listProjects();
+    const results = [];
+
+    for (const project of projects) {
+      try {
+        const result = await this.exportProject(project.id, format, outputDir);
+        results.push(result);
+      } catch (error) {
+        console.error(`[ProjectManager] 导出项目失败: ${project.id}`, error);
+        results.push({
+          projectId: project.id,
+          projectName: project.name,
+          error: error.message
+        });
+      }
+    }
+
+    return results;
   }
 }
 

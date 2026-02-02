@@ -165,6 +165,7 @@ npm start
 - 📋 查看所有项目组
 - 🔍 **项目搜索** - 按关键词搜索项目组（名称、描述、标记）
 - 🏷️ **项目标签** - 为项目添加标签，方便分类和筛选
+- 📤 **项目导出** - 导出项目为 Markdown 或 JSON 格式
 - 📊 **全局统计** - 项目总数、分类统计、活跃项目数
 - 📍 标记时间轴
 - 💬 实时阅读消息流
@@ -354,6 +355,29 @@ await v3.removeTagFromProject('group-xxx', '高优先级');
 - ✅ 优先级标记（高优先级、低优先级等）
 - ✅ 状态标记（进行中、暂停、待审核等）
 - ✅ 自定义标签（任意文本）
+
+### 场景 8：导出项目（v3.6.0 新增）
+
+```javascript
+// 导出单个项目为 Markdown
+const result = await v3.exportProject('group-xxx', 'markdown');
+// 返回：{ path: '/path/to/project-name-2026-02-02.md', format: 'markdown', ... }
+
+// 导出单个项目为 JSON
+const jsonResult = await v3.exportProject('group-xxx', 'json');
+// 返回：{ path: '/path/to/project-name-2026-02-02.json', format: 'json', ... }
+
+// 批量导出所有项目
+const results = await v3.exportAllProjects('markdown');
+// 返回：[{ path, format, projectId, projectName }, ...]
+
+// 指定输出目录
+await v3.exportProject('group-xxx', 'markdown', '/custom/output/dir');
+```
+
+**导出格式：**
+- **Markdown:** 包含项目信息、参与者、统计、标记、消息流
+- **JSON:** 完整的项目数据，可用于备份或迁移
 
 ---
 

@@ -21,6 +21,13 @@
 - **标签统计：** 获取所有标签及使用次数
 - **数据模型：** ProjectGroup 新增 tags 属性和相关方法
 
+#### 项目导出
+- **导出格式：** Markdown、JSON
+- **单个导出：** 导出指定项目组
+- **批量导出：** 导出所有项目组
+- **Markdown 内容：** 项目信息、参与者、统计、标记、消息流
+- **JSON 内容：** 完整的项目数据，可用于备份或迁移
+
 #### 实现细节
 - 新增 `ProjectManager.searchProjects()` 方法
 - 新增 `ProjectManager.getStatistics()` 方法
@@ -28,12 +35,18 @@
 - 新增 `ProjectManager.getAllTags()` 方法
 - 新增 `ProjectManager.addTagToProject()` 方法
 - 新增 `ProjectManager.removeTagFromProject()` 方法
+- 新增 `ProjectManager.exportProject()` 方法
+- 新增 `ProjectManager.exportAllProjects()` 方法
+- 新增 `exportProjectToMarkdown()` 函数
+- 新增 `exportProjectToJSON()` 函数
 - 新增 `V3Integration.searchProjects()` 接口
 - 新增 `V3Integration.getStatistics()` 接口
 - 新增 `V3Integration.findProjectsByTag()` 接口
 - 新增 `V3Integration.getAllTags()` 接口
 - 新增 `V3Integration.addTagToProject()` 接口
 - 新增 `V3Integration.removeTagFromProject()` 接口
+- 新增 `V3Integration.exportProject()` 接口
+- 新增 `V3Integration.exportAllProjects()` 接口
 - ProjectGroup 新增 `tags` 属性和 `addTag()`, `removeTag()`, `hasTag()`, `getTags()` 方法
 
 #### 使用示例
@@ -52,7 +65,12 @@ const projects = await v3.findProjectsByTag('前端');
 
 // 获取所有标签
 const tags = await v3.getAllTags();
-// [{ tag: '前端', count: 5 }, { tag: '后端', count: 3 }, ...]
+
+// 导出项目
+const result = await v3.exportProject('group-xxx', 'markdown');
+
+// 批量导出
+const results = await v3.exportAllProjects('markdown');
 ```
 
 ### 📚 文档更新
@@ -60,15 +78,17 @@ const tags = await v3.getAllTags();
 - README 新增使用示例（场景 5：搜索项目组）
 - README 新增使用示例（场景 6：获取项目统计）
 - README 新增使用示例（场景 7：使用项目标签）
+- README 新增使用示例（场景 8：导出项目）
 - 说明搜索范围和权重
 - 说明统计指标含义
 - 说明标签用途和场景
+- 说明导出格式和内容
 
 ### 📊 统计
 
 - **新增文件：** 0 个
-- **修改文件：** 3 个（project-group.js, project-manager.js, v3-integration.js）
-- **新增代码：** 约 130 行
+- **修改文件：** 2 个（project-manager.js, v3-integration.js）
+- **新增代码：** 约 200 行
 - **测试状态：** ✅ 通过
 
 ---

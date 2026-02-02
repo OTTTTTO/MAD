@@ -330,6 +330,20 @@ class V3Integration {
   async removeTagFromProject(projectId, tag) {
     return await this.projectManager.removeTagFromProject(projectId, tag);
   }
+
+  /**
+   * v3.6.0: 导出项目组
+   */
+  async exportProject(projectId, format = 'markdown', outputDir = null) {
+    return await this.projectManager.exportProject(projectId, format, outputDir);
+  }
+
+  /**
+   * v3.6.0: 批量导出项目组
+   */
+  async exportAllProjects(format = 'markdown', outputDir = null) {
+    return await this.projectManager.exportAllProjects(format, outputDir);
+  }
 }
 
 module.exports = V3Integration;
