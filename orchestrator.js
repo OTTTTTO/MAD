@@ -46,9 +46,9 @@ let templates = null;
 
 async function loadTemplates() {
   if (templates) return templates;
-  
+
   try {
-    const templatePath = path.join(__dirname, 'templates.json');
+    const templatePath = path.join(__dirname, 'data', 'templates.json');
     const data = await fs.readFile(templatePath, 'utf8');
     templates = JSON.parse(data);
     return templates;
