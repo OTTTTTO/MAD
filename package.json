@@ -1,6 +1,6 @@
 {
   "name": "@openclaw/mad",
-  "version": "2.8.2",
+  "version": "2.8.4",
   "description": "MAD (Multi-Agent Discussion) - 让多个专业 Agent 在虚拟讨论组中协同工作",
   "homepage": "https://github.com/OTTTTTO/mad",
   "main": "orchestrator.js",
@@ -13,6 +13,7 @@
     "validate": "node scripts/validate-config.js",
     "analyze": "node scripts/analyze-discussion.js --latest",
     "monitor": "node scripts/performance-monitor.js",
+    "export": "node scripts/export-markdown.js",
     "install:mads": "node scripts/install.js",
     "doctor": "node scripts/doctor.js",
     "check": "npm run doctor"
