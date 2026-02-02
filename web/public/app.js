@@ -62,6 +62,11 @@ function initApp() {
     toggleActions();
   });
   
+  // 相似讨论按钮
+  document.getElementById('similarBtn').addEventListener('click', () => {
+    toggleSimilarPanel();
+  });
+  
   // 搜索功能
   const searchInput = document.getElementById('searchInput');
   
@@ -272,6 +277,7 @@ async function loadMessages(discussionId) {
     document.getElementById('statsBtn').style.display = 'block';
     document.getElementById('recommendBtn').style.display = 'block';
     document.getElementById('actionsBtn').style.display = 'block';
+    document.getElementById('similarBtn').style.display = 'block';
     document.getElementById('pinBtn').style.display = 'block';
     
     const container = document.getElementById('messageContainer');
@@ -985,6 +991,137 @@ function getPriorityLabel(priority) {
     'low': '🟢 低'
   };
   return labels[priority] || '🟡 中';
+}
+
+/**
+ * 切换相似讨论面板
+ */
+async function toggleSimilarPanel() {
+  if (!currentDiscussionId) return;
+  
+  const panel = document.getElementById('similarPanel');
+  const btn = document.getElementById('similarBtn');
+  
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    btn.textContent = '🔗 隐藏相似';
+    await loadSimilarDiscussions(currentDiscussionId);
+  } else {
+    panel.style.display = 'none';
+    btn.textContent = '🔗 相似';
+  }
+}
+
+/**
+ * 加载相似讨论
+ */
+async function loadSimilarDiscussions(discussionId) {
+  try {
+    updateStatus('查找相似讨论...');
+    
+    const threshold = 0.1; // 相似度阈值
+    const limit = 10; // 最多显示 10 个
+    
+    const response = await fetch(`/api/discussion/${discussionId}/similar?threshold=${threshold}&limit=${limit}`);
+    const similar = await response.json();
+    
+    displaySimilarDiscussions(similar);
+    
+    updateStatus(`找到 ${similar.length} 个相似讨论`);
+  } catch (error) {
+    console.error('加载相似讨论失败:', error);
+    updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示相似讨论
+ */
+function displaySimilarDiscussions(similar) {
+  const container = document.getElementById('similarContent');
+  
+  if (!similar || similar.length === 0) {
+    container.innerHTML = '<div class="empty-state">未找到相似讨论</div>';
+    return;
+  }
+  
+  container.innerHTML = `
+    <div class="similar-list">
+      ${similar.map(item => `
+        <div class="similar-item" style="border-left: 3px solid ${getSimilarityColor(item.similarity)}">
+          <div class="similar-header">
+            <div class="similar-title">${escapeHtml(item.topic)}</div>
+            <div class="similar-score">${Math.round(item.similarity * 100)}%</div>
+          </div>
+          <div class="similar-meta">
+            <span class="similar-messages">💬 ${item.messageCount} 条消息</span>
+            <span class="similar-status">${getStatusLabel(item.status)}</span>
+          </div>
+          ${item.commonKeywords && item.commonKeywords.length > 0 ? `
+            <div class="similar-keywords">
+              ${item.commonKeywords.slice(0, 5).map(kw => `<span class="keyword-tag">${escapeHtml(kw)}</span>`).join('')}
+            </div>
+          ` : ''}
+          <div class="similar-actions">
+            <button class="btn btn-sm" onclick="switchToDiscussion('${item.discussionId}')">查看</button>
+            <button class="btn btn-sm" onclick="mergeDiscussion('${item.discussionId}')">合并</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/**
+ * 获取相似度颜色
+ */
+function getSimilarityColor(similarity) {
+  if (similarity >= 0.7) return '#10b981'; // 绿色
+  if (similarity >= 0.5) return '#3b82f6'; // 蓝色
+  if (similarity >= 0.3) return '#f59e0b'; // 橙色
+  return '#6b7280'; // 灰色
+}
+
+/**
+ * 合并讨论
+ */
+async function mergeDiscussion(sourceId) {
+  if (!currentDiscussionId) return;
+  
+  if (!confirm(`确定要将讨论 ${sourceId} 合并到当前讨论吗？`)) {
+    return;
+  }
+  
+  try {
+    updateStatus('合并讨论中...');
+    
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/merge`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        sourceIds: [sourceId]
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      updateStatus(`合并成功：${result.mergedMessagesCount} 条消息`);
+      // 重新加载讨论
+      await loadMessages(currentDiscussionId);
+      // 重新加载相似讨论
+      await loadSimilarDiscussions(currentDiscussionId);
+      // 刷新讨论列表
+      loadDiscussions();
+    } else {
+      updateStatus(`合并失败：${result.error}`);
+    }
+  } catch (error) {
+    console.error('合并讨论失败:', error);
+    updateStatus('合并失败');
+  }
 }
 
 /**

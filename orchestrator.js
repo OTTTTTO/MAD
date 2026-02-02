@@ -16,6 +16,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const { DiscussionSimilarityDetector } = require('./similarity.js');
 
 // 加载模板
 let templates = null;
@@ -203,6 +204,8 @@ class DiscussionOrchestrator {
     this.discussions = new Map();
     this.dataDir = path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss');
     this.agentStats = new Map(); // Agent 统计
+    this.similarityDetector = new DiscussionSimilarityDetector(); // 相似度检测器
+    this.similarityInitialized = false; // 相似度检测器是否已初始化
   }
 
   /**
@@ -366,6 +369,11 @@ class DiscussionOrchestrator {
     mentionedAgents.forEach(mentionedId => {
       this.updateAgentStats(mentionedId, 'mention');
     });
+
+    // 更新相似度检测器
+    if (this.similarityInitialized) {
+      this.similarityDetector.updateDiscussion(discussionId, context);
+    }
 
     // 保存更新
     await this.saveDiscussion(context);
@@ -622,12 +630,33 @@ class DiscussionOrchestrator {
 
     context.status = 'ended';
     context.endedAt = Date.now();
-    
+
     await this.saveDiscussion(context);
-    
+
     console.log(`[Orchestrator] Discussion ${discussionId} ended`);
-    
+
     return this.getDiscussionHistory(discussionId);
+  }
+
+  /**
+   * 删除讨论
+   */
+  async deleteDiscussion(discussionId) {
+    if (!this.discussions.has(discussionId)) {
+      return;
+    }
+
+    // 从内存中移除
+    this.discussions.delete(discussionId);
+
+    // 删除文件
+    try {
+      const filePath = path.join(this.dataDir, 'discussions', `${discussionId}.json`);
+      await fs.unlink(filePath);
+      console.log(`[Orchestrator] Discussion ${discussionId} deleted`);
+    } catch (error) {
+      console.error(`[Orchestrator] Failed to delete discussion file:`, error);
+    }
   }
 
   /**
@@ -1325,6 +1354,135 @@ class DiscussionOrchestrator {
     });
     
     return unique;
+  }
+
+  /**
+   * 初始化相似度检测器（训练模型）
+   */
+  async initializeSimilarityDetector() {
+    if (this.similarityInitialized) {
+      return;
+    }
+
+    try {
+      // 使用现有讨论训练模型
+      if (this.discussions.size > 0) {
+        this.similarityDetector.train(this.discussions);
+        console.log(`[Orchestrator] Similarity detector trained with ${this.discussions.size} discussions`);
+      }
+
+      this.similarityInitialized = true;
+    } catch (error) {
+      console.error('[Orchestrator] Failed to initialize similarity detector:', error);
+    }
+  }
+
+  /**
+   * 查找相似讨论
+   */
+  findSimilarDiscussions(discussionId, threshold = 0.1, limit = 10) {
+    // 确保相似度检测器已初始化
+    if (!this.similarityInitialized) {
+      this.initializeSimilarityDetector();
+    }
+
+    if (!this.discussions.has(discussionId)) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    return this.similarityDetector.findSimilar(
+      discussionId,
+      this.discussions,
+      threshold,
+      limit
+    );
+  }
+
+  /**
+   * 计算两个讨论之间的相似度
+   */
+  calculateDiscussionSimilarity(id1, id2) {
+    // 确保相似度检测器已初始化
+    if (!this.similarityInitialized) {
+      this.initializeSimilarityDetector();
+    }
+
+    return this.similarityDetector.calculateSimilarity(id1, id2);
+  }
+
+  /**
+   * 合并讨论
+   */
+  async mergeDiscussions(targetId, sourceIds) {
+    if (!this.discussions.has(targetId)) {
+      throw new Error(`Target discussion ${targetId} not found`);
+    }
+
+    const targetContext = this.discussions.get(targetId);
+    const mergedMessages = [];
+    const mergedConflicts = [];
+
+    for (const sourceId of sourceIds) {
+      if (!this.discussions.has(sourceId)) {
+        console.warn(`[Orchestrator] Source discussion ${sourceId} not found, skipping`);
+        continue;
+      }
+
+      const sourceContext = this.discussions.get(sourceId);
+
+      // 合并消息
+      sourceContext.messages.forEach(msg => {
+        const newMessage = {
+          ...msg,
+          id: `msg-${targetContext.messages.length + 1}`,
+          metadata: {
+            ...msg.metadata,
+            mergedFrom: sourceId,
+            originalMessageId: msg.id
+          }
+        };
+        targetContext.messages.push(newMessage);
+        mergedMessages.push(newMessage);
+      });
+
+      // 合并冲突
+      sourceContext.conflicts.forEach(conflict => {
+        mergedConflicts.push({
+          ...conflict,
+          sourceDiscussion: sourceId
+        });
+      });
+
+      // 更新主题
+      if (sourceContext.topic && !targetContext.topic.includes(sourceContext.topic)) {
+        targetContext.topic += ` | ${sourceContext.topic}`;
+      }
+
+      // 删除源讨论
+      this.discussions.delete(sourceId);
+      await this.deleteDiscussion(sourceId);
+    }
+
+    // 更新目标讨论
+    targetContext.updatedAt = Date.now();
+
+    // 更新相似度检测器
+    if (this.similarityInitialized) {
+      this.similarityDetector.updateDiscussion(targetId, targetContext);
+      // 移除已删除讨论的向量
+      sourceIds.forEach(id => {
+        this.similarityDetector.discussionVectors.delete(id);
+      });
+    }
+
+    // 保存目标讨论
+    await this.saveDiscussion(targetContext);
+
+    return {
+      targetId,
+      mergedMessagesCount: mergedMessages.length,
+      mergedConflictsCount: mergedConflicts.length
+    };
   }
 }
 

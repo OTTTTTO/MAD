@@ -1383,7 +1383,141 @@ body {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* 相似讨论面板 */
+.similar-panel {
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+}
 
+.similar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
 
+.similar-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-primary);
+}
+
+.similar-content {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.similar-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.similar-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.similar-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.similar-item .similar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.similar-title {
+  flex: 1;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  margin-right: 0.5rem;
+}
+
+.similar-score {
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.similar-meta {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.similar-keywords {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.keyword-tag {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: rgba(99, 102, 241, 0.2);
+  color: #818cf8;
+}
+
+.similar-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.similar-actions .btn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+/* 深色主题适配 */
+[data-theme="dark"] .similar-panel {
+  background: rgba(30, 41, 59, 0.8);
+}
+
+[data-theme="dark"] .similar-item {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme="dark"] .similar-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* 浅色主题适配 */
+[data-theme="light"] .similar-panel {
+  background: #ffffff;
+}
+
+[data-theme="light"] .similar-item {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .similar-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="light"] .keyword-tag {
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
 
 

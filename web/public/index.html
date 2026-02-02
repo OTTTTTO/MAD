@@ -57,6 +57,7 @@
             <button id="statsBtn" class="btn btn-sm" style="display: none;">📊 统计</button>
             <button id="recommendBtn" class="btn btn-sm" style="display: none;">🤖 推荐</button>
             <button id="actionsBtn" class="btn btn-sm" style="display: none;">✅ 待办</button>
+            <button id="similarBtn" class="btn btn-sm" style="display: none;">🔗 相似</button>
             <button id="pinBtn" class="btn btn-sm" style="display: none;">📌 固定</button>
             <button id="exportBtn" class="btn btn-sm" style="display: none;">📥 导出</button>
           </div>
@@ -75,6 +76,17 @@
         <!-- 统计面板 -->
         <div id="statsPanel" class="stats-panel" style="display: none;">
           <div class="stats-content" id="statsContent"></div>
+        </div>
+        
+        <!-- 相似讨论面板 -->
+        <div id="similarPanel" class="similar-panel" style="display: none;">
+          <div class="similar-header">
+            <h3>🔗 相似讨论</h3>
+            <button class="btn btn-sm" onclick="toggleSimilarPanel()">✕</button>
+          </div>
+          <div class="similar-content" id="similarContent">
+            <div class="loading">加载中...</div>
+          </div>
         </div>
         <div id="messageContainer" class="message-container">
           <div class="empty-state">

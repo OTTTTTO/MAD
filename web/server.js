@@ -247,6 +247,55 @@ async function createServer() {
         }
       }
 
+      // API: 获取相似讨论
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/similar')) {
+        const discussionId = url.pathname.split('/')[3];
+        const threshold = parseFloat(url.searchParams.get('threshold')) || 0.1;
+        const limit = parseInt(url.searchParams.get('limit')) || 10;
+        
+        try {
+          const similar = orchestrator.findSimilarDiscussions(discussionId, threshold, limit);
+          
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(similar, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
+      }
+
+      // API: 合并讨论
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/merge')) {
+        const discussionId = url.pathname.split('/')[3];
+        
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const { sourceIds } = JSON.parse(body);
+            
+            if (!Array.isArray(sourceIds) || sourceIds.length === 0) {
+              res.writeHead(400);
+              res.end(JSON.stringify({ error: 'sourceIds is required and must be a non-empty array' }));
+              return;
+            }
+            
+            const result = await orchestrator.mergeDiscussions(discussionId, sourceIds);
+            
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
       // 404
         const query = url.searchParams.get('q') || '';
         const status = url.searchParams.get('status') || null;
