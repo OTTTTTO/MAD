@@ -102,15 +102,9 @@ async function createServer() {
         return;
       }
 
-      // API: 获取讨论详情
-      if (url.pathname.startsWith('/api/discussion/')) {
-        const discussionId = url.pathname.split('/')[3];
-        const history = orchestrator.getDiscussionHistory(discussionId);
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
-        res.writeHead(200);
-        res.end(JSON.stringify(history, null, 2));
-        return;
-      }
+      // API: 获取讨论详情（必须是纯 /api/discussion/:id 格式，不能有其他路径段）
+      // 这个路由放在最后，避免拦截其他 /api/discussion/:id/* 路由
+      // 移到文件末尾处理
 
       // API: 获取所有 Agent 统计
       if (url.pathname === '/api/agents') {
@@ -1541,6 +1535,23 @@ async function createServer() {
         res.writeHead(200);
         res.end(JSON.stringify({ success }, null, 2));
         return;
+      }
+
+      // API: 获取讨论详情（必须是纯 /api/discussion/:id 格式，不能有其他路径段）
+      // 放在所有特定路由之后，避免拦截 /stats、/participants 等路由
+      if (url.pathname.match(/^\/api\/discussion\/[^/]+$/)) {
+        const discussionId = url.pathname.split('/')[3];
+        try {
+          const history = orchestrator.getDiscussionHistory(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(history, null, 2));
+          return;
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+          return;
+        }
       }
 
       // 404
