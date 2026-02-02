@@ -17,6 +17,7 @@ class ProjectGroup {
     this.messages = [];
     this.markers = [];
     this.participants = [];
+    this.tags = [];  // 项目标签
     this.stats = {
       totalMessages: 0,
       totalMarkers: 0,
@@ -44,6 +45,41 @@ class ProjectGroup {
 
   updateTokenCount(tokens) {
     this.stats.totalTokens += tokens;
+  }
+
+  /**
+   * 添加标签
+   */
+  addTag(tag) {
+    if (!this.tags.includes(tag)) {
+      this.tags.push(tag);
+      this.stats.updatedAt = Date.now();
+    }
+  }
+
+  /**
+   * 移除标签
+   */
+  removeTag(tag) {
+    const index = this.tags.indexOf(tag);
+    if (index > -1) {
+      this.tags.splice(index, 1);
+      this.stats.updatedAt = Date.now();
+    }
+  }
+
+  /**
+   * 检查是否有标签
+   */
+  hasTag(tag) {
+    return this.tags.includes(tag);
+  }
+
+  /**
+   * 获取所有标签
+   */
+  getTags() {
+    return [...this.tags];
   }
 }
 

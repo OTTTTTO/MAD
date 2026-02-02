@@ -277,6 +277,76 @@ class ProjectManager {
 
     return stats;
   }
+
+  /**
+   * 按标签搜索项目组
+   */
+  async findProjectsByTag(tag) {
+    const projects = await this.listProjects();
+    return projects.filter(p => p.tags && p.tags.includes(tag));
+  }
+
+  /**
+   * 获取所有标签
+   */
+  async getAllTags() {
+    const projects = await this.listProjects();
+    const tagMap = new Map();
+
+    for (const project of projects) {
+      if (project.tags && project.tags.length > 0) {
+        for (const tag of project.tags) {
+          if (!tagMap.has(tag)) {
+            tagMap.set(tag, 0);
+          }
+          tagMap.set(tag, tagMap.get(tag) + 1);
+        }
+      }
+    }
+
+    // 转换为数组并按使用次数排序
+    return Array.from(tagMap.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  /**
+   * 添加标签到项目组
+   */
+  async addTagToProject(projectId, tag) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    if (!project.tags) {
+      project.tags = [];
+    }
+
+    project.addTag(tag);
+    await this.saveProject(project);
+
+    return project;
+  }
+
+  /**
+   * 从项目组移除标签
+   */
+  async removeTagFromProject(projectId, tag) {
+    const project = await this.getProject(projectId);
+    if (!project) {
+      throw new Error(`项目组不存在: ${projectId}`);
+    }
+
+    if (!project.tags) {
+      project.tags = [];
+    }
+
+    project.removeTag(tag);
+    await this.saveProject(project);
+
+    return project;
+  }
 }
 
 module.exports = ProjectManager;

@@ -15,11 +15,26 @@
 - **分类统计：** 按状态、类别统计项目分布
 - **活跃检测：** 自动统计最近 24 小时内有更新的项目
 
+#### 项目标签
+- **标签管理：** 为项目添加/移除标签
+- **标签搜索：** 按标签查找项目
+- **标签统计：** 获取所有标签及使用次数
+- **数据模型：** ProjectGroup 新增 tags 属性和相关方法
+
 #### 实现细节
 - 新增 `ProjectManager.searchProjects()` 方法
 - 新增 `ProjectManager.getStatistics()` 方法
+- 新增 `ProjectManager.findProjectsByTag()` 方法
+- 新增 `ProjectManager.getAllTags()` 方法
+- 新增 `ProjectManager.addTagToProject()` 方法
+- 新增 `ProjectManager.removeTagFromProject()` 方法
 - 新增 `V3Integration.searchProjects()` 接口
 - 新增 `V3Integration.getStatistics()` 接口
+- 新增 `V3Integration.findProjectsByTag()` 接口
+- 新增 `V3Integration.getAllTags()` 接口
+- 新增 `V3Integration.addTagToProject()` 接口
+- 新增 `V3Integration.removeTagFromProject()` 接口
+- ProjectGroup 新增 `tags` 属性和 `addTag()`, `removeTag()`, `hasTag()`, `getTags()` 方法
 
 #### 使用示例
 ```javascript
@@ -28,21 +43,32 @@ const results = await v3.searchProjects('微服务');
 
 // 获取统计
 const stats = await v3.getStatistics();
-// { total, activeProjects, byStatus, byCategory, ... }
+
+// 添加标签
+await v3.addTagToProject('group-xxx', '高优先级');
+
+// 按标签搜索
+const projects = await v3.findProjectsByTag('前端');
+
+// 获取所有标签
+const tags = await v3.getAllTags();
+// [{ tag: '前端', count: 5 }, { tag: '后端', count: 3 }, ...]
 ```
 
 ### 📚 文档更新
 
 - README 新增使用示例（场景 5：搜索项目组）
 - README 新增使用示例（场景 6：获取项目统计）
+- README 新增使用示例（场景 7：使用项目标签）
 - 说明搜索范围和权重
 - 说明统计指标含义
+- 说明标签用途和场景
 
 ### 📊 统计
 
 - **新增文件：** 0 个
-- **修改文件：** 2 个（project-manager.js, v3-integration.js）
-- **新增代码：** 约 90 行
+- **修改文件：** 3 个（project-group.js, project-manager.js, v3-integration.js）
+- **新增代码：** 约 130 行
 - **测试状态：** ✅ 通过
 
 ---

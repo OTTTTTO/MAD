@@ -164,6 +164,7 @@ npm start
 **v3.0 项目组视图功能：**
 - 📋 查看所有项目组
 - 🔍 **项目搜索** - 按关键词搜索项目组（名称、描述、标记）
+- 🏷️ **项目标签** - 为项目添加标签，方便分类和筛选
 - 📊 **全局统计** - 项目总数、分类统计、活跃项目数
 - 📍 标记时间轴
 - 💬 实时阅读消息流
@@ -327,6 +328,32 @@ const stats = await v3.getStatistics();
   }
 }
 ```
+
+### 场景 7：使用项目标签（v3.6.0 新增）
+
+```javascript
+// 添加标签到项目
+await v3.addTagToProject('group-xxx', '高优先级');
+await v3.addTagToProject('group-xxx', '前端');
+await v3.addTagToProject('group-yyy', '后端');
+
+// 获取所有标签（按使用次数排序）
+const allTags = await v3.getAllTags();
+// 返回：[{ tag: '前端', count: 5 }, { tag: '后端', count: 3 }, ...]
+
+// 按标签搜索项目
+const frontendProjects = await v3.findProjectsByTag('前端');
+// 返回：所有带有"前端"标签的项目
+
+// 移除标签
+await v3.removeTagFromProject('group-xxx', '高优先级');
+```
+
+**标签用途：**
+- ✅ 项目分类（前端、后端、移动端等）
+- ✅ 优先级标记（高优先级、低优先级等）
+- ✅ 状态标记（进行中、暂停、待审核等）
+- ✅ 自定义标签（任意文本）
 
 ---
 

@@ -302,6 +302,34 @@ class V3Integration {
   async getStatistics() {
     return await this.projectManager.getStatistics();
   }
+
+  /**
+   * v3.6.0: 按标签搜索项目
+   */
+  async findProjectsByTag(tag) {
+    return await this.projectManager.findProjectsByTag(tag);
+  }
+
+  /**
+   * v3.6.0: 获取所有标签
+   */
+  async getAllTags() {
+    return await this.projectManager.getAllTags();
+  }
+
+  /**
+   * v3.6.0: 添加标签到项目
+   */
+  async addTagToProject(projectId, tag) {
+    return await this.projectManager.addTagToProject(projectId, tag);
+  }
+
+  /**
+   * v3.6.0: 从项目移除标签
+   */
+  async removeTagFromProject(projectId, tag) {
+    return await this.projectManager.removeTagFromProject(projectId, tag);
+  }
 }
 
 module.exports = V3Integration;
