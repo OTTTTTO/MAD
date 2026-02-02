@@ -345,6 +345,12 @@ async function loadMessages(discussionId) {
       return;
     }
     
+    // 记录旧的消息数量，用于检测新消息
+    const oldMessageCount = container.children.length > 0 && 
+                          container.querySelector('.message') !== null ? 
+                          container.querySelectorAll('.message').length : 
+                          data.messages.length;
+    
     // 获取参与者信息
     const participants = {};
     data.participants.forEach(p => {
@@ -352,7 +358,7 @@ async function loadMessages(discussionId) {
     });
     
     container.innerHTML = data.messages.map(msg => {
-      const participant = participants[msg.role] || { role: msg.role, emoji: '🤖' };
+      const participant = participants[msg.id] || { role: msg.role, emoji: '🤖' };
       const stats = agentStats[msg.role] || {};
       const karma = stats.karma || 0;
       const level = stats.level || '🌱 新手';
@@ -386,14 +392,52 @@ async function loadMessages(discussionId) {
       `;
     }).join('');
     
-    // 滚动到底部
-    container.scrollTop = container.scrollHeight;
+    // ✅ 智能滚动：只有当用户已经在底部时才自动滚动
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 100;
+    
+    if (isNearBottom) {
+      container.scrollTop = container.scrollHeight;
+    } else if (data.messages.length > oldMessageCount) {
+      // 有新消息但用户不在底部，显示提示
+      showNewMessageBanner(data.messages.length - oldMessageCount);
+    }
     
     updateStatus(`已加载 ${data.messages.length} 条消息`);
     
   } catch (error) {
     console.error('加载消息失败:', error);
     updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示新消息提示
+ */
+function showNewMessageBanner(newMessageCount) {
+  const banner = document.getElementById('newMessageBanner');
+  if (banner) {
+    banner.innerHTML = `📨 有 ${newMessageCount} 条新消息 <button id="scrollToBottomBtn" class="btn btn-sm">↓ 滚动到底部</button>`;
+    banner.style.display = 'block';
+    
+    // 绑定滚动按钮事件
+    const scrollBtn = document.getElementById('scrollToBottomBtn');
+    if (scrollBtn) {
+      scrollBtn.onclick = () => {
+        const container = document.getElementById('messageContainer');
+        container.scrollTop = container.scrollHeight;
+        banner.style.display = 'none';
+      };
+    }
+  }
+}
+
+/**
+ * 隐藏新消息提示
+ */
+function hideNewMessageBanner() {
+  const banner = document.getElementById('newMessageBanner');
+  if (banner) {
+    banner.style.display = 'none';
   }
 }
 
