@@ -1484,6 +1484,169 @@ class DiscussionOrchestrator {
       mergedConflictsCount: mergedConflicts.length
     };
   }
+
+  /**
+   * 获取模板市场
+   */
+  async getTemplateMarket() {
+    try {
+      const marketPath = path.join(__dirname, 'templates', 'market.json');
+      const data = await fs.readFile(marketPath, 'utf8');
+      return JSON.parse(data);
+    } catch (error) {
+      console.error('[Orchestrator] Failed to load template market:', error);
+      return { templates: [], categories: [], stats: {} };
+    }
+  }
+
+  /**
+   * 从市场获取单个模板
+   */
+  async getMarketTemplate(templateId) {
+    const market = await this.getTemplateMarket();
+    return market.templates.find(t => t.id === templateId) || null;
+  }
+
+  /**
+   * 搜索市场模板
+   */
+  async searchMarketTemplates(query, options = {}) {
+    const market = await this.getTemplateMarket();
+    const { category, tags, minRating } = options;
+
+    return market.templates.filter(template => {
+      // 关键词搜索
+      if (query) {
+        const searchLower = query.toLowerCase();
+        const matchName = template.name.toLowerCase().includes(searchLower);
+        const matchDesc = template.description.toLowerCase().includes(searchLower);
+        const matchTags = template.tags.some(t => t.toLowerCase().includes(searchLower));
+        if (!matchName && !matchDesc && !matchTags) {
+          return false;
+        }
+      }
+
+      // 分类过滤
+      if (category && template.category !== category) {
+        return false;
+      }
+
+      // 标签过滤
+      if (tags && tags.length > 0) {
+        const hasTag = tags.some(tag => template.tags.includes(tag));
+        if (!hasTag) {
+          return false;
+        }
+      }
+
+      // 评分过滤
+      if (minRating && template.rating < minRating) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  /**
+   * 对市场模板进行评分
+   */
+  async rateMarketTemplate(templateId, rating, comment = '', user = 'Anonymous') {
+    const marketPath = path.join(__dirname, 'templates', 'market.json');
+    const market = await this.getTemplateMarket();
+    const template = market.templates.find(t => t.id === templateId);
+
+    if (!template) {
+      throw new Error(`Template ${templateId} not found`);
+    }
+
+    // 添加评论
+    template.comments.push({
+      user,
+      rating,
+      comment,
+      date: new Date().toISOString().split('T')[0]
+    });
+
+    // 重新计算平均评分
+    const totalRating = template.comments.reduce((sum, c) => sum + c.rating, 0);
+    template.rating = Number((totalRating / template.comments.length).toFixed(1));
+    template.ratingCount = template.comments.length;
+
+    // 更新统计
+    market.stats.averageRating = Number(
+      (market.templates.reduce((sum, t) => sum + t.rating, 0) / market.templates.length).toFixed(2)
+    );
+
+    // 保存
+    await fs.writeFile(marketPath, JSON.stringify(market, null, 2), 'utf8');
+
+    return template;
+  }
+
+  /**
+   * 增加模板下载次数
+   */
+  async incrementTemplateDownloads(templateId) {
+    const marketPath = path.join(__dirname, 'templates', 'market.json');
+    const market = await this.getTemplateMarket();
+    const template = market.templates.find(t => t.id === templateId);
+
+    if (template) {
+      template.downloads = (template.downloads || 0) + 1;
+      market.stats.totalDownloads = (market.stats.totalDownloads || 0) + 1;
+      await fs.writeFile(marketPath, JSON.stringify(market, null, 2), 'utf8');
+    }
+  }
+
+  /**
+   * 从市场创建讨论
+   */
+  async createDiscussionFromMarket(templateId, params = {}) {
+    const template = await this.getMarketTemplate(templateId);
+    if (!template) {
+      throw new Error(`Template ${templateId} not found in market`);
+    }
+
+    // 增加下载计数
+    await this.incrementTemplateDownloads(templateId);
+
+    // 使用模板配置创建讨论
+    const selectedRoles = template.config.participants.map(id => AGENT_ROLES[id] || AGENT_ROLES.coordinator);
+    const topic = template.config.topic;
+
+    // 替换参数
+    let finalTopic = topic;
+    if (params) {
+      Object.keys(params).forEach(key => {
+        finalTopic = finalTopic.replace(`{${key}}`, params[key]);
+      });
+    }
+
+    const { discussionId, context } = await this.createDiscussion(finalTopic, {
+      participants: selectedRoles
+    });
+
+    // 发送初始消息
+    let initialPrompt = template.config.initialPrompt;
+    if (params) {
+      Object.keys(params).forEach(key => {
+        initialPrompt = initialPrompt.replace(`{${key}}`, params[key]);
+      });
+    }
+
+    if (initialPrompt && selectedRoles.length > 0) {
+      // 使用第一个参与者发送初始消息
+      const firstAgent = selectedRoles[0];
+      await this.agentSpeak(discussionId, firstAgent.id, initialPrompt);
+    }
+
+    return {
+      discussionId,
+      context,
+      template
+    };
+  }
 }
 
 /**

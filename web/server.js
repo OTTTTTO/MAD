@@ -347,6 +347,108 @@ async function createServer() {
           try {
             const { templateId, params } = JSON.parse(body);
             const result = await orchestrator.createDiscussionFromTemplate(templateId, params);
+            
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 获取模板市场
+      if (url.pathname === '/api/market') {
+        const market = await orchestrator.getTemplateMarket();
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(market, null, 2));
+        return;
+      }
+
+      // API: 搜索市场模板
+      if (url.pathname === '/api/market/search') {
+        const query = url.searchParams.get('q') || '';
+        const category = url.searchParams.get('category') || null;
+        const tags = url.searchParams.get('tags')?.split(',') || null;
+        const minRating = parseFloat(url.searchParams.get('minRating')) || 0;
+
+        const results = await orchestrator.searchMarketTemplates(query, { category, tags, minRating });
+        
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(results, null, 2));
+        return;
+      }
+
+      // API: 获取市场模板详情
+      if (url.pathname.startsWith('/api/market/')) {
+        const templateId = url.pathname.split('/')[3];
+        const template = await orchestrator.getMarketTemplate(templateId);
+        
+        if (!template) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: 'Template not found' }));
+          return;
+        }
+        
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(template, null, 2));
+        return;
+      }
+
+      // API: 对市场模板评分
+      if (url.pathname.startsWith('/api/market/') && url.pathname.endsWith('/rate')) {
+        const templateId = url.pathname.split('/')[3];
+        
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const { rating, comment, user } = JSON.parse(body);
+            
+            if (rating < 1 || rating > 5) {
+              res.writeHead(400);
+              res.end(JSON.stringify({ error: 'Rating must be between 1 and 5' }));
+              return;
+            }
+            
+            const template = await orchestrator.rateMarketTemplate(templateId, rating, comment, user);
+            
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(template, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: 从市场创建讨论
+      if (url.pathname === '/api/discussion/from-market') {
+        let body = '';
+        req.on('data', chunk => body += chunk);
+        req.on('end', async () => {
+          try {
+            const { templateId, params } = JSON.parse(body);
+            const result = await orchestrator.createDiscussionFromMarket(templateId, params);
+            
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(500);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+            const result = await orchestrator.createDiscussionFromTemplate(templateId, params);
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             res.writeHead(200);
             res.end(JSON.stringify(result, null, 2));

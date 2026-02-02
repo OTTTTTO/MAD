@@ -35,7 +35,10 @@
             <label><input type="checkbox" id="filterActive" checked> 进行中</label>
             <label><input type="checkbox" id="filterEnded" checked> 已结束</label>
           </div>
-          <button id="newDiscussionBtn" class="btn btn-sm" style="margin-top: 0.5rem; width: 100%;">➕ 新建讨论</button>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button id="newDiscussionBtn" class="btn btn-sm" style="flex: 1;">➕ 新建</button>
+            <button id="marketBtn" class="btn btn-sm" style="flex: 1;">🏪 市场</button>
+          </div>
         </div>
         
         <div id="discussionList" class="discussion-list">
@@ -120,6 +123,35 @@
       </div>
       <div class="modal-footer">
         <button class="btn" onclick="closeTemplateModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模板市场对话框 -->
+  <div id="marketModal" class="modal" style="display: none;">
+    <div class="modal-content market-modal">
+      <div class="modal-header">
+        <h2>🏪 模板市场</h2>
+        <button class="modal-close" onclick="closeMarketModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="market-search">
+          <input type="text" id="marketSearchInput" placeholder="🔍 搜索模板..." />
+          <select id="marketCategoryFilter">
+            <option value="">全部分类</option>
+            <option value="产品">产品</option>
+            <option value="技术">技术</option>
+            <option value="市场">市场</option>
+            <option value="管理">管理</option>
+          </select>
+        </div>
+        <div class="market-stats" id="marketStats"></div>
+        <div class="market-list" id="marketList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeMarketModal()">关闭</button>
       </div>
     </div>
   </div>

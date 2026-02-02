@@ -74,7 +74,12 @@ function initApp() {
   document.getElementById('newDiscussionBtn').addEventListener('click', () => {
     openTemplateModal();
   });
-  
+
+  // 模板市场按钮
+  document.getElementById('marketBtn').addEventListener('click', () => {
+    openMarketModal();
+  });
+
   let searchTimeout = null;
   
   searchInput.addEventListener('input', (e) => {
@@ -1845,22 +1850,170 @@ async function showReasoning(messageId) {
   try {
     const response = await fetch(`/api/message/${messageId}/reasoning`);
     const data = await response.json();
-    
+
     if (data.reasoning && data.reasoning.length > 0) {
       const messageEl = document.querySelector(`[data-message-id="${messageId}"]`);
       if (!messageEl) return;
-      
+
       let reasoningEl = messageEl.querySelector('.reasoning-chain');
       if (reasoningEl) {
         reasoningEl.remove();
       }
-      
+
       reasoningEl = createReasoningChain(messageId, data.reasoning);
       messageEl.appendChild(reasoningEl);
-      
+
       reasoningVisibility.set(messageId, true);
     }
   } catch (error) {
     console.error('Failed to load reasoning:', error);
   }
+}
+
+/**
+ * 打开模板市场
+ */
+async function openMarketModal() {
+  const modal = document.getElementById('marketModal');
+  modal.style.display = 'flex';
+
+  await loadMarket();
+}
+
+/**
+ * 关闭模板市场
+ */
+function closeMarketModal() {
+  document.getElementById('marketModal').style.display = 'none';
+}
+
+/**
+ * 加载模板市场
+ */
+async function loadMarket() {
+  try {
+    updateStatus('加载模板市场...');
+
+    const response = await fetch('/api/market');
+    const market = await response.json();
+
+    displayMarketStats(market.stats);
+    displayMarketTemplates(market.templates);
+
+    updateStatus(`已加载 ${market.templates.length} 个模板`);
+  } catch (error) {
+    console.error('加载模板市场失败:', error);
+    updateStatus('加载失败');
+  }
+}
+
+/**
+ * 显示市场统计
+ */
+function displayMarketStats(stats) {
+  const container = document.getElementById('marketStats');
+
+  if (!stats) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="market-stats-grid">
+      <div class="stat-item">
+        <div class="stat-value">${stats.totalTemplates || 0}</div>
+        <div class="stat-label">模板总数</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${stats.totalDownloads || 0}</div>
+        <div class="stat-label">总下载量</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${stats.averageRating || 0}</div>
+        <div class="stat-label">平均评分</div>
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * 显示市场模板列表
+ */
+function displayMarketTemplates(templates) {
+  const container = document.getElementById('marketList');
+
+  if (!templates || templates.length === 0) {
+    container.innerHTML = '<div class="empty-state">暂无模板</div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="market-grid">
+      ${templates.map(template => `
+        <div class="market-item" data-template-id="${template.id}">
+          <div class="market-item-header">
+            <div class="market-item-icon">${template.icon || '📦'}</div>
+            <div class="market-item-title">${escapeHtml(template.name)}</div>
+          </div>
+          <div class="market-item-desc">${escapeHtml(template.description)}</div>
+          <div class="market-item-meta">
+            <span class="market-item-category">${template.category || '未分类'}</span>
+            <span class="market-item-rating">⭐ ${template.rating || 0}</span>
+            <span class="market-item-downloads">📥 ${template.downloads || 0}</span>
+          </div>
+          <div class="market-item-tags">
+            ${(template.tags || []).slice(0, 3).map(tag => `<span class="tag">${escapeHtml(tag)}</span>`).join('')}
+          </div>
+          <div class="market-item-actions">
+            <button class="btn btn-sm btn-primary" onclick="useMarketTemplate('${template.id}')">使用模板</button>
+            <button class="btn btn-sm" onclick="viewMarketTemplate('${template.id}')">详情</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+/**
+ * 使用市场模板
+ */
+async function useMarketTemplate(templateId) {
+  try {
+    updateStatus('创建讨论...');
+
+    const response = await fetch('/api/discussion/from-market', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        templateId,
+        params: {}
+      })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+      updateStatus('讨论创建成功');
+      closeMarketModal();
+
+      // 刷新讨论列表并跳转
+      await loadDiscussions();
+      selectDiscussion(result.discussionId);
+    } else {
+      updateStatus(`创建失败：${result.error}`);
+    }
+  } catch (error) {
+    console.error('使用模板失败:', error);
+    updateStatus('创建失败');
+  }
+}
+
+/**
+ * 查看市场模板详情（简化版）
+ */
+function viewMarketTemplate(templateId) {
+  // 简化版：直接使用模板
+  useMarketTemplate(templateId);
 }
