@@ -136,6 +136,21 @@ async function createServer() {
         return;
       }
 
+      // v2.5.3: API: 获取讨论中所有 Agent 的状态
+      if (url.pathname.match(/\/api\/discussion\/[^/]+\/agent-states/)) {
+        const discussionId = url.pathname.split('/')[3];
+        const states = orchestrator.getAgentStates(discussionId);
+        if (!states) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: 'Discussion not found' }));
+          return;
+        }
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(states, null, 2));
+        return;
+      }
+
       // API: 导出讨论为 Markdown
       if (url.pathname.match(/\/api\/discussion\/[^/]+\/export\/markdown/)) {
         const discussionId = url.pathname.split('/')[3];
@@ -379,7 +394,8 @@ async function createServer() {
         return;
       }
 
-      // 404
+      // API: 全局搜索
+      if (url.pathname.startsWith('/api/search')) {
         const query = url.searchParams.get('q') || '';
         const status = url.searchParams.get('status') || null;
         const role = url.searchParams.get('role') || null;
@@ -397,7 +413,8 @@ async function createServer() {
         return;
       }
 
-      // 404
+      // API: 导出讨论为 JSON
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/export')) {
         const discussionId = url.pathname.split('/')[3];
         try {
           const json = orchestrator.exportToJson(discussionId);
@@ -840,7 +857,15 @@ async function createServer() {
         res.end(JSON.stringify({ isFavorited, favorites }, null, 2));
         return;
       }
-      }
+
+      // API: 从模板创建讨论
+      if (url.pathname.startsWith('/api/templates/') && url.pathname.endsWith('/create') && req.method === 'POST') {
+        const templateId = url.pathname.split('/')[3];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const params = JSON.parse(body);
             const result = await orchestrator.createDiscussionFromTemplate(templateId, params);
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             res.writeHead(200);

@@ -295,6 +295,9 @@ async function loadMessages(discussionId) {
     document.getElementById('similarBtn').style.display = 'block';
     document.getElementById('pinBtn').style.display = 'block';
     
+    // v2.5.3: 加载 Agent 状态
+    await loadAgentStates(discussionId);
+    
     const container = document.getElementById('messageContainer');
     
     if (!data.messages || data.messages.length === 0) {
@@ -352,6 +355,59 @@ async function loadMessages(discussionId) {
   } catch (error) {
     console.error('加载消息失败:', error);
     updateStatus('加载失败');
+  }
+}
+
+/**
+ * v2.5.3: 加载 Agent 状态
+ */
+async function loadAgentStates(discussionId) {
+  try {
+    const response = await fetch(`/api/discussion/${discussionId}/agent-states`);
+    if (!response.ok) {
+      console.warn('Agent 状态 API 不可用');
+      return;
+    }
+    
+    const states = await response.json();
+    
+    const statesBar = document.getElementById('agentStatesBar');
+    const statesContent = document.getElementById('agentStatesContent');
+    
+    if (!states || Object.keys(states).length === 0) {
+      statesBar.style.display = 'none';
+      return;
+    }
+    
+    statesBar.style.display = 'block';
+    
+    // 获取参与者信息
+    const discussionResponse = await fetch(`/api/discussion/${discussionId}`);
+    const discussionData = await discussionResponse.json();
+    const participants = {};
+    discussionData.participants.forEach(p => {
+      participants[p.id] = p;
+    });
+    
+    statesContent.innerHTML = Object.entries(states).map(([agentId, state]) => {
+      const participant = participants[agentId] || { role: agentId, emoji: '🤖' };
+      const statusText = {
+        'thinking': '💭 思考中',
+        'speaking': '🗣️ 发言中',
+        'waiting': '⏸️ 等待中'
+      }[state.status] || state.status;
+      
+      return `
+        <div class="agent-state-item ${state.status}">
+          <span class="agent-state-emoji">${participant.emoji}</span>
+          <span class="agent-state-name">${participant.role}</span>
+          <span class="agent-state-status">${statusText}</span>
+        </div>
+      `;
+    }).join('');
+    
+  } catch (error) {
+    console.error('加载 Agent 状态失败:', error);
   }
 }
 

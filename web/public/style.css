@@ -2550,4 +2550,117 @@ mark {
   color: rgba(0, 0, 0, 0.8);
 }
 
+/* v2.5.3: Agent 状态栏 */
+.agent-states-bar {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+}
+
+.agent-states-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.agent-states-title {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+}
+
+.agent-states-legend {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.thinking {
+  background: #fbbf24;
+  animation: pulse 1.5s infinite;
+}
+
+.status-dot.speaking {
+  background: #4ade80;
+  animation: pulse 0.75s infinite;
+}
+
+.status-dot.waiting {
+  background: #6b7280;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.agent-states-content {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.agent-state-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  background: var(--bg-message);
+  border-radius: 6px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+
+.agent-state-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.agent-state-emoji {
+  font-size: 1rem;
+}
+
+.agent-state-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.agent-state-status {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.agent-state-item.thinking {
+  border-left: 3px solid #fbbf24;
+}
+
+.agent-state-item.speaking {
+  border-left: 3px solid #4ade80;
+}
+
+.agent-state-item.waiting {
+  border-left: 3px solid #6b7280;
+}
+
 

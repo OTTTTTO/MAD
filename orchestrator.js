@@ -89,6 +89,8 @@ class DiscussionContext {
     this.rounds = 0;
     this.conflicts = [];
     this.consensus = new Map();
+    // v2.5.3: Agent 状态跟踪
+    this.agentStates = new Map(); // <agentId, { status: 'thinking'|'speaking'|'waiting', lastUpdate: timestamp }>
   }
 
   addMessage(role, content, metadata = {}) {
@@ -271,7 +273,7 @@ class DiscussionOrchestrator {
       this.historyManager = new DiscussionHistoryManager(this);
       await this.historyManager.initialize();
       
-      console.log('[Orchestrator] Initialized successfully (v2.5.2)');
+      console.log('[Orchestrator] Initialized successfully (v2.5.3)');
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
       throw error;
@@ -294,6 +296,14 @@ class DiscussionOrchestrator {
 
     const context = new DiscussionContext(discussionId, topic, participants);
     context.status = 'active';
+    
+    // v2.5.3: 初始化所有 Agent 状态为 waiting
+    participants.forEach(p => {
+      context.agentStates.set(p.id, {
+        status: 'waiting',
+        lastUpdate: Date.now()
+      });
+    });
     
     this.discussions.set(discussionId, context);
     this.contexts.set(discussionId, context); // 同时添加到 contexts 映射
@@ -411,6 +421,12 @@ class DiscussionOrchestrator {
       throw new Error(`Agent ${agentId} not in discussion`);
     }
 
+    // v2.5.3: 更新 Agent 状态为发言中
+    context.agentStates.set(agentId, {
+      status: 'speaking',
+      lastUpdate: Date.now()
+    });
+
     // 添加消息到上下文
     const message = context.addMessage(agentId, content, {
       agentRole: participant.role,
@@ -438,6 +454,12 @@ class DiscussionOrchestrator {
     if (this.config.enableConflictDetection) {
       await this.detectConflicts(context);
     }
+
+    // v2.5.3: 更新 Agent 状态为等待中
+    context.agentStates.set(agentId, {
+      status: 'waiting',
+      lastUpdate: Date.now()
+    });
 
     console.log(`[Orchestrator] ${participant.role} spoke in ${discussionId}`);
     
@@ -779,6 +801,22 @@ class DiscussionOrchestrator {
       stats[id] = agentStats.getSummary();
     }
     return stats;
+  }
+
+  /**
+   * v2.5.3: 获取讨论中所有 Agent 的状态
+   */
+  getAgentStates(discussionId) {
+    const context = this.discussions.get(discussionId);
+    if (!context) {
+      return null;
+    }
+    
+    const states = {};
+    for (const [agentId, state] of context.agentStates.entries()) {
+      states[agentId] = state;
+    }
+    return states;
   }
 
   /**

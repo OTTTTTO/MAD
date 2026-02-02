@@ -85,6 +85,21 @@
           </div>
         </div>
         
+        <!-- v2.5.3: Agent 状态栏 -->
+        <div id="agentStatesBar" class="agent-states-bar" style="display: none;">
+          <div class="agent-states-header">
+            <span class="agent-states-title">🤖 Agent 状态</span>
+            <span class="agent-states-legend">
+              <span class="legend-item"><span class="status-dot thinking"></span> 思考中</span>
+              <span class="legend-item"><span class="status-dot speaking"></span> 发言中</span>
+              <span class="legend-item"><span class="status-dot waiting"></span> 等待中</span>
+            </span>
+          </div>
+          <div id="agentStatesContent" class="agent-states-content">
+            <!-- Agent 状态将动态加载 -->
+          </div>
+        </div>
+        
         <!-- 待办事项面板 -->
         <div id="actionsPanel" class="actions-panel" style="display: none;">
           <div class="actions-content" id="actionsContent"></div>
