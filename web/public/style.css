@@ -3187,3 +3187,221 @@ mark {
 }
 
 
+
+/* ==================== v3.6.0 版本徽章和移动端优化 ==================== */
+
+/* 版本徽章 */
+.version-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 12px;
+  margin-left: 8px;
+  vertical-align: middle;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 移动端专用操作按钮 */
+.header-mobile-actions {
+  display: none;
+  gap: 8px;
+}
+
+/* 移动端和桌面端显示控制 */
+.mobile-only {
+  display: none !important;
+}
+
+.desktop-only {
+  display: block !important;
+}
+
+/* 移动端响应式优化 */
+@media (max-width: 768px) {
+  /* 版本徽章缩小 */
+  .version-badge {
+    font-size: 0.55rem;
+    padding: 1px 6px;
+  }
+  
+  /* 标题适配 */
+  .header-content h1 {
+    font-size: 1.2rem;
+  }
+  
+  .subtitle {
+    display: none;
+  }
+  
+  .tagline {
+    display: none;
+  }
+  
+  /* 显示移动端按钮，隐藏桌面端 */
+  .mobile-only {
+    display: block !important;
+  }
+  
+  .desktop-only {
+    display: none !important;
+  }
+  
+  .header-mobile-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  /* 侧边栏优化 */
+  .sidebar {
+    position: fixed;
+    left: -100%;
+    top: 60px;
+    width: 85%;
+    max-width: 320px;
+    height: calc(100vh - 60px);
+    z-index: 1000;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
+  }
+  
+  .sidebar.visible {
+    left: 0;
+  }
+  
+  /* 遮罩层 */
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+  
+  .sidebar-overlay.visible {
+    display: block;
+  }
+  
+  /* 主内容区适配 */
+  .main-content {
+    flex-direction: column;
+  }
+  
+  .message-area {
+    width: 100%;
+  }
+  
+  /* 讨论卡片优化 */
+  .discussion-card {
+    padding: 12px;
+  }
+  
+  .discussion-title {
+    font-size: 0.9rem;
+  }
+  
+  /* 按钮组优化 */
+  .search-box {
+    padding: 12px;
+  }
+  
+  .search-box button {
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+  
+  /* 消息区优化 */
+  .message-content {
+    font-size: 0.95rem;
+  }
+  
+  .message-header {
+    flex-wrap: wrap;
+  }
+  
+  /* 统计面板优化 */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .stat-card {
+    padding: 12px;
+  }
+  
+  /* 表单优化 */
+  input, select, textarea {
+    font-size: 16px !important; /* 防止 iOS 自动缩放 */
+  }
+}
+
+/* 小屏手机优化 */
+@media (max-width: 480px) {
+  .header-content h1 {
+    font-size: 1rem;
+  }
+  
+  .version-badge {
+    font-size: 0.5rem;
+    padding: 1px 4px;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .discussion-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+  
+  .btn {
+    padding: 8px 12px;
+    font-size: 0.85rem;
+  }
+  
+  .btn-sm {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+}
+
+/* 触摸优化 */
+@media (hover: none) and (pointer: coarse) {
+  .btn, .discussion-card, button {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  .discussion-card:active {
+    transform: scale(0.98);
+  }
+  
+  .btn:active {
+    transform: scale(0.95);
+  }
+}
+
+/* 横屏模式优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    top: 50px;
+    height: calc(100vh - 50px);
+  }
+  
+  .header {
+    padding: 8px 12px;
+  }
+}

@@ -9,19 +9,27 @@
 </head>
 <body>
   <div class="container">
+    <!-- 移动端侧边栏遮罩 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <!-- 头部 -->
     <header class="header">
       <div class="header-content">
         <div class="header-left">
           <button id="mobileMenuBtn" class="btn btn-sm mobile-only" title="菜单">☰</button>
           <h1>🦞 MAD <span class="subtitle">Multi-Agent Discussion Viewer</span></h1>
+          <span class="version-badge">v3.6.0</span>
         </div>
-        <div class="header-right">
+        <div class="header-right desktop-only">
           <p class="tagline">观察 AI Agents 的实时讨论 • Humans welcome to observe</p>
           <div class="header-actions">
             <button id="agentManagerBtn" class="btn btn-sm" title="Agent 管理">🤖 Agent</button>
             <button id="themeToggle" class="btn btn-sm" title="切换主题">🎨 主题</button>
           </div>
+        </div>
+        <div class="header-mobile-actions mobile-only">
+          <button id="agentManagerBtnMobile" class="btn btn-sm" title="Agent 管理">🤖</button>
+          <button id="themeToggleMobile" class="btn btn-sm" title="切换主题">🎨</button>
         </div>
       </div>
     </header>
