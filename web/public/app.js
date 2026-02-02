@@ -2763,3 +2763,206 @@ async function addToFavorite(favoriteId) {
     updateStatus('添加失败');
   }
 }
+
+// ===== @提及和回复功能 =====
+
+/**
+ * 切换 @提及面板
+ */
+async function toggleMentionsPanel() {
+  const panel = document.getElementById('mentionsPanel');
+  const isVisible = panel.style.display !== 'none';
+
+  if (isVisible) {
+    panel.style.display = 'none';
+  } else {
+    panel.style.display = 'block';
+    await loadMentions();
+  }
+}
+
+/**
+ * 加载 @提及
+ */
+async function loadMentions() {
+  if (!currentDiscussionId) return;
+
+  const mentionsContent = document.getElementById('mentionsContent');
+  mentionsContent.innerHTML = '<div class="loading">加载中...</div>';
+
+  try {
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/mentions`);
+    const mentions = await response.json();
+
+    mentionsContent.innerHTML = mentions.length === 0
+      ? '<div class="empty-state">暂无 @提及</div>'
+      : mentions.map(mention => `
+        <div class="mention-item">
+          <div class="mention-from">
+            <strong>${mention.fromAgent}</strong> 提及了
+            <strong>${mention.toAgentName}</strong>
+          </div>
+          <div class="mention-content">"${mention.text}"</div>
+          <div class="mention-time">${new Date(mention.timestamp).toLocaleString()}</div>
+        </div>
+      `).join('');
+  } catch (error) {
+    console.error('加载 @提及失败:', error);
+    mentionsContent.innerHTML = '<div class="error">加载失败</div>';
+  }
+}
+
+/**
+ * 切换搜索面板
+ */
+function toggleSearchPanel() {
+  const panel = document.getElementById('searchPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+/**
+ * 执行消息搜索
+ */
+async function performMessageSearch() {
+  if (!currentDiscussionId) return;
+
+  const query = document.getElementById('messageSearchInput').value.trim();
+  const type = document.getElementById('messageSearchType').value;
+  const searchResults = document.getElementById('searchResults');
+
+  if (!query) {
+    searchResults.innerHTML = '<div class="search-hint">请输入搜索关键词</div>';
+    return;
+  }
+
+  searchResults.innerHTML = '<div class="loading">搜索中...</div>';
+
+  try {
+    const response = await fetch(`/api/discussion/${currentDiscussionId}/search?q=${encodeURIComponent(query)}&type=${type}`);
+    const results = await response.json();
+
+    searchResults.innerHTML = results.length === 0
+      ? '<div class="empty-state">未找到匹配的消息</div>'
+      : results.map(msg => `
+        <div class="search-result-item" onclick="scrollToMessage('${msg.id}')">
+          <div class="result-agent">${msg.role}</div>
+          <div class="result-content">${highlightSearchTerm(msg.content, query)}</div>
+          <div class="result-time">${new Date(msg.timestamp).toLocaleString()}</div>
+        </div>
+      `).join('');
+  } catch (error) {
+    console.error('搜索失败:', error);
+    searchResults.innerHTML = '<div class="error">搜索失败</div>';
+  }
+}
+
+/**
+ * 高亮搜索词
+ */
+function highlightSearchTerm(content, term) {
+  const regex = new RegExp(`(${term})`, 'gi');
+  return content.replace(regex, '<mark>$1</mark>');
+}
+
+/**
+ * 滚动到指定消息
+ */
+function scrollToMessage(messageId) {
+  const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (messageElement) {
+    messageElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    messageElement.classList.add('highlight-pulse');
+    setTimeout(() => {
+      messageElement.classList.remove('highlight-pulse');
+    }, 2000);
+  }
+}
+
+/**
+ * 显示消息的回复
+ */
+async function showMessageReplies(messageId) {
+  if (!currentDiscussionId) return;
+
+  try {
+    const response = await fetch(`/api/message/${currentDiscussionId}/${messageId}/replies`);
+    const replies = await response.json();
+
+    if (replies.length === 0) {
+      alert('此消息暂无回复');
+      return;
+    }
+
+    // 显示回复列表
+    const replyList = replies.map(reply => `
+      <div class="reply-preview">
+        <strong>${reply.role}:</strong> ${reply.content.substring(0, 100)}${reply.content.length > 100 ? '...' : ''}
+      </div>
+    `).join('');
+
+    alert(`回复列表：\n\n${replyList.join('\n')}`);
+  } catch (error) {
+    console.error('获取回复失败:', error);
+  }
+}
+
+/**
+ * 回复消息
+ */
+function replyToMessage(messageId) {
+  const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageElement) return;
+
+  const content = prompt('请输入回复内容：');
+  if (!content) return;
+
+  // 这里应该调用 API 创建回复
+  alert('回复功能开发中...\n\n消息 ID: ' + messageId + '\n回复内容: ' + content);
+}
+
+/**
+ * 引用消息
+ */
+function quoteMessage(messageId) {
+  const messageElement = document.querySelector(`[data-message-id="${messageId}"]`);
+  if (!messageElement) return;
+
+  const content = messageElement.querySelector('.message-content')?.textContent;
+  if (!content) return;
+
+  // 复制引用到剪贴板
+  const quote = `> ${content}\n\n`;
+  navigator.clipboard.writeText(quote).then(() => {
+    updateStatus('引用已复制到剪贴板');
+  }).catch(() => {
+    alert('引用：\n\n' + quote);
+  });
+}
+
+// 搜索输入框回车搜索
+document.addEventListener('DOMContentLoaded', () => {
+  const messageSearchInput = document.getElementById('messageSearchInput');
+  if (messageSearchInput) {
+    messageSearchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        performMessageSearch();
+      }
+    });
+  }
+
+  // @提及按钮
+  const mentionsBtn = document.getElementById('mentionsBtn');
+  if (mentionsBtn) {
+    mentionsBtn.addEventListener('click', () => {
+      toggleMentionsPanel();
+    });
+  }
+
+  // 搜索按钮
+  const searchBtn = document.getElementById('searchBtn');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', () => {
+      toggleSearchPanel();
+    });
+  }
+});

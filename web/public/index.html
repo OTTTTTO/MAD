@@ -77,6 +77,8 @@
             <button id="similarBtn" class="btn btn-sm" style="display: none;">🔗 相似</button>
             <button id="tagsBtn" class="btn btn-sm" style="display: none;">🏷️ 标签</button>
             <button id="favoriteBtn" class="btn btn-sm" style="display: none;">⭐ 收藏</button>
+            <button id="mentionsBtn" class="btn btn-sm" style="display: none;">💬 提及</button>
+            <button id="searchBtn" class="btn btn-sm" style="display: none;">🔍 搜索</button>
             <button id="pinBtn" class="btn btn-sm" style="display: none;">📌 固定</button>
             <button id="exportBtn" class="btn btn-sm" style="display: none;">📥 导出</button>
           </div>
@@ -127,6 +129,40 @@
           </div>
           <div class="favorites-content" id="favoritesContent">
             <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- @提及面板 -->
+        <div id="mentionsPanel" class="mentions-panel" style="display: none;">
+          <div class="mentions-header">
+            <h3>💬 @提及</h3>
+            <button class="btn btn-sm" onclick="toggleMentionsPanel()">✕</button>
+          </div>
+          <div class="mentions-content" id="mentionsContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 消息搜索面板 -->
+        <div id="searchPanel" class="search-panel" style="display: none;">
+          <div class="search-header">
+            <h3>🔍 消息搜索</h3>
+            <button class="btn btn-sm" onclick="toggleSearchPanel()">✕</button>
+          </div>
+          <div class="search-content">
+            <div class="search-input-group">
+              <input type="text" id="messageSearchInput" placeholder="搜索消息内容..." />
+              <select id="messageSearchType">
+                <option value="all">全部</option>
+                <option value="mention">@提及</option>
+                <option value="reply">回复</option>
+                <option value="quote">引用</option>
+              </select>
+              <button class="btn btn-primary" onclick="performMessageSearch()">搜索</button>
+            </div>
+            <div class="search-results" id="searchResults">
+              <div class="search-hint">输入关键词开始搜索</div>
+            </div>
           </div>
         </div>
         <div id="messageContainer" class="message-container">

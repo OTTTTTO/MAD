@@ -2268,4 +2268,286 @@ body {
   background: rgba(59, 130, 246, 0.05);
 }
 
+/* ===== @提及和回复样式 ===== */
+
+/* @提及面板 */
+.mentions-panel {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(168, 85, 247, 0.1);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  border-radius: 8px;
+}
+
+[data-theme="light"] .mentions-panel {
+  background: rgba(168, 85, 247, 0.05);
+  border-color: rgba(168, 85, 247, 0.2);
+}
+
+.mentions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.mentions-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.mentions-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.mention-item {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+[data-theme="light"] .mention-item {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.mention-from {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.mention-content {
+  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="light"] .mention-content {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+.mention-time {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .mention-time {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* 搜索面板 */
+.search-panel {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background: rgba(236, 72, 153, 0.1);
+  border: 1px solid rgba(236, 72, 153, 0.3);
+  border-radius: 8px;
+}
+
+[data-theme="light"] .search-panel {
+  background: rgba(236, 72, 153, 0.05);
+  border-color: rgba(236, 72, 153, 0.2);
+}
+
+.search-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.search-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.search-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.search-input-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.search-input-group input {
+  flex: 1;
+  min-width: 200px;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: inherit;
+}
+
+[data-theme="light"] .search-input-group input {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.search-input-group select {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  color: inherit;
+}
+
+[data-theme="light"] .search-input-group select {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.search-hint {
+  padding: 1rem;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+[data-theme="light"] .search-hint {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.search-result-item {
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.search-result-item:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+[data-theme="light"] .search-result-item {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .search-result-item:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.result-agent {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.5);
+  margin-bottom: 0.25rem;
+}
+
+[data-theme="light"] .result-agent {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.result-content {
+  font-size: 0.875rem;
+  margin-bottom: 0.25rem;
+}
+
+.result-time {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.3);
+}
+
+[data-theme="light"] .result-time {
+  color: rgba(0, 0, 0, 0.3);
+}
+
+/* 搜索高亮 */
+mark {
+  background: rgba(236, 72, 153, 0.3);
+  padding: 0 0.125rem;
+  border-radius: 2px;
+}
+
+/* 消息高亮脉冲 */
+.highlight-pulse {
+  animation: pulse 2s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    background: transparent;
+  }
+  50% {
+    background: rgba(236, 72, 153, 0.2);
+  }
+}
+
+/* @提及高亮（消息内容中） */
+.message-content .mention {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  background: rgba(168, 85, 247, 0.2);
+  border-radius: 4px;
+  font-weight: 500;
+  color: #a855f7;
+  cursor: pointer;
+}
+
+.message-content .mention:hover {
+  background: rgba(168, 85, 247, 0.3);
+}
+
+/* 回复预览 */
+.reply-preview {
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+[data-theme="light"] .reply-preview {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* 消息操作按钮（回复、引用等） */
+.message-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
+}
+
+.message-action-btn {
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border: none;
+  border-radius: 4px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.message-action-btn:hover {
+  background: rgba(0, 0, 0, 0.3);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+[data-theme="light"] .message-action-btn {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+[data-theme="light"] .message-action-btn:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.8);
+}
+
 

@@ -20,6 +20,8 @@ const { DiscussionSimilarityDetector } = require('./similarity.js');
 const { exportToPDF } = require('./exporters/pdf.js');
 const { exportToHTML } = require('./exporters/html.js');
 const { exportToCSV } = require('./exporters/csv.js');
+const { parseMentions, validateMentions, highlightMentions, extractMentionedAgentIds } = require('./mention.js');
+const { createReply, getReplies, getReplyTree, getReplyChain, countReplies, hasReplies, formatReplyQuote, searchMessages } = require('./reply.js');
 
 // 加载模板
 let templates = null;
@@ -82,6 +84,11 @@ class DiscussionContext {
   }
 
   addMessage(role, content, metadata = {}) {
+    // 解析 @提及
+    const rawMentions = parseMentions(content);
+    const validAgents = this.participants.map(p => ({ id: p.role, name: p.role }));
+    const mentions = validateMentions(rawMentions, validAgents);
+
     const message = {
       id: `msg-${this.messages.length + 1}`,
       role,
@@ -89,7 +96,10 @@ class DiscussionContext {
       timestamp: Date.now(),
       round: this.rounds,
       metadata,
-      reasoning: metadata.reasoning || null // 支持思维链数据
+      reasoning: metadata.reasoning || null, // 支持思维链数据
+      mentions: mentions.filter(m => m.valid), // 只保留有效的提及
+      replyTo: metadata.replyTo || null, // 回复信息
+      quotes: metadata.quotes || [] // 引用列表
     };
     this.messages.push(message);
     this.updatedAt = Date.now();
@@ -209,6 +219,8 @@ class DiscussionOrchestrator {
     this.agentStats = new Map(); // Agent 统计
     this.similarityDetector = new DiscussionSimilarityDetector(); // 相似度检测器
     this.similarityInitialized = false; // 相似度检测器是否已初始化
+    this.contexts = new Map(); // 讨论上下文映射
+    this.collaboration = null; // 协作管理器（延迟初始化）
   }
 
   /**
@@ -219,6 +231,7 @@ class DiscussionOrchestrator {
       await fs.mkdir(this.dataDir, { recursive: true });
       await fs.mkdir(path.join(this.dataDir, 'discussions'), { recursive: true });
       await fs.mkdir(path.join(this.dataDir, 'logs'), { recursive: true });
+      this.collaboration = new CollaborationManager(this);
       console.log('[Orchestrator] Initialized successfully');
     } catch (error) {
       console.error('[Orchestrator] Initialization failed:', error);
@@ -2209,6 +2222,87 @@ class FavoritesManager {
 }
 
 /**
+ * 协作管理器（@提及和回复）
+ */
+class CollaborationManager {
+  constructor(orchestrator) {
+    this.orchestrator = orchestrator;
+  }
+
+  /**
+   * 获取讨论中的所有 @提及
+   */
+  getAllMentions(discussionId) {
+    const context = this.orchestrator.contexts.get(discussionId);
+    if (!context) return [];
+
+    const mentions = [];
+    context.messages.forEach(message => {
+      if (message.mentions && message.mentions.length > 0) {
+        message.mentions.forEach(mention => {
+          mentions.push({
+            messageId: message.id,
+            fromAgent: message.role,
+            toAgent: mention.agentId,
+            toAgentName: mention.agentName,
+            text: mention.text,
+            timestamp: message.timestamp
+          });
+        });
+      }
+    });
+
+    return mentions;
+  }
+
+  /**
+   * 获取消息的回复
+   */
+  getMessageReplies(discussionId, messageId) {
+    const context = this.orchestrator.contexts.get(discussionId);
+    if (!context) return [];
+
+    return getReplies(messageId, context.messages);
+  }
+
+  /**
+   * 获取回复树
+   */
+  getReplyTree(discussionId, rootMessageId, maxDepth = 3) {
+    const context = this.orchestrator.contexts.get(discussionId);
+    if (!context) return null;
+
+    return getReplyTree(rootMessageId, context.messages, maxDepth);
+  }
+
+  /**
+   * 搜索消息
+   */
+  searchDiscussionMessages(discussionId, query, type = 'all') {
+    const context = this.orchestrator.contexts.get(discussionId);
+    if (!context) return [];
+
+    return searchMessages(context.messages, query, type);
+  }
+
+  /**
+   * 检查 Agent 是否被提及
+   */
+  isAgentMentionedInDiscussion(discussionId, agentId) {
+    const mentions = this.getAllMentions(discussionId);
+    return mentions.some(m => m.toAgent === agentId);
+  }
+
+  /**
+   * 获取 Agent 收到的提及
+   */
+  getMentionsForAgent(discussionId, agentId) {
+    const mentions = this.getAllMentions(discussionId);
+    return mentions.filter(m => m.toAgent === agentId);
+  }
+}
+
+/**
  * 导出
  */
 module.exports = {
@@ -2219,5 +2313,6 @@ module.exports = {
   AgentStats,
   TagManager,
   FavoritesManager,
+  CollaborationManager,
   AGENT_ROLES
 };

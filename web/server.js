@@ -10,6 +10,8 @@ const http = require('http');
 const fs = require('fs').promises;
 const path = require('path');
 const { DiscussionOrchestrator, TagManager, FavoritesManager } = require('../orchestrator.js');
+const { parseMentions, validateMentions, highlightMentions } = require('../mention.js');
+const { createReply, getReplies, getReplyTree } = require('../reply.js');
 
 const PORT = 18790;
 const WEB_DIR = path.join(__dirname, 'public');
@@ -824,6 +826,79 @@ async function createServer() {
             res.end(JSON.stringify({ error: error.message }));
           }
         });
+        return;
+      }
+
+      // ===== @提及和回复 API =====
+
+      // API: 获取讨论中的所有 @提及
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/mentions') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const mentions = orchestrator.collaboration.getAllMentions(discussionId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(mentions, null, 2));
+        return;
+      }
+
+      // API: 获取消息的回复
+      if (url.pathname.startsWith('/api/message/') && url.pathname.endsWith('/replies') && req.method === 'GET') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const messageId = parts[4];
+        const replies = orchestrator.collaboration.getMessageReplies(discussionId, messageId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(replies, null, 2));
+        return;
+      }
+
+      // API: 获取回复树
+      if (url.pathname.startsWith('/api/message/') && url.pathname.endsWith('/tree') && req.method === 'GET') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const messageId = parts[4];
+        const maxDepth = parseInt(url.searchParams.get('maxDepth') || '3');
+        const tree = orchestrator.collaboration.getReplyTree(discussionId, messageId, maxDepth);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(tree, null, 2));
+        return;
+      }
+
+      // API: 搜索消息
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.endsWith('/search') && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[3];
+        const query = url.searchParams.get('q') || '';
+        const type = url.searchParams.get('type') || 'all';
+        const results = orchestrator.collaboration.searchDiscussionMessages(discussionId, query, type);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(results, null, 2));
+        return;
+      }
+
+      // API: 检查 Agent 是否被提及
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.includes('/mentioned/') && req.method === 'GET') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const agentId = parts[5];
+        const isMentioned = orchestrator.collaboration.isAgentMentionedInDiscussion(discussionId, agentId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify({ isMentioned }, null, 2));
+        return;
+      }
+
+      // API: 获取 Agent 收到的提及
+      if (url.pathname.startsWith('/api/discussion/') && url.pathname.includes('/mentions-for/') && req.method === 'GET') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[3];
+        const agentId = parts[5];
+        const mentions = orchestrator.collaboration.getMentionsForAgent(discussionId, agentId);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(mentions, null, 2));
         return;
       }
 
