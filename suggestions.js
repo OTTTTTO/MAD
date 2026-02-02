@@ -197,8 +197,8 @@ class DiscussionSuggestionSystem {
     let total = 0;
 
     participants.forEach(p => {
-      const count = messages.filter(m => m.agentName === p.role).length;
-      distribution[p.role] = count;
+      const count = messages.filter(m => m.role === p.id).length;
+      distribution[p.id] = count;
       total += count;
     });
 
