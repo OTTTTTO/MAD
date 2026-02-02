@@ -1,5 +1,91 @@
 # 更新日志
 
+## [2.7.1] - 2026-02-02
+
+### 🐛 Bug 修复
+
+#### 关键 API 500 错误修复
+- 修复相似讨论 API (`GET /api/discussion/:id/similar`) 500 错误
+- 修复合并讨论 API (`POST /api/discussion/:id/merge`) 500 错误
+- 修复 5 个方法的潜在空值引用问题
+
+#### 修复详情
+
+**相似讨论 API**
+- **问题：** 异步初始化未等待，模型训练未完成就开始查询
+- **问题：** 数据一致性检查缺失，访问 undefined 对象属性
+- **修复：** 添加 `async/await`，添加空值检查
+- **影响：** API 现在能正确返回相似讨论列表
+
+**合并讨论 API**
+- **问题：** 方法调用冲突，调用原型方法而不是类方法
+- **问题：** 逻辑顺序错误，先删除再检查存在性
+- **问题：** messages/conflicts 字段可能为 null
+- **修复：** 删除冗余删除操作，添加防御性空值检查
+- **影响：** 讨论合并功能正常工作
+
+**防御性空值检查**
+- 修复方法：`mergeDiscussions`, `generateSummary`, `exportToMarkdown`, `extractActionItems`, `getAllMentions`
+- 标准防御模式：确保 messages 和 conflicts 始终为数组
+
+### 📚 文档更新
+
+- 新增 **API 500 错误排查指南** (`docs/troubleshooting/api-500-errors.md`)
+  - 完整的排查流程
+  - 根本原因分析
+  - 最佳实践和调试技巧
+
+- 新增 **故障修复总结** (`FIXES_SUMMARY.md`)
+  - 快速了解修复内容
+  - 技术要点总结
+  - 相关文档链接
+
+- 新增修复记录文档：
+  - `memory/2026-02-02-fix-similar-api.md`
+  - `memory/2026-02-02-fix-merge-api.md`
+  - `memory/2026-02-02-fix-merge-final.md`
+  - `memory/2026-02-02-defensive-null-checks.md`
+
+### 🔧 技术改进
+
+- **异步操作规范化：** 所有 async 方法调用都使用 await
+- **防御性编程：** 访问对象属性前检查空值
+- **错误处理改进：** 更清晰的错误消息和日志
+
+### 📊 统计
+
+- **修复文件：** 3 个（orchestrator.js, similarity.js, server.js）
+- **新增文档：** 5 个
+- **Git 提交：** 3 次
+- **修复行数：** +500 行（包含文档）
+- **测试状态：** ✅ 全部通过
+
+### 🚀 升级建议
+
+```bash
+# 拉取最新修复
+cd ~/.openclaw/skills/multi-agent-discuss
+git pull origin main
+
+# 重启 Web 服务器
+pkill -f "node server.js"
+cd web && node server.js &
+
+# 测试 API
+curl "http://localhost:18790/api/discussion/:id/similar"
+curl -X POST "http://localhost:18790/api/discussion/:id/merge" \
+  -H "Content-Type: application/json" \
+  -d '{"sourceIds":["..."]}'
+```
+
+### 📖 相关文档
+
+- [API 500 错误排查指南](docs/troubleshooting/api-500-errors.md)
+- [故障修复总结](FIXES_SUMMARY.md)
+- [GitHub Commits](https://github.com/OTTTTTO/MAD/commits/main)
+
+---
+
 ## [2.7.0] - 2026-02-02
 
 ### 🎉 大版本更新
