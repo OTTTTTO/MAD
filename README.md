@@ -530,6 +530,49 @@ mad/
     └── basic.test.js         # 基础测试
 ```
 
+## 🔧 故障排除
+
+### API 500 错误
+
+如果遇到 API 返回 500 错误，请查看：
+
+1. **相似讨论 API** (`GET /api/discussion/:id/similar`)
+   - 症状：返回 500 错误
+   - 原因：异步初始化未完成或数据不一致
+   - 解决：已在 v2.7.1 修复
+
+2. **合并讨论 API** (`POST /api/discussion/:id/merge`)
+   - 症状：返回 "Discussion not found"
+   - 原因：方法调用冲突或空值引用
+   - 解决：已在 v2.7.1 修复
+
+详细的故障排查指南：[docs/troubleshooting/api-500-errors.md](docs/troubleshooting/api-500-errors.md)
+
+### 常见问题
+
+**Q: Web 服务器无法启动？**
+```bash
+# 检查端口是否被占用
+lsof -i :18790
+
+# 查看日志
+tail -f /tmp/mad-web-server.log
+```
+
+**Q: 讨论数据丢失？**
+- 数据存储在 `~/.openclaw/multi-agent-discuss/discussions/`
+- 检查文件权限和磁盘空间
+
+**Q: Agent 不响应？**
+- 检查 OpenClaw 配置
+- 查看 Agent 日志：`tail -f logs/agent-*.log`
+
+### 获取帮助
+
+- 📖 [故障排查指南](docs/troubleshooting/api-500-errors.md)
+- 🐛 [提交 Issue](https://github.com/OTTTTTO/MAD/issues)
+- 💬 [Discord 社区](https://discord.com/invite/clawd)
+
 ## 🧪 测试
 
 ```bash
