@@ -1,0 +1,89 @@
+{
+  "id": {
+    "id": "disc-1769997007312",
+    "name": "午餐吃什么",
+    "category": "general",
+    "description": "午餐吃什么",
+    "status": "active",
+    "participants": [
+      {
+        "id": "coordinator",
+        "role": "主协调员",
+        "emoji": "💡",
+        "systemPrompt": "你是讨论协调员，负责引导讨论方向、识别分歧、总结共识",
+        "agentId": "main",
+        "triggerKeywords": [],
+        "responseRequired": false,
+        "speakProbability": 0.3,
+        "personality": "balanced"
+      },
+      {
+        "id": "market_research",
+        "role": "市场调研",
+        "emoji": "📊",
+        "systemPrompt": "你是市场调研专家，评估商业价值、市场需求、竞争态势",
+        "agentId": "main",
+        "triggerKeywords": [
+          "市场",
+          "用户",
+          "价值",
+          "竞争",
+          "需求"
+        ],
+        "responseRequired": false,
+        "speakProbability": 0.6,
+        "personality": "balanced"
+      }
+    ],
+    "tags": [
+      "历史讨论",
+      "general",
+      "active"
+    ],
+    "messages": [
+      {
+        "id": "msg-1",
+        "role": "coordinator",
+        "content": "今天中午吃什么好呢？",
+        "timestamp": 1769997007313,
+        "round": 0,
+        "metadata": {
+          "agentRole": "主协调员"
+        },
+        "reasoning": null
+      }
+    ],
+    "markers": [],
+    "stats": {
+      "totalMessages": 1,
+      "totalMarkers": 0,
+      "totalTokens": 3,
+      "progress": 50,
+      "createdAt": 1769997007312,
+      "updatedAt": 1769997007313
+    },
+    "metadata": {
+      "originalDiscussionId": "disc-1769997007312",
+      "originalCreatedAt": 1769997007312,
+      "convertedAt": 1770048831953,
+      "originalFilePath": "/home/otto/.openclaw/multi-agent-discuss/discussions/disc-1769997007312.json",
+      "originalMessageCount": 1,
+      "originalMarkerCount": 0
+    }
+  },
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831953,
+    "updatedAt": 1770048831953
+  },
+  "status": "active"
+}

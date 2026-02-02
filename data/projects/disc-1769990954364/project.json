@@ -1,0 +1,154 @@
+{
+  "id": {
+    "id": "disc-1769990954364",
+    "name": "v2.0.0 - 重大升级 技术设计\n\n任务:\n1. 技术 Agent：设计技术方案和数据结构\n2. 测试 Agent：提出测试策略\n3. 目标：产出完整的技术方案",
+    "category": "general",
+    "description": "v2.0.0 - 重大升级 技术设计\n\n任务:\n1. 技术 Agent：设计技术方案和数据结构\n2. 测试 Agent：提出测试策略\n3. 目标：产出完整的技术方案",
+    "status": "completed",
+    "participants": [
+      {
+        "id": "coordinator",
+        "role": "主协调员",
+        "emoji": "💡",
+        "systemPrompt": "你是讨论协调员，负责引导讨论方向、识别分歧、总结共识",
+        "agentId": "main",
+        "triggerKeywords": [],
+        "responseRequired": false,
+        "speakProbability": 0.3,
+        "personality": "balanced"
+      },
+      {
+        "id": "requirement",
+        "role": "需求分析",
+        "emoji": "🎯",
+        "systemPrompt": "你是需求分析专家，梳理用户需求、功能边界、使用场景",
+        "agentId": "main",
+        "triggerKeywords": [
+          "需求",
+          "功能",
+          "场景",
+          "用户"
+        ],
+        "responseRequired": false,
+        "speakProbability": 0.7,
+        "personality": "balanced"
+      },
+      {
+        "id": "technical",
+        "role": "技术可行性",
+        "emoji": "🔧",
+        "systemPrompt": "你是技术架构专家，评估技术实现方案、难点、工作量",
+        "agentId": "main",
+        "triggerKeywords": [
+          "技术",
+          "实现",
+          "开发",
+          "架构",
+          "代码"
+        ],
+        "responseRequired": false,
+        "speakProbability": 0.7,
+        "personality": "balanced"
+      },
+      {
+        "id": "testing",
+        "role": "测试",
+        "emoji": "🧪",
+        "systemPrompt": "你是测试专家，考虑质量保障、测试策略、风险控制",
+        "agentId": "main",
+        "triggerKeywords": [
+          "测试",
+          "质量",
+          "风险",
+          "验证"
+        ],
+        "responseRequired": false,
+        "speakProbability": 0.5,
+        "personality": "balanced"
+      }
+    ],
+    "tags": [
+      "历史讨论",
+      "general",
+      "ended"
+    ],
+    "messages": [
+      {
+        "id": "msg-1",
+        "role": "coordinator",
+        "content": "需求已明确，现在设计技术方案。",
+        "timestamp": 1769990954365,
+        "round": 0,
+        "metadata": {
+          "agentRole": "主协调员"
+        },
+        "reasoning": null
+      },
+      {
+        "id": "msg-2",
+        "role": "technical",
+        "content": "技术方案:\n\n- 讨论模板市场\n  前端: ... \n  后端: ... \n  数据结构: ...\n\n- Agent 自定义\n  前端: ... \n  后端: ... \n  数据结构: ...\n\n- 代码重构\n  前端: ... \n  后端: ... \n  数据结构: ...\n\n架构: 保持现有架构，增量开发",
+        "timestamp": 1769990954566,
+        "round": 0,
+        "metadata": {
+          "agentRole": "技术可行性"
+        },
+        "reasoning": null
+      },
+      {
+        "id": "msg-3",
+        "role": "testing",
+        "content": "测试策略:\n- 单元测试: 每个功能点\n- 集成测试: 端到端流程\n- 性能测试: 响应时间",
+        "timestamp": 1769990954767,
+        "round": 0,
+        "metadata": {
+          "agentRole": "测试"
+        },
+        "reasoning": null
+      },
+      {
+        "id": "msg-4",
+        "role": "coordinator",
+        "content": "技术方案已确定！开始实施。",
+        "timestamp": 1769990954968,
+        "round": 0,
+        "metadata": {
+          "agentRole": "主协调员"
+        },
+        "reasoning": null
+      }
+    ],
+    "markers": [],
+    "stats": {
+      "totalMessages": 4,
+      "totalMarkers": 0,
+      "totalTokens": 59,
+      "progress": 100,
+      "createdAt": 1769990954365,
+      "updatedAt": 1769990954968
+    },
+    "metadata": {
+      "originalDiscussionId": "disc-1769990954364",
+      "originalCreatedAt": 1769990954365,
+      "convertedAt": 1770048831946,
+      "originalFilePath": "/home/otto/.openclaw/multi-agent-discuss/discussions/disc-1769990954364.json",
+      "originalMessageCount": 4,
+      "originalMarkerCount": 0
+    }
+  },
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831946,
+    "updatedAt": 1770048831946
+  },
+  "status": "active"
+}
