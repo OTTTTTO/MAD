@@ -14,8 +14,10 @@ const path = require('path');
 
 // 数据目录
 const DATA_DIR = path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss');
-const PROJECTS_DIR = path.join(DATA_DIR, 'projects');
-const DISCUSSIONS_DIR = path.join(DATA_DIR, 'discussions');
+// 备用路径：npm全局安装路径
+const DATA_DIR_ALT = path.join(process.env.HOME, '.npm-global', 'lib', 'node_modules', 'openclaw', 'skills', 'mad', 'data');
+const PROJECTS_DIR = path.join(process.cwd(), 'data', 'projects');
+const DISCUSSIONS_DIR = path.join(process.cwd(), 'data', 'discussions');
 
 // 字段映射
 const FIELD_MAPPING = {
@@ -42,18 +44,27 @@ async function migrateProjectsToDiscussions() {
     await fs.mkdir(DISCUSSIONS_DIR, { recursive: true });
 
     // 2. 读取所有项目
-    const projectFiles = await fs.readdir(PROJECTS_DIR);
-    const projectJsonFiles = projectFiles.filter(f => f.endsWith('.json'));
+    const projectDirs = await fs.readdir(PROJECTS_DIR);
+    // 过滤出项目目录（包含project.json的目录）
+    const projectGroupIds = [];
 
-    console.log(`📦 找到 ${projectJsonFiles.length} 个项目\n`);
+    for (const dir of projectDirs) {
+      const projectJsonPath = path.join(PROJECTS_DIR, dir, 'project.json');
+      try {
+        await fs.access(projectJsonPath);
+        projectGroupIds.push(dir);
+      } catch {
+        // 不是项目目录，跳过
+      }
+    }
+
+    console.log(`📦 找到 ${projectGroupIds.length} 个项目\n`);
 
     let migrated = 0;
     let skipped = 0;
     let failed = 0;
 
-    for (const file of projectJsonFiles) {
-      const groupId = file.replace('.json', '');
-
+    for (const groupId of projectGroupIds) {
       try {
         // 读取项目数据
         const projectPath = path.join(PROJECTS_DIR, groupId, 'project.json');
@@ -90,7 +101,7 @@ async function migrateProjectsToDiscussions() {
     console.log(`✅ 成功: ${migrated}`);
     console.log(`⏭️  跳过: ${skipped}`);
     console.log(`❌ 失败: ${failed}`);
-    console.log(`📁 总计: ${projectJsonFiles.length}`);
+    console.log(`📁 总计: ${projectGroupIds.length}`);
     console.log('='.repeat(50));
 
     if (failed === 0 && migrated > 0) {
