@@ -5,6 +5,80 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.9] - 2026-02-04
+
+### ✨ Web界面集成 - LLM智能讨论
+
+#### 新增功能
+
+**Web API端点**：
+- ✅ `/api/v4/llm-discussion` - LLM讨论API（返回使用说明）
+- ✅ `/api/v4/llm-discussion/demo` - 模拟演示API（预设响应）
+- ✅ 两个API端点都支持POST请求，接收话题参数
+
+**Web界面**：
+- ✅ `/llm-discussion.html` - 全新的LLM智能讨论界面
+- ✅ 美观的UI设计，渐变色彩
+- ✅ 双模式选择器：模拟演示 / 真实LLM
+- ✅ 示例话题快速填充
+- ✅ 实时加载动画
+- ✅ 响应式布局，支持移动端
+
+**功能特性**：
+- ✅ 模拟模式：使用预设响应，快速体验
+- ✅ 真实LLM模式：显示Agent使用代码示例
+- ✅ 根据话题关键词自动选择专家
+- ✅ 专家意见卡片式展示
+- ✅ 代码高亮显示
+
+#### 技术实现
+
+```javascript
+// API调用示例
+POST /api/v4/llm-discussion/demo
+{
+  "topic": "我想开发一个在线教育平台"
+}
+
+// 响应
+{
+  "success": true,
+  "mode": "demo",
+  "experts": [
+    { "name": "技术专家", "response": "..." },
+    { "name": "产品专家", "response": "..." }
+  ]
+}
+```
+
+#### 使用说明
+
+**Web界面访问**：
+```
+http://localhost:18790/llm-discussion.html
+```
+
+**真实LLM使用**：
+```javascript
+// 在OpenClaw Agent中
+const { DiscussionEngine } = require('./src/core/v4/discussion-engine');
+const engine = new DiscussionEngine({ tool: this.tool });
+const result = await engine.startDiscussion({ content: "..." });
+```
+
+#### 改进
+- ✅ 用户友好的Web界面
+- ✅ 清晰的模式说明
+- ✅ 代码示例展示
+- ✅ 实时反馈和加载状态
+
+#### 已知限制
+- ⚠️ Web环境无法直接调用真实LLM（需要OpenClaw tool注入）
+- ⚠️ 真实LLM功能需要在Agent环境中使用
+- ✅ 提供了模拟演示作为替代
+
+---
+
 ## [4.0.8] - 2026-02-04
 
 ### ✨ 重大更新 - 真实LLM集成

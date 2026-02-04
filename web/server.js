@@ -13,6 +13,7 @@ const { DiscussionOrchestrator, TagManager, FavoritesManager, SnapshotManager, R
 const { parseMentions, validateMentions, highlightMentions } = require('../src/core/mention.js');
 const { createReply, getReplies, getReplyTree } = require('../src/core/reply.js');
 const { compareSnapshots, formatDiffHTML } = require('../src/features/version/diff.js');
+const { DiscussionEngine } = require('../src/core/v4/discussion-engine');
 
 const PORT = 18790;
 const WEB_DIR = path.join(__dirname, 'public');
@@ -129,10 +130,19 @@ async function createServer() {
         return;
       }
 
+      // v4.0.9: LLM智能讨论页面
+      if (url.pathname === '/llm-discussion' || url.pathname === '/llm-discussion.html') {
+        const html = await fs.readFile(path.join(WEB_DIR, 'llm-discussion.html'), 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.writeHead(200);
+        res.end(html);
+        return;
+      }
+
       // API: 列出所有讨论
       if (url.pathname === '/api/discussions') {
         const discussions = orchestrator.listDiscussions();
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.setHeader('Content-Type', 'application/json; charset utf-8');
         res.writeHead(200);
         res.end(JSON.stringify(discussions, null, 2));
         return;
@@ -174,6 +184,160 @@ async function createServer() {
             );
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             res.writeHead(201);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: v4.0.9 - LLM智能讨论（真实LLM集成）
+      if (url.pathname === '/api/v4/llm-discussion' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const data = JSON.parse(body);
+
+            if (!data.topic) {
+              res.writeHead(400);
+              res.end(JSON.stringify({ error: '缺少 topic 参数' }));
+              return;
+            }
+
+            console.log(`[API v4.0.9] 接收LLM讨论请求: ${data.topic}`);
+
+            // 注意：Web服务器环境没有OpenClaw的tool
+            // 这里返回说明，引导用户在Agent中使用
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify({
+              status: 'info',
+              message: 'LLM智能讨论功能需要在OpenClaw Agent中运行',
+              topic: data.topic,
+              instructions: {
+                method: '在OpenClaw Agent中调用',
+                code: `const { DiscussionEngine } = require('./src/core/v4/discussion-engine');\n\nconst engine = new DiscussionEngine({ tool: this.tool });\nconst result = await engine.startDiscussion({\n  content: "${data.topic}"\n});`,
+                alternative: '或在Web界面使用模拟模式（仅供演示）'
+              },
+              demoMode: {
+                available: true,
+                note: '模拟模式使用预设响应，不调用真实LLM'
+              }
+            }, null, 2));
+          } catch (error) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: v4.0.9 - LLM模拟演示（不调用真实LLM）
+      if (url.pathname === '/api/v4/llm-discussion/demo' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const data = JSON.parse(body);
+
+            if (!data.topic) {
+              res.writeHead(400);
+              res.end(JSON.stringify({ error: '缺少 topic 参数' }));
+              return;
+            }
+
+            console.log(`[API v4.0.9 Demo] 模拟LLM讨论: ${data.topic}`);
+
+            // 模拟LLM响应
+            const demoResponses = {
+              technical: `【技术专家】
+
+作为技术专家，我分析一下这个方案的技术可行性：
+
+1. 技术架构建议：
+   - 推荐使用现代Web技术栈
+   - 前端：React/Vue + TypeScript
+   - 后端：Node.js/Python
+   - 数据库：PostgreSQL + Redis
+
+2. 技术风险：
+   - 需要考虑性能和扩展性
+   - 数据安全很重要
+
+3. 实施建议：
+   - 先做MVP验证
+   - 使用云服务加速开发`,
+              product: `【产品专家】
+
+从产品角度分析：
+
+1. 目标用户：
+   - 需要明确用户画像
+   - 了解核心使用场景
+
+2. 核心功能：
+   - MVP应该包含最核心的功能
+   - 关注用户体验
+
+3. 建议：
+   - 先做用户调研`,
+              business: `【商业专家】
+
+商业模式分析：
+
+1. 盈利模式：
+   - 订阅制或单次付费
+   - 考虑B端市场
+
+2. 市场定位：
+   - 差异化很重要
+   - 分析竞争对手
+
+3. 建议：
+   - 明确价值主张`
+            };
+
+            // 根据话题关键词选择专家
+            const experts = [];
+            const topicLower = data.topic.toLowerCase();
+
+            if (topicLower.includes('技术') || topicLower.includes('开发') || topicLower.includes('系统')) {
+              experts.push({ name: '技术专家', domain: 'technical', response: demoResponses.technical });
+            }
+            if (topicLower.includes('产品') || topicLower.includes('用户') || topicLower.includes('体验')) {
+              experts.push({ name: '产品专家', domain: 'product', response: demoResponses.product });
+            }
+            if (topicLower.includes('商业') || topicLower.includes('盈利') || topicLower.includes('市场')) {
+              experts.push({ name: '商业专家', domain: 'business', response: demoResponses.business });
+            }
+
+            // 默认至少包含技术和产品专家
+            if (experts.length === 0) {
+              experts.push(
+                { name: '技术专家', domain: 'technical', response: demoResponses.technical },
+                { name: '产品专家', domain: 'product', response: demoResponses.product }
+              );
+            }
+
+            const result = {
+              success: true,
+              mode: 'demo',
+              message: '这是模拟响应，不包含真实LLM调用',
+              topic: data.topic,
+              experts: experts.map(e => ({
+                name: e.name,
+                domain: e.domain,
+                response: e.response
+              })),
+              timestamp: new Date().toISOString(),
+              note: '真实LLM功能需要在OpenClaw Agent中使用'
+            };
+
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
             res.end(JSON.stringify(result, null, 2));
           } catch (error) {
             res.writeHead(400);

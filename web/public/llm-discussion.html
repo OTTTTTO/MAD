@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAD v4.0.9 - LLM智能讨论</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .version-badge {
+      display: inline-block;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-left: 10px;
+    }
+
+    .input-section {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+
+    .topic-input {
+      width: 100%;
+      min-height: 150px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+      transition: all 0.3s;
+    }
+
+    .topic-input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .mode-selector {
+      margin: 20px 0;
+      display: flex;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .mode-btn {
+      padding: 10px 20px;
+      border: 2px solid #e0e0e0;
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s;
+      flex: 1;
+    }
+
+    .mode-btn.active {
+      border-color: #667eea;
+      background: #667eea;
+      color: white;
+    }
+
+    .mode-btn:hover:not(.active) {
+      border-color: #667eea;
+    }
+
+    .start-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .start-btn:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .results-section {
+      display: none;
+    }
+
+    .results-section.show {
+      display: block;
+    }
+
+    .expert-card {
+      background: white;
+      padding: 25px;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 20px;
+      border-left: 5px solid #667eea;
+    }
+
+    .expert-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .expert-name {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .expert-domain {
+      margin-left: 15px;
+      padding: 5px 12px;
+      background: #f0f0f0;
+      border-radius: 15px;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .expert-response {
+      line-height: 1.8;
+      color: #444;
+      white-space: pre-wrap;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 40px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #667eea;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .info-box {
+      background: #e3f2fd;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      border-left: 4px solid #2196f3;
+    }
+
+    .info-box h3 {
+      margin-top: 0;
+      color: #1976d2;
+    }
+
+    .example-topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .example-chip {
+      padding: 8px 16px;
+      background: #f5f5f5;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+
+    .example-chip:hover {
+      background: #667eea;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🦞 MAD <span class="version-badge">v4.0.9</span></h1>
+      <p style="color: #666; margin-top: 10px;">LLM智能讨论系统 - 真实AI专家协作</p>
+    </div>
+
+    <div class="info-box">
+      <h3>✨ v4.0.8重大更新</h3>
+      <p><strong>真实LLM集成</strong>：专家现在使用真正的LLM生成内容，不再是模板回复！</p>
+      <p><strong>注意</strong>：真实LLM功能需要在OpenClaw Agent环境中运行。Web界面提供模拟演示。</p>
+    </div>
+
+    <div class="input-section">
+      <h2 style="margin-top: 0;">💡 输入讨论话题</h2>
+
+      <textarea
+        id="topicInput"
+        class="topic-input"
+        placeholder="例如：我想开发一个在线教育平台，需要考虑技术架构、用户体验和商业模式..."
+      ></textarea>
+
+      <div class="example-topics">
+        <div class="example-chip" onclick="setTopic('我想开发一个在线教育平台')">在线教育平台</div>
+        <div class="example-chip" onclick="setTopic('如何设计一个高并发的聊天系统')">高并发聊天系统</div>
+        <div class="example-chip" onclick="setTopic('电商系统的秒杀功能如何设计')">秒杀系统设计</div>
+        <div class="example-chip" onclick="setTopic('SaaS产品的商业模式和定价策略')">SaaS商业模式</div>
+      </div>
+
+      <div class="mode-selector">
+        <button class="mode-btn active" onclick="setMode('demo')">🎭 模拟演示</button>
+        <button class="mode-btn" onclick="setMode('real')">🤖 真实LLM（需Agent环境）</button>
+      </div>
+
+      <p id="modeHint" style="color: #666; font-size: 0.9rem; margin-bottom: 15px;">
+        模拟模式：使用预设响应，快速体验功能
+      </p>
+
+      <button id="startBtn" class="start-btn" onclick="startDiscussion()">
+        🚀 开始讨论
+      </button>
+    </div>
+
+    <div id="resultsSection" class="results-section">
+      <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+        <p>专家们正在思考和讨论...</p>
+        <p style="color: #666; font-size: 0.9rem;">这可能需要10-30秒</p>
+      </div>
+
+      <div id="results"></div>
+    </div>
+  </div>
+
+  <script>
+    let currentMode = 'demo';
+
+    function setMode(mode) {
+      currentMode = mode;
+
+      // 更新按钮状态
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+
+      // 更新提示
+      const hint = document.getElementById('modeHint');
+      if (mode === 'demo') {
+        hint.textContent = '模拟模式：使用预设响应，快速体验功能';
+      } else {
+        hint.textContent = '真实LLM模式：需要在OpenClaw Agent环境中运行（查看返回的代码示例）';
+      }
+    }
+
+    function setTopic(topic) {
+      document.getElementById('topicInput').value = topic;
+    }
+
+    async function startDiscussion() {
+      const topic = document.getElementById('topicInput').value.trim();
+
+      if (!topic) {
+        alert('请输入讨论话题');
+        return;
+      }
+
+      const startBtn = document.getElementById('startBtn');
+      const resultsSection = document.getElementById('resultsSection');
+      const loading = document.getElementById('loading');
+      const results = document.getElementById('results');
+
+      startBtn.disabled = true;
+      startBtn.textContent = '⏳ 讨论中...';
+      resultsSection.classList.add('show');
+      loading.style.display = 'block';
+      results.innerHTML = '';
+
+      try {
+        const endpoint = currentMode === 'demo'
+          ? '/api/v4/llm-discussion/demo'
+          : '/api/v4/llm-discussion';
+
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ topic })
+        });
+
+        const data = await response.json();
+
+        loading.style.display = 'none';
+
+        if (data.status === 'info') {
+          // 真实LLM模式，显示说明
+          results.innerHTML = `
+            <div class="info-box">
+              <h3>📖 如何使用真实LLM功能</h3>
+              <p>真实LLM讨论需要在OpenClaw Agent环境中运行。请在Agent中使用以下代码：</p>
+              <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto;">${data.instructions.code}</pre>
+              <p><strong>为什么？</strong></p>
+              <ul>
+                <li>Web服务器环境无法访问OpenClaw的tool.sessions_spawn</li>
+                <li>真实LLM需要通过sub-agents调用</li>
+                <li>Agent环境提供完整的OpenClaw能力</li>
+              </ul>
+              <p><strong>替代方案</strong>：您可以使用"模拟演示"模式快速体验功能。</p>
+            </div>
+          `;
+        } else if (data.success) {
+          // 模拟模式成功
+          let html = '<h2 style="text-align: center;">🎉 讨论结果</h2>';
+
+          if (data.mode === 'demo') {
+            html += `<p style="text-align: center; color: #666;">${data.note}</p>`;
+          }
+
+          data.experts.forEach(expert => {
+            html += `
+              <div class="expert-card">
+                <div class="expert-header">
+                  <span class="expert-name">${expert.name}</span>
+                  <span class="expert-domain">${expert.domain}</span>
+                </div>
+                <div class="expert-response">${expert.response}</div>
+              </div>
+            `;
+          });
+
+          html += `
+            <div class="info-box">
+              <h3>💡 下一步</h3>
+              <p>想在真实项目中使用LLM专家讨论？在OpenClaw Agent中运行：</p>
+              <pre style="background: #f5f5f5; padding: 15px; border-radius: 8px;">const { DiscussionEngine } = require('./skills/MAD/src/core/v4/discussion-engine');
+
+const engine = new DiscussionEngine({ tool: this.tool });
+const result = await engine.startDiscussion({
+  content: "你的话题"
+});
+
+console.log(result.summary);</pre>
+            </div>
+          `;
+
+          results.innerHTML = html;
+        } else {
+          results.innerHTML = `<p style="color: red;">错误：${data.error}</p>`;
+        }
+
+      } catch (error) {
+        loading.style.display = 'none';
+        results.innerHTML = `<p style="color: red;">请求失败：${error.message}</p>`;
+      }
+
+      startBtn.disabled = false;
+      startBtn.textContent = '🚀 开始讨论';
+    }
+
+    // 回车快捷键
+    document.getElementById('topicInput').addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'Enter') {
+        startDiscussion();
+      }
+    });
+  </script>
+</body>
+</html>
