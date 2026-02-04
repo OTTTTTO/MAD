@@ -102,6 +102,15 @@ async function createServer() {
         return;
       }
 
+      // create-discussion.js
+      if (url.pathname === '/create-discussion.js') {
+        const js = await fs.readFile(path.join(WEB_DIR, 'create-discussion.js'), 'utf8');
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+        res.writeHead(200);
+        res.end(js);
+        return;
+      }
+
       // JavaScript
       if (url.pathname === '/app.js') {
         const js = await fs.readFile(path.join(WEB_DIR, 'app.js'), 'utf8');
