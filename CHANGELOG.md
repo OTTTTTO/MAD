@@ -5,6 +5,53 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.3] - 2026-02-04
+
+### ✨ 新增功能
+
+#### 用户交互处理器 📝
+- ✅ 自动识别缺失的关键信息
+  - 关键信息检测：目标用户、核心需求、使用场景
+  - 可选信息检测：预算、时间、技术偏好
+  - 智能关键词匹配
+- ✅ 自动生成补充问题
+  - 支持多种问题类型：文本、多行文本、下拉选择
+  - 问题模板系统
+  - 必填/可选标记
+- ✅ 用户回答处理
+  - 答案验证和清洗
+  - 信息充分性检查
+
+#### 核心模块
+- ✅ `src/core/v4/user-interaction-handler.js` - 用户交互处理器（4.2KB）
+- ✅ `test-v4.0.3.js` - 功能测试文件（2.1KB）
+
+### 🔧 改进
+
+#### 配置灵活性
+- ✅ 关键信息字段可配置
+- ✅ 可选信息字段可配置
+- ✅ 阈值可调整
+
+#### 可测试性
+- ✅ 5个测试场景覆盖
+- ✅ 测试通过率100%
+
+### 📝 文档
+
+- ✅ 添加v4.0.3测试说明
+- ✅ 更新使用示例
+
+### 🧪 测试
+
+- ✅ 缺失关键信息检测
+- ✅ 完整信息识别
+- ✅ 可选信息检测
+- ✅ 用户回答处理
+- ✅ 信息充分性检查
+
+---
+
 ## [4.0.2] - 2026-02-04
 
 ### ✨ 新增功能
