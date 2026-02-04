@@ -659,7 +659,7 @@ class DiscussionOrchestrator {
       if (result.discussion && result.discussion.messages) {
         for (const msg of result.discussion.messages) {
           if (msg.type === 'EXPERT_RESPONSE' && msg.llmGenerated) {
-            await this.discussionManager.addMessage(discussion.id, {
+            discussion.addMessage({
               role: 'agent',
               agentId: msg.expert,
               agentName: msg.expertName,
@@ -672,6 +672,8 @@ class DiscussionOrchestrator {
             });
           }
         }
+        // 保存更新后的讨论
+        await this.discussionManager.saveDiscussion(discussion);
       }
 
       console.log(`[Orchestrator V4] LLM discussion completed: ${discussion.id}`);
