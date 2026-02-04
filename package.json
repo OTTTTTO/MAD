@@ -1,0 +1,64 @@
+{
+  "name": "@openclaw/mad",
+  "version": "3.7.0",
+  "description": "MAD (Multi-Agent Discussion) - 让多个专业 Agent 在虚拟讨论组中协同工作",
+  "homepage": "https://github.com/OTTTTTO/mad",
+  "main": "orchestrator.js",
+  "scripts": {
+    "start": "node web/server.js",
+    "start:ws": "node web/websocket.js",
+    "test": "node test/basic.test.js",
+    "demo": "node quick-start.js",
+    "health": "node scripts/health-check.js",
+    "validate": "node scripts/validate-config.js",
+    "analyze": "node scripts/analyze-discussion.js --latest",
+    "monitor": "node scripts/performance-monitor.js",
+    "export": "node scripts/export-markdown.js",
+    "install:mads": "node scripts/install.js",
+    "doctor": "node scripts/doctor.js",
+    "check": "npm run doctor"
+  },
+  "dependencies": {
+    "pdfkit": "^0.17.2",
+    "ws": "^8.16.0"
+  },
+  "openclaw": {
+    "skill": true,
+    "enabled": true,
+    "type": "tool"
+  },
+  "keywords": [
+    "multi-agent",
+    "discussion",
+    "collaboration",
+    "orchestration",
+    "templates",
+    "custom-agents",
+    "similarity",
+    "search",
+    "pagination",
+    "cache",
+    "permissions",
+    "rbac",
+    "acl",
+    "integrations",
+    "git",
+    "slack",
+    "workflows",
+    "automation",
+    "analytics",
+    "trends",
+    "behavior-analysis",
+    "knowledge-graph",
+    "realtime",
+    "collaboration",
+    "presence",
+    "cursor-sync"
+  ],
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OTTTTTO/mad.git"
+  }
+}

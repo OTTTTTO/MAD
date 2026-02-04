@@ -1,0 +1,46 @@
+{
+  "id": "group-1770048098828",
+  "name": "MAD v3.6.0 开发",
+  "category": "development",
+  "messages": [],
+  "markers": [],
+  "participants": [
+    {
+      "id": "coordinator",
+      "name": "主协调员",
+      "role": "coordinator",
+      "emoji": "💡"
+    },
+    {
+      "id": "technical",
+      "name": "技术专家",
+      "role": "technical",
+      "emoji": "🔧"
+    },
+    {
+      "id": "testing",
+      "name": "测试专家",
+      "role": "testing",
+      "emoji": "🧪"
+    },
+    {
+      "id": "docs",
+      "name": "文档专家",
+      "role": "docs",
+      "emoji": "📝"
+    }
+  ],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048098828,
+    "updatedAt": 1770048098828
+  },
+  "status": "active",
+  "description": "MAD 项目 v3.6.0 版本开发 - 项目管理增强功能\n\n完成功能：\n- 项目搜索（智能评分、高亮显示）\n- 项目统计（全局统计、分类统计）\n- 项目标签（标签管理、搜索、统计）\n- 项目导出（Markdown、JSON）\n- 项目归档（状态筛选）\n- 项目克隆（保留配置、清空数据）"
+}

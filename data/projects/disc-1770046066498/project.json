@@ -1,0 +1,20 @@
+{
+  "id": "disc-1770046066498",
+  "name": "评估开发\"自动写代码\"技能",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831985,
+    "updatedAt": 1770048831985
+  },
+  "status": "active"
+}

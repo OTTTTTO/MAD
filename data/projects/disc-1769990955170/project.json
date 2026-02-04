@@ -1,0 +1,20 @@
+{
+  "id": "disc-1769990955170",
+  "name": "v2.0.0 - 重大升级 开发实施\n\n任务:\n协调各个 Agent 协同开发\n1. 技术 Agent: 实现核心功能\n2. 文档 Agent: 更新文档\n3. 目标: 完成所有功能开发",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831948,
+    "updatedAt": 1770048831948
+  },
+  "status": "active"
+}

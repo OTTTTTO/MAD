@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAD v3.7.0 - 讨论组列表</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f7fa; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 30px; }
+    .header h1 { color: #333; margin-bottom: 10px; }
+    .version-badge { display: inline-block; background: linear-gradient(135deg, #ff6b6b, #4ecdc4); color: white; font-size: 0.65rem; padding: 2px 8px; border-radius: 12px; }
+    .project-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+    .project-card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: transform 0.2s; }
+    .project-card:hover { transform: translateY(-5px); }
+    .project-name { font-size: 1.1rem; font-weight: bold; margin-bottom: 10px; color: #333; }
+    .project-meta { font-size: 0.9rem; color: #666; margin-bottom: 15px; }
+    .stats { display: flex; gap: 15px; flex-wrap: wrap; }
+    .stat-item { background: #f8f9fa; padding: 8px 12px; border-radius: 5px; font-size: 0.85rem; }
+    .stat-label { color: #666; margin-right: 5px; }
+    .stat-value { font-weight: bold; color: #333; }
+    .tokens { color: #e63946; }
+    .messages { color: #457b9d; }
+    .markers { color: #f4a261; }
+    .participants { color: #2a9d8f; }
+    .status { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; }
+    .status.active { background: #d4edda; color: #155724; }
+    .status.completed { background: #cce5ff; color: #004085; }
+    .status.archived { background: #e2e3e5; color: #383d41; }
+    .tags { margin-top: 10px; }
+    .tag { display: inline-block; background: #e9ecef; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; margin-right: 5px; margin-bottom: 5px; }
+    .back-link { display: inline-block; margin-bottom: 20px; color: #4ecdc4; text-decoration: none; }
+    .back-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-link">← 返回主界面</a>
+    <div class="header">
+      <h1>🦞 MAD 项目组</h1>
+      <span class="version-badge">v3.7.0</span>
+      <p style="color: #666; margin-top: 10px;">查看所有项目组的统计和 Tokens 信息</p>
+    </div>
+    <div id="projectList" class="project-list">加载中...</div>
+  </div>
+  <script>
+    async function loadProjects() {
+      const response = await fetch('/api/projects');
+      const projects = await response.json();
+      
+      const container = document.getElementById('projectList');
+      
+      if (projects.length === 0) {
+        container.innerHTML = '<p style="text-align:center; color:#666;">暂无项目组</p>';
+        return;
+      }
+      
+      container.innerHTML = projects.map(project => {
+        const statusClass = project.status || 'active';
+        const statusText = {
+          'active': '进行中',
+          'completed': '已完成',
+          'archived': '已归档'
+        }[project.status] || '未知';
+        
+        return `
+          <div class="project-card">
+            <div class="project-name">${project.name}</div>
+            <div class="project-meta">${project.category || 'general'} • <span class="status ${statusClass}">${statusText}</span></div>
+            <div class="stats">
+              <div class="stat-item">
+                <span class="stat-label">💬</span>
+                <span class="stat-value messages">${project.stats.totalMessages || 0}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">📊</span>
+                <span class="stat-value tokens">${project.stats.totalTokens || 0} tokens</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">📍</span>
+                <span class="stat-value markers">${project.stats.totalMarkers || 0}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">👥</span>
+                <span class="stat-value participants">${project.participants?.length || 0}</span>
+              </div>
+            </div>
+            ${project.tags && project.tags.length > 0 ? `
+              <div class="tags">
+                ${project.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+    
+    loadProjects();
+    setInterval(loadProjects, 30000); // 每30秒刷新
+  </script>
+</body>
+</html>

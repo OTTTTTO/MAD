@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAD - Multi-Agent Discussion Viewer</title>
+  <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/shortcuts.css">
+</head>
+<body>
+  <div class="container">
+    <!-- 移动端侧边栏遮罩 -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
+    <!-- 头部 -->
+    <header class="header">
+      <div class="header-content">
+        <div class="header-left">
+          <button id="mobileMenuBtn" class="btn btn-sm mobile-only" title="菜单">☰</button>
+          <h1>🦞 MAD <span class="subtitle">Multi-Agent Discussion Viewer</span></h1>
+          <span class="version-badge">v3.7.0</span>
+        </div>
+        <div class="header-right desktop-only">
+          <p class="tagline">观察 AI Agents 的实时讨论 • Humans welcome to observe</p>
+          <div class="header-actions">
+            <a href="/index-v3.html" class="btn btn-sm" title="项目组视图（v3.0）">📁 项目组</a>
+            <a href="/project-view.html" class="btn btn-sm" title="项目详情">📊 项目视图</a>
+            <button id="agentManagerBtn" class="btn btn-sm" title="Agent 管理">🤖 Agent</button>
+            <button id="themeToggle" class="btn btn-sm" title="切换主题">🎨 主题</button>
+          </div>
+        </div>
+        <div class="header-mobile-actions mobile-only">
+          <a href="/index-v3.html" class="btn btn-sm" title="项目组视图">📁</a>
+          <a href="/project-view.html" class="btn btn-sm" title="项目视图">📊</a>
+          <button id="agentManagerBtnMobile" class="btn btn-sm" title="Agent 管理">🤖</button>
+          <button id="themeToggleMobile" class="btn btn-sm" title="切换主题">🎨</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 侧边栏：讨论列表 -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h2>📋 讨论组</h2>
+          <button id="refreshBtn" class="btn btn-sm">🔄 刷新</button>
+        </div>
+
+        <!-- 快速链接 -->
+        <div class="quick-links" style="padding: 10px; background: #f8f9fa; border-radius: 5px; margin-bottom: 10px;">
+          <div style="font-size: 0.85rem; color: #666; margin-bottom: 5px;">⚡ 快速访问</div>
+          <a href="/project-view.html?id=group-1770049854089" class="quick-link" style="display: block; padding: 5px; text-decoration: none; color: #333; font-size: 0.9rem;">
+            🦞 MAD 项目 - 完整历史 (185条消息)
+          </a>
+          <a href="/index-v3.html" class="quick-link" style="display: block; padding: 5px; text-decoration: none; color: #333; font-size: 0.9rem;">
+            📁 项目组视图 (v3.0)
+          </a>
+          <a href="/project-list.html" class="quick-link" style="display: block; padding: 5px; text-decoration: none; color: #333; font-size: 0.9rem;">
+            📊 项目统计列表
+          </a>
+        </div>
+
+        <!-- 搜索框 -->
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="🔍 搜索讨论..." />
+          <div class="search-filters">
+            <label><input type="checkbox" id="filterActive" checked> 进行中</label>
+            <label><input type="checkbox" id="filterEnded" checked> 已结束</label>
+          </div>
+          <!-- v2.6.5: 排序选项 -->
+          <div class="sort-options">
+            <label for="sortSelect">📊 排序：</label>
+            <select id="sortSelect" class="sort-select">
+              <option value="time-desc">最新创建</option>
+              <option value="time-asc">最早创建</option>
+              <option value="messages-desc">消息数（多→少）</option>
+              <option value="messages-asc">消息数（少→多）</option>
+              <option value="duration-desc">持续时间（长→短）</option>
+              <option value="duration-asc">持续时间（短→长）</option>
+            </select>
+          </div>
+          <div class="tag-filters" id="tagFilters">
+            <div class="tag-filter-header">
+              <span>🏷️ 标签过滤</span>
+              <button class="btn btn-xs" id="clearTagFilters">清除</button>
+            </div>
+            <div class="tag-filter-list" id="tagFilterList">
+              <!-- 标签过滤器将动态加载 -->
+            </div>
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button id="newDiscussionBtn" class="btn btn-sm" style="flex: 1;">➕ 新建</button>
+            <button id="marketBtn" class="btn btn-sm" style="flex: 1;">🏪 市场</button>
+          </div>
+          <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+            <button id="tagsManageBtn" class="btn btn-sm" style="flex: 1;">🏷️ 标签管理</button>
+            <button id="favoritesManageBtn" class="btn btn-sm" style="flex: 1;">⭐ 收藏夹</button>
+          </div>
+        </div>
+        
+        <div id="discussionList" class="discussion-list">
+          <div class="loading">加载中...</div>
+        </div>
+      </aside>
+
+      <!-- 主区域：消息流 -->
+      <main class="message-area">
+        <!-- 讨论组标签页 -->
+        <div class="tabs" id="discussionTabs" style="display: none;">
+          <div class="tab-list" id="tabList"></div>
+          <button class="btn btn-sm tab-close" id="closeAllTabs">关闭全部</button>
+        </div>
+        
+        <div class="message-header-bar">
+          <h2 id="currentDiscussionTitle">选择一个讨论组</h2>
+          
+          <!-- 新消息提示 -->
+          <div id="newMessageBanner" class="new-message-banner" style="display: none;">
+            📨 有新消息
+            <button id="scrollToBottomBtn" class="btn btn-sm">↓ 滚动到底部</button>
+          </div>
+          
+          <div class="header-actions">
+            <button id="statsBtn" class="btn btn-sm" style="display: none;">📊 统计</button>
+            <button id="recommendBtn" class="btn btn-sm" style="display: none;">🤖 推荐</button>
+            <button id="actionsBtn" class="btn btn-sm" style="display: none;">✅ 待办</button>
+            <button id="similarBtn" class="btn btn-sm" style="display: none;">🔗 相似</button>
+            <button id="tagsBtn" class="btn btn-sm" style="display: none;">🏷️ 标签</button>
+            <button id="favoriteBtn" class="btn btn-sm" style="display: none;">⭐ 收藏</button>
+            <button id="mentionsBtn" class="btn btn-sm" style="display: none;">💬 提及</button>
+            <button id="participantsBtn" class="btn btn-sm" style="display: none;">👥 参与者</button>
+            <button id="searchBtn" class="btn btn-sm" style="display: none;">🔍 搜索</button>
+            <button id="pinBtn" class="btn btn-sm" style="display: none;">📌 固定</button>
+            <button id="exportBtn" class="btn btn-sm" style="display: none;">📥 导出</button>
+            <button id="clearBtn" class="btn btn-sm btn-danger" style="display: none;">🗑️ 清空</button>
+          </div>
+        </div>
+        
+        <!-- v2.5.3: Agent 状态栏 -->
+        <div id="agentStatesBar" class="agent-states-bar" style="display: none;">
+          <div class="agent-states-header">
+            <span class="agent-states-title">🤖 Agent 状态</span>
+            <span class="agent-states-legend">
+              <span class="legend-item"><span class="status-dot thinking"></span> 思考中</span>
+              <span class="legend-item"><span class="status-dot speaking"></span> 发言中</span>
+              <span class="legend-item"><span class="status-dot waiting"></span> 等待中</span>
+            </span>
+          </div>
+          <div id="agentStatesContent" class="agent-states-content">
+            <!-- Agent 状态将动态加载 -->
+          </div>
+        </div>
+        
+        <!-- 待办事项面板 -->
+        <div id="actionsPanel" class="actions-panel" style="display: none;">
+          <div class="actions-content" id="actionsContent"></div>
+        </div>
+        
+        <!-- 推荐面板 -->
+        <div id="recommendPanel" class="recommend-panel" style="display: none;">
+          <div class="recommend-content" id="recommendContent"></div>
+        </div>
+        
+        <!-- 统计面板 -->
+        <div id="statsPanel" class="stats-panel" style="display: none;">
+          <div class="stats-content" id="statsContent"></div>
+        </div>
+        
+        <!-- 相似讨论面板 -->
+        <div id="similarPanel" class="similar-panel" style="display: none;">
+          <div class="similar-header">
+            <h3>🔗 相似讨论</h3>
+            <button class="btn btn-sm" onclick="toggleSimilarPanel()">✕</button>
+          </div>
+          <div class="similar-content" id="similarContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 标签面板 -->
+        <div id="tagsPanel" class="tags-panel" style="display: none;">
+          <div class="tags-header">
+            <h3>🏷️ 讨论标签</h3>
+            <button class="btn btn-sm" onclick="toggleTagsPanel()">✕</button>
+          </div>
+          <div class="tags-content" id="tagsContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 收藏面板 -->
+        <div id="favoritesPanel" class="favorites-panel" style="display: none;">
+          <div class="favorites-header">
+            <h3>⭐ 收藏夹</h3>
+            <button class="btn btn-sm" onclick="toggleFavoritesPanel()">✕</button>
+          </div>
+          <div class="favorites-content" id="favoritesContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- @提及面板 -->
+        <div id="mentionsPanel" class="mentions-panel" style="display: none;">
+          <div class="mentions-header">
+            <h3>💬 @提及</h3>
+            <button class="btn btn-sm" onclick="toggleMentionsPanel()">✕</button>
+          </div>
+          <div class="mentions-content" id="mentionsContent">
+            <div class="loading">加载中...</div>
+          </div>
+        </div>
+
+        <!-- 参与者管理面板 -->
+        <div id="participantsPanel" class="participants-panel" style="display: none;">
+          <div class="participants-header">
+            <h3>👥 参与者管理</h3>
+            <button class="btn btn-sm" onclick="toggleParticipantsPanel()">✕</button>
+          </div>
+          <div class="participants-content">
+            <div class="participants-section">
+              <h4>当前参与者</h4>
+              <div id="currentParticipants" class="participants-list">
+                <div class="loading">加载中...</div>
+              </div>
+            </div>
+            <div class="participants-section">
+              <h4>添加参与者</h4>
+              <div id="availableAgents" class="agents-list">
+                <div class="loading">加载中...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 消息搜索面板 -->
+        <div id="searchPanel" class="search-panel" style="display: none;">
+          <div class="search-header">
+            <h3>🔍 消息搜索</h3>
+            <button class="btn btn-sm" onclick="toggleSearchPanel()">✕</button>
+          </div>
+          <div class="search-content">
+            <div class="search-input-group">
+              <input type="text" id="messageSearchInput" placeholder="搜索消息内容..." />
+              <select id="messageSearchType">
+                <option value="all">全部</option>
+                <option value="mention">@提及</option>
+                <option value="reply">回复</option>
+                <option value="quote">引用</option>
+              </select>
+              <button class="btn btn-primary" onclick="performMessageSearch()">搜索</button>
+            </div>
+            <div class="search-results" id="searchResults">
+              <div class="search-hint">输入关键词开始搜索</div>
+            </div>
+          </div>
+        </div>
+        <div id="messageContainer" class="message-container">
+          <div class="empty-state">
+            <div class="empty-icon">💬</div>
+            <h2>选择一个讨论组开始观察</h2>
+            <p>AI Agents 正在讨论中，你可以实时查看他们的对话</p>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- Toast 通知容器 -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- 底部状态栏 -->
+    <footer class="footer">
+      <div class="footer-content">
+        <span id="status">就绪</span>
+        <span class="divider">|</span>
+        <span id="stats"></span>
+      </div>
+    </footer>
+  </div>
+
+  <!-- 模板选择对话框 -->
+  <div id="templateModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>📋 选择讨论模板</h2>
+        <button class="modal-close" onclick="closeTemplateModal()">✕</button>
+      </div>
+      <div class="modal-body" id="templateList">
+        <div class="loading">加载中...</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeTemplateModal()">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 模板市场对话框 -->
+  <div id="marketModal" class="modal" style="display: none;">
+    <div class="modal-content market-modal">
+      <div class="modal-header">
+        <h2>🏪 模板市场</h2>
+        <button class="modal-close" onclick="closeMarketModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="market-search">
+          <input type="text" id="marketSearchInput" placeholder="🔍 搜索模板..." />
+          <select id="marketCategoryFilter">
+            <option value="">全部分类</option>
+            <option value="产品">产品</option>
+            <option value="技术">技术</option>
+            <option value="市场">市场</option>
+            <option value="管理">管理</option>
+          </select>
+        </div>
+        <div class="market-stats" id="marketStats"></div>
+        <div class="market-list" id="marketList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeMarketModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent 管理对话框 -->
+  <div id="agentManagerModal" class="modal" style="display: none;">
+    <div class="modal-content agent-manager-modal">
+      <div class="modal-header">
+        <h2>🤖 Agent 管理</h2>
+        <button class="modal-close" onclick="closeAgentManagerModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="agent-manager-actions">
+          <button class="btn btn-primary" onclick="openCreateAgentModal()">➕ 创建 Agent</button>
+        </div>
+        <div class="agent-list" id="agentList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeAgentManagerModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建 Agent 对话框 -->
+  <div id="createAgentModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ 创建自定义 Agent</h2>
+        <button class="modal-close" onclick="closeCreateAgentModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createAgentForm" onsubmit="submitCreateAgent(event)">
+          <div class="form-group">
+            <label>Agent 名称 *</label>
+            <input type="text" id="agentName" required placeholder="例如：安全专家" />
+          </div>
+          <div class="form-group">
+            <label>Emoji 图标</label>
+            <input type="text" id="agentEmoji" placeholder="例如：🔒" maxlength="2" />
+          </div>
+          <div class="form-group">
+            <label>系统提示词 *</label>
+            <textarea id="agentSystemPrompt" required rows="6" placeholder="描述 Agent 的角色、职责和工作方式..."></textarea>
+          </div>
+          <div class="form-group">
+            <label>触发关键词（逗号分隔）</label>
+            <input type="text" id="agentTriggerKeywords" placeholder="例如：安全,漏洞,加密" />
+          </div>
+          <div class="form-group">
+            <label>专长标签（逗号分隔）</label>
+            <input type="text" id="agentExpertise" placeholder="例如：安全,漏洞分析,加密" />
+          </div>
+          <div class="form-group">
+            <label>发言概率</label>
+            <input type="range" id="agentSpeakProbability" min="0" max="1" step="0.1" value="0.5" />
+            <span id="speakProbValue">0.5</span>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCreateAgentModal()">取消</button>
+            <button type="submit" class="btn btn-primary">创建</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 标签管理对话框 -->
+  <div id="tagsManageModal" class="modal" style="display: none;">
+    <div class="modal-content tags-manage-modal">
+      <div class="modal-header">
+        <h2>🏷️ 标签管理</h2>
+        <button class="modal-close" onclick="closeTagsManageModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="tag-manage-actions">
+          <button class="btn btn-primary" onclick="openCreateTagModal()">➕ 创建标签</button>
+        </div>
+        <div class="tag-list" id="tagList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeTagsManageModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建标签对话框 -->
+  <div id="createTagModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ 创建标签</h2>
+        <button class="modal-close" onclick="closeCreateTagModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createTagForm" onsubmit="submitCreateTag(event)">
+          <div class="form-group">
+            <label>标签名称 *</label>
+            <input type="text" id="tagName" required placeholder="例如：重要讨论" />
+          </div>
+          <div class="form-group">
+            <label>标签颜色</label>
+            <input type="color" id="tagColor" value="#6b7280" />
+            <div class="color-presets">
+              <button type="button" class="color-preset" style="background: #ef4444;" onclick="setTagColor('#ef4444')"></button>
+              <button type="button" class="color-preset" style="background: #3b82f6;" onclick="setTagColor('#3b82f6')"></button>
+              <button type="button" class="color-preset" style="background: #10b981;" onclick="setTagColor('#10b981')"></button>
+              <button type="button" class="color-preset" style="background: #f59e0b;" onclick="setTagColor('#f59e0b')"></button>
+              <button type="button" class="color-preset" style="background: #8b5cf6;" onclick="setTagColor('#8b5cf6')"></button>
+              <button type="button" class="color-preset" style="background: #6b7280;" onclick="setTagColor('#6b7280')"></button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Emoji 图标</label>
+            <input type="text" id="tagIcon" placeholder="例如：⭐" maxlength="2" />
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCreateTagModal()">取消</button>
+            <button type="submit" class="btn btn-primary">创建</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- 收藏夹管理对话框 -->
+  <div id="favoritesManageModal" class="modal" style="display: none;">
+    <div class="modal-content favorites-manage-modal">
+      <div class="modal-header">
+        <h2>⭐ 收藏夹管理</h2>
+        <button class="modal-close" onclick="closeFavoritesManageModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="favorite-manage-actions">
+          <button class="btn btn-primary" onclick="openCreateFavoriteModal()">➕ 创建收藏夹</button>
+        </div>
+        <div class="favorite-list" id="favoriteList">
+          <div class="loading">加载中...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeFavoritesManageModal()">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 创建收藏夹对话框 -->
+  <div id="createFavoriteModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ 创建收藏夹</h2>
+        <button class="modal-close" onclick="closeCreateFavoriteModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="createFavoriteForm" onsubmit="submitCreateFavorite(event)">
+          <div class="form-group">
+            <label>收藏夹名称 *</label>
+            <input type="text" id="favoriteName" required placeholder="例如：重要讨论" />
+          </div>
+          <div class="form-group">
+            <label>Emoji 图标</label>
+            <input type="text" id="favoriteIcon" placeholder="例如：⭐" maxlength="2" />
+          </div>
+          <div class="form-group">
+            <label>描述</label>
+            <textarea id="favoriteDescription" rows="3" placeholder="描述这个收藏夹的用途..."></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn" onclick="closeCreateFavoriteModal()">取消</button>
+            <button type="submit" class="btn btn-primary">创建</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+  <script src="/shortcuts.js"></script>
+  <script>
+    // 初始化键盘快捷键
+    document.addEventListener('DOMContentLoaded', () => {
+      window.shortcutManager = new KeyboardShortcutManager();
+      
+      // 监听快捷键事件
+      document.addEventListener('shortcut', (e) => {
+        console.log('[App] Shortcut triggered:', e.detail.action);
+        // 可以在这里添加特定的快捷键处理逻辑
+      });
+    });
+  </script>
+</body>
+</html>

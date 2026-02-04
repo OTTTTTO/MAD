@@ -1,0 +1,20 @@
+{
+  "id": "disc-1770009006348",
+  "name": "测试讨论：新功能评估",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831974,
+    "updatedAt": 1770048831974
+  },
+  "status": "active"
+}

@@ -1,0 +1,20 @@
+{
+  "id": "disc-1769990947625",
+  "name": "v1.9.0 - 协作优化 技术设计\n\n任务:\n1. 技术 Agent：设计技术方案和数据结构\n2. 测试 Agent：提出测试策略\n3. 目标：产出完整的技术方案",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831934,
+    "updatedAt": 1770048831934
+  },
+  "status": "active"
+}

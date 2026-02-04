@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAD v3.0 - 项目组视图</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #f5f7fa;
+      min-height: 100vh;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* 侧边栏 */
+    .sidebar {
+      width: 300px;
+      background: white;
+      border-right: 1px solid #e1e4e8;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid #e1e4e8;
+    }
+
+    .sidebar-header h1 {
+      font-size: 1.5rem;
+      color: #333;
+    }
+
+    .sidebar-header p {
+      font-size: 0.9rem;
+      color: #666;
+      margin-top: 5px;
+    }
+
+    .project-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+    }
+
+    .project-item {
+      padding: 15px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .project-item:hover {
+      background: #e9ecef;
+      transform: translateX(5px);
+    }
+
+    .project-item.active {
+      background: #e3f2fd;
+      border-left: 3px solid #2196F3;
+    }
+
+    .project-name {
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .project-meta {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    /* 主内容区 */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: white;
+    }
+
+    .content-header {
+      padding: 20px 30px;
+      border-bottom: 1px solid #e1e4e8;
+      background: #fafbfc;
+    }
+
+    .content-header h2 {
+      font-size: 1.8rem;
+      color: #333;
+      margin-bottom: 10px;
+    }
+
+    .project-info {
+      display: flex;
+      gap: 20px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .info-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .participants {
+      display: flex;
+      gap: 5px;
+    }
+
+    .participant-avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #e3f2fd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    /* 标记时间轴 */
+    .timeline {
+      padding: 30px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-left: 40px;
+      margin-bottom: 30px;
+    }
+
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 10px;
+      top: 5px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #2196F3;
+      border: 3px solid #e3f2fd;
+    }
+
+    .timeline-item::after {
+      content: '';
+      position: absolute;
+      left: 15px;
+      top: 20px;
+      width: 2px;
+      height: calc(100% + 10px);
+      background: #e1e4e8;
+    }
+
+    .timeline-item:last-child::after {
+      display: none;
+    }
+
+    .marker-card {
+      background: white;
+      border: 1px solid #e1e4e8;
+      border-radius: 8px;
+      padding: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .marker-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .marker-type {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: bold;
+    }
+
+    .marker-type.decision { background: #e3f2fd; color: #1976D2; }
+    .marker-type.problem { background: #ffebee; color: #C62828; }
+    .marker-type.solution { background: #fff3e0; color: #EF6C00; }
+    .marker-type.milestone { background: #e8f5e9; color: #388E3C; }
+    .marker-type.consensus { background: #f3e5f5; color: #7B1FA2; }
+
+    .marker-time {
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    .marker-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 8px;
+    }
+
+    .marker-summary {
+      color: #666;
+      line-height: 1.6;
+    }
+
+    .marker-tags {
+      margin-top: 10px;
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      padding: 3px 10px;
+      background: #f0f0f0;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      color: #666;
+    }
+
+    /* 消息流 */
+    .message-list {
+      padding: 30px;
+      border-top: 1px solid #e1e4e8;
+    }
+
+    .message-item {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .message-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #e3f2fd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      flex-shrink: 0;
+    }
+
+    .message-content {
+      flex: 1;
+      background: #f8f9fa;
+      padding: 12px 15px;
+      border-radius: 8px;
+    }
+
+    .message-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .message-role {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .message-time {
+      font-size: 0.8rem;
+      color: #999;
+    }
+
+    .message-text {
+      color: #666;
+      line-height: 1.5;
+    }
+
+    /* 底部操作栏 */
+    .action-bar {
+      padding: 20px 30px;
+      border-top: 1px solid #e1e4e8;
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: #2196F3;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1976D2;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+
+    /* 统计卡片 */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      padding: 20px 30px;
+      background: #fafbfc;
+      border-bottom: 1px solid #e1e4e8;
+    }
+
+    .stat-card {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      border: 1px solid #e1e4e8;
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #2196F3;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 侧边栏：项目列表 -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <h1>🦞 MAD v3.0</h1>
+        <p>智能项目组</p>
+      </div>
+      <div class="project-list" id="projectList">
+        <!-- 项目列表将动态加载 -->
+      </div>
+    </div>
+
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <!-- 头部信息 -->
+      <div class="content-header">
+        <h2 id="projectName">选择一个项目组</h2>
+        <div class="project-info" id="projectInfo" style="display: none;">
+          <div class="info-item">
+            <span>📁</span>
+            <span id="projectCategory">-</span>
+          </div>
+          <div class="info-item">
+            <span>📊</span>
+            <span id="projectStatus">-</span>
+          </div>
+          <div class="info-item">
+            <span>👥</span>
+            <div class="participants" id="participants"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-grid" id="statsGrid" style="display: none;">
+        <div class="stat-card">
+          <div class="stat-value" id="statMessages">0</div>
+          <div class="stat-label">消息数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statMarkers">0</div>
+          <div class="stat-label">标记数</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTokens">0</div>
+          <div class="stat-label">Tokens</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statProgress">0%</div>
+          <div class="stat-label">进度</div>
+        </div>
+      </div>
+
+      <!-- 标记时间轴 -->
+      <div class="timeline" id="timeline">
+        <!-- 标记将动态加载 -->
+      </div>
+
+      <!-- 消息流 -->
+      <div class="message-list" id="messageList" style="display: none;">
+        <!-- 消息将动态加载 -->
+      </div>
+
+      <!-- 底部操作栏 -->
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="detectMarkers()">✨ 智能标记</button>
+        <button class="btn btn-secondary" onclick="optimizeMarkers()">🎯 优化标记</button>
+        <button class="btn btn-secondary" onclick="generateSummary()">📝 生成总结</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentProject = null;
+
+    // 加载项目列表
+    async function loadProjects() {
+      const response = await fetch('/api/skills/projects');
+      const data = await response.json();
+
+      if (data.success) {
+        displayProjects(data.projects);
+      }
+    }
+
+    // 显示项目列表
+    function displayProjects(projects) {
+      const projectList = document.getElementById('projectList');
+      projectList.innerHTML = '';
+
+      for (const category in projects) {
+        const categoryProjects = projects[category];
+
+        categoryProjects.forEach(project => {
+          const item = document.createElement('div');
+          item.className = 'project-item';
+          item.innerHTML = `
+            <div class="project-name">${project.name}</div>
+            <div class="project-meta">
+              <span>${category}</span> • 
+              <span>${project.stats?.totalMessages || 0} 条消息</span>
+            </div>
+          `;
+          item.onclick = () => selectProject(project);
+          projectList.appendChild(item);
+        });
+      }
+    }
+
+    // 选择项目
+    async function selectProject(project) {
+      currentProject = project;
+
+      // 更新 UI
+      document.getElementById('projectName').textContent = project.name;
+      document.getElementById('projectCategory').textContent = project.category;
+      document.getElementById('projectStatus').textContent = project.status;
+      document.getElementById('projectInfo').style.display = 'flex';
+      document.getElementById('statsGrid').style.display = 'grid';
+
+      // 显示统计
+      document.getElementById('statMessages').textContent = project.stats?.totalMessages || 0;
+      document.getElementById('statMarkers').textContent = project.stats?.totalMarkers || 0;
+      document.getElementById('statTokens').textContent = project.stats?.totalTokens || 0;
+      document.getElementById('statProgress').textContent = project.stats?.progress || 0 + '%';
+
+      // 显示参与者
+      const participantsDiv = document.getElementById('participants');
+      participantsDiv.innerHTML = '';
+      project.participants?.forEach(p => {
+        const avatar = document.createElement('div');
+        avatar.className = 'participant-avatar';
+        avatar.textContent = p.emoji || '🤖';
+        avatar.title = p.name;
+        participantsDiv.appendChild(avatar);
+      });
+
+      // 加载标记和消息
+      await loadMarkers(project.id);
+      await loadMessages(project.id);
+
+      // 高亮选中项目
+      document.querySelectorAll('.project-item').forEach(item => {
+        item.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+    }
+
+    // 加载标记
+    async function loadMarkers(projectId) {
+      const response = await fetch(`/api/skills/projects/${projectId}`);
+      const data = await response.json();
+
+      if (data.success) {
+        displayMarkers(data.project.markers || []);
+      }
+    }
+
+    // 显示标记
+    function displayMarkers(markers) {
+      const timeline = document.getElementById('timeline');
+      timeline.innerHTML = '';
+
+      markers.forEach(marker => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.innerHTML = `
+          <div class="marker-card">
+            <div class="marker-header">
+              <span class="marker-type ${marker.type}">${getTypeName(marker.type)}</span>
+              <span class="marker-time">${new Date(marker.timestamp).toLocaleString()}</span>
+            </div>
+            <div class="marker-title">${marker.title}</div>
+            <div class="marker-summary">${marker.summary}</div>
+            <div class="marker-tags">
+              ${marker.tags?.map(tag => `<span class="tag">${tag}</span>`).join('') || ''}
+            </div>
+          </div>
+        `;
+        timeline.appendChild(item);
+      });
+    }
+
+    // 加载消息
+    async function loadMessages(projectId) {
+      const response = await fetch(`/api/skills/projects/${projectId}/messages`);
+      const data = await response.json();
+
+      if (data.success) {
+        displayMessages(data.messages);
+        document.getElementById('messageList').style.display = 'block';
+      }
+    }
+
+    // 显示消息
+    function displayMessages(messages) {
+      const messageList = document.getElementById('messageList');
+      messageList.innerHTML = '';
+
+      messages.slice(-20).forEach(message => {
+        if (message.isMarker) return; // 跳过标记消息
+
+        const item = document.createElement('div');
+        item.className = 'message-item';
+        item.innerHTML = `
+          <div class="message-avatar">${getEmoji(message.role)}</div>
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-role">${getRoleName(message.role)}</span>
+              <span class="message-time">${new Date(message.timestamp).toLocaleString()}</span>
+            </div>
+            <div class="message-text">${message.content}</div>
+          </div>
+        `;
+        messageList.appendChild(item);
+      });
+    }
+
+    // 智能标记
+    async function detectMarkers() {
+      if (!currentProject) {
+        alert('请先选择一个项目');
+        return;
+      }
+
+      const response = await fetch(`/api/skills/projects/${currentProject.id}/detect-markers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ minConfidence: 0.7, maxMarkers: 5 })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`已添加 ${data.total} 个标记`);
+        await loadMarkers(currentProject.id);
+      }
+    }
+
+    // 优化标记
+    async function optimizeMarkers() {
+      if (!currentProject) {
+        alert('请先选择一个项目');
+        return;
+      }
+
+      const response = await fetch(`/api/skills/projects/${currentProject.id}/optimize-markers`, {
+        method: 'POST'
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('标记已优化');
+        await loadMarkers(currentProject.id);
+      }
+    }
+
+    // 生成总结
+    async function generateSummary() {
+      if (!currentProject) {
+        alert('请先选择一个项目');
+        return;
+      }
+
+      const response = await fetch(`/api/skills/projects/${currentProject.id}/summary`);
+      const data = await response.json();
+
+      if (data.success) {
+        alert('项目总结：\n\n' + data.summary);
+      }
+    }
+
+    // 辅助函数
+    function getTypeName(type) {
+      const names = {
+        decision: '决策',
+        problem: '问题',
+        solution: '方案',
+        milestone: '里程碑',
+        consensus: '共识'
+      };
+      return names[type] || type;
+    }
+
+    function getRoleName(role) {
+      const names = {
+        coordinator: '主协调员',
+        technical: '技术可行性',
+        testing: '测试',
+        documentation: '文档'
+      };
+      return names[role] || role;
+    }
+
+    function getEmoji(role) {
+      const emojis = {
+        coordinator: '💡',
+        technical: '🔧',
+        testing: '🧪',
+        documentation: '📝'
+      };
+      return emojis[role] || '🤖';
+    }
+
+    // 初始化
+    loadProjects();
+  </script>
+</body>
+</html>

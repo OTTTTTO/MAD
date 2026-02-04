@@ -1,0 +1,20 @@
+{
+  "id": "disc-1769990946618",
+  "name": "v1.9.0 - 协作优化 需求讨论\n\n功能清单:\n1. 讨论版本对比\n2. 实时协作编辑\n3. 移动端优化\n\n任务:\n1. 需求分析 Agent：细化每个功能的用户故事\n2. 市场调研 Agent：",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831927,
+    "updatedAt": 1770048831927
+  },
+  "status": "active"
+}

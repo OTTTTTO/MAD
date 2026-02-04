@@ -1,0 +1,20 @@
+{
+  "id": "disc-1770006938013",
+  "name": "质量事故分析：web/server.js 语法错误\n\n事故描述：\n- 时间：2026-02-02 12:15\n- 问题：web/server.js 语法错误导致 Web 服务器无法启动\n- 影响：用户",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831966,
+    "updatedAt": 1770048831966
+  },
+  "status": "active"
+}

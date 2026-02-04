@@ -1,0 +1,20 @@
+{
+  "id": "disc-1769990939867",
+  "name": "v1.8.0 - 讨论增强 需求讨论\n\n功能清单:\n1. 讨论高亮和标注\n2. 可视化思维链\n3. 讨论质量评分\n\n任务:\n1. 需求分析 Agent：细化每个功能的用户故事\n2. 市场调研 Agen",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831910,
+    "updatedAt": 1770048831910
+  },
+  "status": "active"
+}

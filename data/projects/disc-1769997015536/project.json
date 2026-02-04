@@ -1,0 +1,20 @@
+{
+  "id": "disc-1769997015536",
+  "name": "午餐吃什么",
+  "category": "general",
+  "messages": [],
+  "markers": [],
+  "participants": [],
+  "tags": [],
+  "notes": "",
+  "priority": "medium",
+  "stats": {
+    "totalMessages": 0,
+    "totalMarkers": 0,
+    "totalTokens": 0,
+    "progress": 0,
+    "createdAt": 1770048831954,
+    "updatedAt": 1770048831954
+  },
+  "status": "active"
+}
