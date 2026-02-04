@@ -205,24 +205,50 @@ async function createServer() {
               ? userInput.substring(0, 50) + '...'
               : userInput;
 
-            const result = await orchestrator.createDiscussionV2(topic, '需求讨论', {
+            // 使用旧的createDiscussion方法，它会自动处理participants
+            const createResult = await orchestrator.createDiscussion(topic, {
               description: userInput,
-              participants: [],
-              tags: ['自然语言创建']
+              participants: ['coordinator'] // 添加协调员
             });
+
+            // 添加初始消息以触发讨论
+            try {
+              const context = orchestrator.contexts.get(createResult.discussionId);
+              if (context) {
+                // 添加用户输入作为系统消息
+                context.addMessage('system', userInput, {
+                  type: 'user_input',
+                  source: 'api_skills_create'
+                });
+                
+                // 让协调员发起讨论
+                await orchestrator.agentSpeak(createResult.discussionId, 'coordinator', 
+                  `请各位专家讨论以下话题：${userInput}`
+                );
+                
+                console.log(`[API] 已添加初始消息并触发协调员发言`);
+              }
+            } catch (msgError) {
+              console.warn('[API] 触发讨论失败（非关键错误）:', msgError.message);
+            }
 
             // 返回兼容格式
             const response = {
               success: true,
-              projectId: result.discussionId,
-              projectName: result.topic,
-              topic: result.topic,
-              category: result.category,
-              discussionId: result.discussionId,
-              message: `讨论组 "${topic}" 已创建成功`
+              projectId: createResult.discussionId,
+              projectName: topic,
+              topic: topic,
+              category: '需求讨论',
+              discussionId: createResult.discussionId,
+              message: `讨论组 "${topic}" 已创建成功`,
+              experts: createResult.participants.map(p => ({
+                id: p.role,
+                name: p.role,
+                emoji: '🤖'
+              }))
             };
 
-            console.log(`[API] 创建成功: ${result.discussionId}`);
+            console.log(`[API] 创建成功: ${createResult.discussionId}`);
 
             res.setHeader('Content-Type', 'application/json; charset=utf-8');
             res.writeHead(201);
