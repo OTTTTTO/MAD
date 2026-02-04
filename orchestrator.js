@@ -994,6 +994,127 @@ class DiscussionOrchestrator {
   }
 
   /**
+   * 获取单个讨论（v4.0 - 使用新的DiscussionManager）
+   */
+  async getDiscussionV2(discussionId) {
+    const discussion = await this.discussionManager.getDiscussion(discussionId);
+    if (!discussion) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+    return discussion;
+  }
+
+  /**
+   * 删除讨论（v4.0 - 使用新的DiscussionManager）
+   */
+  async deleteDiscussionV2(discussionId) {
+    await this.discussionManager.deleteDiscussion(discussionId);
+    console.log(`[Orchestrator V4] Discussion ${discussionId} deleted`);
+    return { success: true, discussionId };
+  }
+
+  /**
+   * 归档讨论（v4.0 - 使用新的DiscussionManager）
+   */
+  async archiveDiscussionV2(discussionId) {
+    const discussion = await this.discussionManager.archiveDiscussion(discussionId);
+    console.log(`[Orchestrator V4] Discussion ${discussionId} archived`);
+    return discussion;
+  }
+
+  /**
+   * 取消归档讨论（v4.0 - 使用新的DiscussionManager）
+   */
+  async unarchiveDiscussionV2(discussionId) {
+    const discussion = await this.discussionManager.unarchiveDiscussion(discussionId);
+    console.log(`[Orchestrator V4] Discussion ${discussionId} unarchived`);
+    return discussion;
+  }
+
+  /**
+   * Agent发言（v4.0 - 使用新的Discussion）
+   */
+  async agentSpeakV2(discussionId, agentId, content, options = {}) {
+    const discussion = await this.discussionManager.getDiscussion(discussionId);
+    if (!discussion) {
+      throw new Error(`Discussion ${discussionId} not found`);
+    }
+
+    const message = await discussion.agentSpeak(agentId, content, options);
+    
+    await this.discussionManager.saveDiscussion(discussion);
+    
+    console.log(`[Orchestrator V4] Agent ${agentId} spoke in ${discussionId}`);
+    return message;
+  }
+
+  /**
+   * 添加标签到讨论（v4.0）
+   */
+  async addTagToDiscussionV2(discussionId, tag) {
+    const discussion = await this.discussionManager.addTagToDiscussion(discussionId, tag);
+    console.log(`[Orchestrator V4] Added tag "${tag}" to ${discussionId}`);
+    return discussion;
+  }
+
+  /**
+   * 从讨论移除标签（v4.0）
+   */
+  async removeTagFromDiscussionV2(discussionId, tag) {
+    const discussion = await this.discussionManager.removeTagFromDiscussion(discussionId, tag);
+    console.log(`[Orchestrator V4] Removed tag "${tag}" from ${discussionId}`);
+    return discussion;
+  }
+
+  /**
+   * 设置讨论备注（v4.0）
+   */
+  async setDiscussionNotesV2(discussionId, notes) {
+    const discussion = await this.discussionManager.setDiscussionNotes(discussionId, notes);
+    console.log(`[Orchestrator V4] Set notes for ${discussionId}`);
+    return discussion;
+  }
+
+  /**
+   * 追加讨论备注（v4.0）
+   */
+  async appendDiscussionNotesV2(discussionId, text) {
+    const discussion = await this.discussionManager.appendDiscussionNotes(discussionId, text);
+    console.log(`[Orchestrator V4] Appended notes to ${discussionId}`);
+    return discussion;
+  }
+
+  /**
+   * 克隆讨论（v4.0）
+   */
+  async cloneDiscussionV2(discussionId, newTopic = null) {
+    const discussion = await this.discussionManager.cloneDiscussion(discussionId, newTopic);
+    console.log(`[Orchestrator V4] Cloned ${discussionId} to ${discussion.id}`);
+    return discussion;
+  }
+
+  /**
+   * 搜索讨论（v4.0）
+   */
+  async searchDiscussionsV2(keyword, options = {}) {
+    const results = await this.discussionManager.searchDiscussions(keyword, options);
+    return results.map(r => ({
+      discussion: r.discussion,
+      score: r.score,
+      highlights: r.highlights,
+      topic: r.discussion.topic,
+      category: r.discussion.category
+    }));
+  }
+
+  /**
+   * 获取统计信息（v4.0）
+   */
+  async getStatisticsV2() {
+    return await this.discussionManager.getStatistics();
+  }
+
+  /**
    * 列出所有讨论（旧版本，保留向后兼容）
    */
   listDiscussions() {
