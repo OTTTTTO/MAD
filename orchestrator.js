@@ -48,7 +48,7 @@ const DiscussionManager = require('./src/core/discussion-manager.js');
 const { Discussion: DiscussionV4 } = require('./src/models/discussion.js');
 
 // v4.0.8: LLM集成 - DiscussionEngine
-const { DiscussionEngine } = require('./src/core/v4/discussion-engine');
+const DiscussionEngine = require('./src/core/v4/discussion-engine');
 
 // 加载模板
 let templates = null;

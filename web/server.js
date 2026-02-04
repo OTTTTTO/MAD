@@ -15,6 +15,28 @@ const { createReply, getReplies, getReplyTree } = require('../src/core/reply.js'
 const { compareSnapshots, formatDiffHTML } = require('../src/features/version/diff.js');
 const { DiscussionEngine } = require('../src/core/v4/discussion-engine');
 
+// v4.1.1: Agent后端客户端
+const AGENT_BACKEND_URL = process.env.MAD_AGENT_BACKEND || 'http://localhost:18791';
+
+async function callAgentBackend(userInput) {
+  try {
+    const response = await fetch(`${AGENT_BACKEND_URL}/api/agent/create-discussion`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userInput }),
+      signal: AbortSignal.timeout(30000) // 30秒超时
+    });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
+    return await response.json();
+  } catch (error) {
+    throw new Error(`Agent后端调用失败: ${error.message}`);
+  }
+}
+
 const PORT = 18790;
 const WEB_DIR = path.join(__dirname, 'public');
 
@@ -383,7 +405,7 @@ async function createServer() {
 
             // 检查是否可以使用真实LLM
             if (orchestrator.discussionEngine) {
-              console.log('[API] 使用真实LLM创建讨论...');
+              console.log('[API] 使用本地真实LLM创建讨论...');
               
               try {
                 // 使用真实LLM创建讨论
@@ -412,7 +434,8 @@ async function createServer() {
                   message: `LLM智能讨论 "${llmResult.topic.substring(0, 30)}..." 已创建成功`,
                   llmUsed: true,
                   expertCount: llmResult.summary.expertCount,
-                  totalMessages: llmResult.summary.totalMessages
+                  totalMessages: llmResult.summary.totalMessages,
+                  llmSource: 'local'
                 }, null, 2));
 
               } catch (llmError) {
@@ -423,9 +446,53 @@ async function createServer() {
               }
 
             } else {
-              console.log('[API] orchestrator未配置LLM，使用模板模式');
-              // 使用模板模式
-              return await createTemplateDiscussion(userInput);
+              // 本地无LLM，尝试调用Agent后端
+              console.log('[API] 本地未配置LLM，尝试调用Agent后端...');
+              
+              try {
+                // 调用Agent后端API
+                const agentResponse = await fetch('http://localhost:18791/api/agent/create-discussion', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ userInput }),
+                  timeout: 30000 // 30秒超时
+                });
+
+                if (agentResponse.ok) {
+                  const agentResult = await agentResponse.json();
+                  
+                  if (agentResult.success) {
+                    console.log(`[API] ✅ Agent后端创建成功: ${agentResult.discussionId}`);
+                    console.log(`[API] 专家数量: ${agentResult.summary.expertCount}`);
+                    
+                    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                    res.writeHead(201);
+                    res.end(JSON.stringify({
+                      success: true,
+                      projectId: agentResult.discussionId,
+                      projectName: agentResult.topic.substring(0, 50),
+                      topic: agentResult.topic,
+                      category: 'LLM智能讨论',
+                      discussionId: agentResult.discussionId,
+                      message: `LLM智能讨论 "${agentResult.topic.substring(0, 30)}..." 已创建成功`,
+                      llmUsed: true,
+                      expertCount: agentResult.summary.expertCount,
+                      totalMessages: agentResult.summary.totalMessages,
+                      llmSource: 'agent'
+                    }, null, 2));
+                    return;
+                  }
+                }
+                
+                throw new Error('Agent后端调用失败');
+
+              } catch (agentError) {
+                console.warn('[API] ⚠️  Agent后端不可用:', agentError.message);
+                console.log('[API] 降级到模板模式');
+                
+                // 降级到模板模式
+                return await createTemplateDiscussion(userInput);
+              }
             }
 
             // 模板模式创建讨论的辅助函数
