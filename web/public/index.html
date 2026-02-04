@@ -6,6 +6,59 @@
   <title>MAD - Multi-Agent Discussion Viewer</title>
   <link rel="stylesheet" href="/style.css">
   <link rel="stylesheet" href="/shortcuts.css">
+  <style>
+    /* 新建讨论组模态框样式 */
+    .create-modal {
+      max-width: 700px;
+      width: 90%;
+    }
+
+    .create-input-box {
+      width: 100%;
+      min-height: 150px;
+      padding: 15px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      resize: vertical;
+      transition: all 0.3s;
+      box-sizing: border-box;
+    }
+
+    .create-input-box:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .create-examples {
+      margin-top: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .example-chip {
+      background: #f0f0f0;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+
+    .example-chip:hover {
+      background: #667eea;
+      color: white;
+      transform: translateY(-2px);
+    }
+
+    #createDiscussionSubmitBtn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
@@ -270,6 +323,44 @@
     </footer>
   </div>
 
+  <!-- 新建讨论组对话框 (v3.6.0风格) -->
+  <div id="createDiscussionModal" class="modal" style="display: none;">
+    <div class="modal-content create-modal">
+      <div class="modal-header">
+        <h2>✨ 创建讨论组</h2>
+        <button class="modal-close" onclick="closeCreateDiscussionModal()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: #666; margin-bottom: 20px;">用自然语言描述你的需求，MAD 会自动创建讨论组并选取专家</p>
+
+        <textarea
+          id="newDiscussionInput"
+          class="create-input-box"
+          placeholder="例如：我想写一篇关于微服务分层架构设计的专利文档&#10;&#10;或者：帮我评估开发自动写代码功能的可行性"
+        ></textarea>
+
+        <div class="create-examples">
+          <div class="example-chip" onclick="setCreateInput('我想写一篇关于微服务分层架构设计的专利文档')">
+            📝 微服务专利
+          </div>
+          <div class="example-chip" onclick="setCreateInput('帮我评估开发自动写代码功能的可行性')">
+            📋 功能评估
+          </div>
+          <div class="example-chip" onclick="setCreateInput('我们的系统响应时间太慢，需要优化性能')">
+            ⚡ 性能优化
+          </div>
+          <div class="example-chip" onclick="setCreateInput('想要设计一个高可用的数据库架构')">
+            🗄️ 数据库设计
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeCreateDiscussionModal()">取消</button>
+        <button id="createDiscussionSubmitBtn" class="btn btn-primary" onclick="createDiscussion()">✨ 创建讨论组</button>
+      </div>
+    </div>
+  </div>
+
   <!-- 模板选择对话框 -->
   <div id="templateModal" class="modal" style="display: none;">
     <div class="modal-content">
@@ -490,6 +581,7 @@
   </div>
 
   <script src="/app.js"></script>
+  <script src="/create-discussion.js"></script>
   <script src="/shortcuts.js"></script>
   <script>
     // 初始化键盘快捷键

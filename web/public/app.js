@@ -241,9 +241,9 @@ function initApp() {
   // 搜索功能
   const searchInput = document.getElementById('searchInput');
 
-  // 新建讨论按钮
+  // 新建讨论按钮 - 改为打开创建讨论组模态框
   document.getElementById('newDiscussionBtn').addEventListener('click', () => {
-    openTemplateModal();
+    openCreateDiscussionModal();
   });
 
   // 模板市场按钮
