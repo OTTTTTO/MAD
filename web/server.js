@@ -365,7 +365,7 @@ async function createServer() {
         return;
       }
 
-      // API: Skills - 创建讨论组（兼容v3.6.0接口）
+      // API: Skills - 创建讨论组（兼容v3.6.0接口，支持真实LLM）
       if (url.pathname === '/api/skills/create' && req.method === 'POST') {
         let body = '';
         req.on('data', chunk => { body += chunk.toString(); });
@@ -381,109 +381,149 @@ async function createServer() {
 
             console.log(`[API] 用户输入: ${userInput}`);
 
-            // 简化版：直接创建讨论，不进行智能分析
-            // 取用户输入的前50个字符作为主题
-            const topic = userInput.length > 50
-              ? userInput.substring(0, 50) + '...'
-              : userInput;
-
-            // ✨ 使用智能专家选择（基于关键词匹配）
-            const createResult = await orchestrator.createDiscussion(topic, {
-              description: userInput
-              // 不指定participants，让selectParticipantsForTopic自动选择
-            });
-
-            // 添加初始消息以触发讨论
-            try {
-              const context = orchestrator.contexts.get(createResult.discussionId);
-              if (context) {
-                // 添加用户输入作为系统消息
-                context.addMessage('system', userInput, {
-                  type: 'user_input',
-                  source: 'api_skills_create'
+            // 检查是否可以使用真实LLM
+            if (orchestrator.discussionEngine) {
+              console.log('[API] 使用真实LLM创建讨论...');
+              
+              try {
+                // 使用真实LLM创建讨论
+                const llmResult = await orchestrator.createLLMDiscussion(userInput, {
+                  tags: ['用户创建', 'LLM讨论'],
+                  priority: 'high'
                 });
-                
-                // 让协调员发起讨论
-                await orchestrator.agentSpeak(createResult.discussionId, 'coordinator', 
-                  `请各位专家讨论以下话题：${userInput}`
-                );
-                
-                // ✨ 触发其他专家自动发言（基于speakProbability）
-                const participants = context.participants.filter(p => p.id !== 'coordinator');
-                console.log(`[API] 共有 ${participants.length} 个专家，触发发言流程`);
-                
-                let speakCount = 0;
-                // 为每个专家决定是否发言（基于speakProbability）
-                for (const participant of participants) {
-                  const shouldSpeak = Math.random() < (participant.speakProbability || 0.5);
-                  
-                  if (shouldSpeak) {
-                    speakCount++;
-                    // 异步触发发言（不等待完成）
-                    const delay = Math.random() * 3000 + 1000; // 1-4秒随机延迟
-                    
-                    setTimeout(async () => {
-                      try {
-                        // 使用更智能的发言内容（基于专家角色）
-                        const rolePrompts = {
-                          'market_research': '从市场需求和商业价值角度，我认为这个想法...',
-                          'requirement': '从用户需求和功能角度，我建议...',
-                          'technical': '从技术实现角度，我认为...',
-                          'architecture': '从系统架构设计角度，我建议...',
-                          'patent': '从专利保护角度，这个想法的创新点在于...',
-                          'microservices': '从微服务架构角度，我建议...',
-                          'security': '从安全防护角度，我认为需要注意...',
-                          'database': '从数据存储角度，我建议...',
-                          'testing': '从质量保障角度，我们需要考虑...',
-                          'documentation': '从文档编写角度，我认为...'
-                        };
-                        
-                        const prompt = rolePrompts[participant.id] || 
-                          `作为${participant.role}专家，我认为这个想法...`;
-                        
-                        await orchestrator.agentSpeak(createResult.discussionId, participant.id, prompt);
-                        console.log(`[API] ${participant.role} 已发言 (延迟${Math.round(delay)}ms)`);
-                      } catch (error) {
-                        console.error(`[API] ${participant.role} 发言失败:`, error.message);
-                      }
-                    }, delay);
-                  }
+
+                if (!llmResult.success) {
+                  throw new Error(llmResult.error || 'LLM讨论创建失败');
                 }
+
+                console.log(`[API] LLM讨论创建成功: ${llmResult.discussionId}`);
+                console.log(`[API] 专家数量: ${llmResult.summary.expertCount}`);
+
+                // 返回兼容格式
+                res.setHeader('Content-Type', 'application/json; charset=utf-8');
+                res.writeHead(201);
+                res.end(JSON.stringify({
+                  success: true,
+                  projectId: llmResult.discussionId,
+                  projectName: llmResult.topic.substring(0, 50),
+                  topic: llmResult.topic,
+                  category: 'LLM智能讨论',
+                  discussionId: llmResult.discussionId,
+                  message: `LLM智能讨论 "${llmResult.topic.substring(0, 30)}..." 已创建成功`,
+                  llmUsed: true,
+                  expertCount: llmResult.summary.expertCount,
+                  totalMessages: llmResult.summary.totalMessages
+                }, null, 2));
+
+              } catch (llmError) {
+                console.error('[API] LLM讨论创建失败，回退到模板模式:', llmError.message);
                 
-                console.log(`[API] 已触发 ${speakCount} 个专家参与讨论`);
+                // 回退到模板模式
+                return await createTemplateDiscussion(userInput);
               }
-            } catch (msgError) {
-              console.warn('[API] 触发讨论失败（非关键错误）:', msgError.message);
+
+            } else {
+              console.log('[API] orchestrator未配置LLM，使用模板模式');
+              // 使用模板模式
+              return await createTemplateDiscussion(userInput);
             }
 
-            // 返回兼容格式
-            const response = {
-              success: true,
-              projectId: createResult.discussionId,
-              projectName: topic,
-              topic: topic,
-              category: '需求讨论',
-              discussionId: createResult.discussionId,
-              message: `讨论组 "${topic}" 已创建成功`,
-              experts: createResult.participants.map(p => ({
-                id: p.role,
-                name: p.role,
-                emoji: '🤖'
-              }))
-            };
+            // 模板模式创建讨论的辅助函数
+            async function createTemplateDiscussion(userInput) {
+              const topic = userInput.length > 50
+                ? userInput.substring(0, 50) + '...'
+                : userInput;
 
-            console.log(`[API] 创建成功: ${createResult.discussionId}`);
+              // 使用传统方式创建讨论
+              const createResult = await orchestrator.createDiscussion(topic, {
+                description: userInput
+              });
 
-            res.setHeader('Content-Type', 'application/json; charset=utf-8');
-            res.writeHead(201);
-            res.end(JSON.stringify(response, null, 2));
+              // 添加初始消息以触发讨论
+              try {
+                const context = orchestrator.contexts.get(createResult.discussionId);
+                if (context) {
+                  // 添加用户输入作为系统消息
+                  context.addMessage('system', userInput, {
+                    type: 'user_input',
+                    source: 'api_skills_create'
+                  });
+                  
+                  // 让协调员发起讨论
+                  await orchestrator.agentSpeak(createResult.discussionId, 'coordinator', 
+                    `请各位专家讨论以下话题：${userInput}`
+                  );
+                  
+                  // 触发其他专家自动发言（基于speakProbability）
+                  const participants = context.participants.filter(p => p.id !== 'coordinator');
+                  console.log(`[API] 共有 ${participants.length} 个专家，触发发言流程`);
+                  
+                  let speakCount = 0;
+                  for (const participant of participants) {
+                    const shouldSpeak = Math.random() < (participant.speakProbability || 0.5);
+                    
+                    if (shouldSpeak) {
+                      speakCount++;
+                      const delay = Math.random() * 3000 + 1000;
+                      
+                      setTimeout(async () => {
+                        try {
+                          const rolePrompts = {
+                            'market_research': '从市场需求和商业价值角度，我认为这个想法...',
+                            'requirement': '从用户需求和功能角度，我建议...',
+                            'technical': '从技术实现角度，我认为...',
+                            'architecture': '从系统架构设计角度，我建议...',
+                            'patent': '从专利保护角度，这个想法的创新点在于...',
+                            'microservices': '从微服务架构角度，我建议...',
+                            'security': '从安全防护角度，我认为需要注意...',
+                            'database': '从数据存储角度，我建议...',
+                            'testing': '从质量保障角度，我们需要考虑...',
+                            'documentation': '从文档编写角度，我认为...'
+                          };
+                          
+                          const prompt = rolePrompts[participant.id] || 
+                            `作为${participant.role}专家，我认为这个想法...`;
+                          
+                          await orchestrator.agentSpeak(createResult.discussionId, participant.id, prompt);
+                          console.log(`[API] ${participant.role} 已发言 (延迟${Math.round(delay)}ms)`);
+                        } catch (error) {
+                          console.error(`[API] ${participant.role} 发言失败:`, error.message);
+                        }
+                      }, delay);
+                    }
+                  }
+                  
+                  console.log(`[API] 已触发 ${speakCount} 个专家参与讨论`);
+                }
+              } catch (msgError) {
+                console.warn('[API] 触发讨论失败（非关键错误）:', msgError.message);
+              }
+
+              // 返回兼容格式
+              res.setHeader('Content-Type', 'application/json; charset=utf-8');
+              res.writeHead(201);
+              res.end(JSON.stringify({
+                success: true,
+                projectId: createResult.discussionId,
+                projectName: topic,
+                topic: topic,
+                category: '需求讨论',
+                discussionId: createResult.discussionId,
+                message: `讨论组 "${topic}" 已创建成功`,
+                llmUsed: false,
+                experts: createResult.participants.map(p => ({
+                  id: p.id,
+                  role: p.role,
+                  name: p.name,
+                  expertise: p.expertise
+                }))
+              }, null, 2));
+            }
+
           } catch (error) {
-            console.error('[API] 创建失败:', error);
+            console.error('[API] 创建讨论失败:', error);
             res.writeHead(500);
-            res.end(JSON.stringify({
-              success: false,
-              error: error.message
-            }));
+            res.end(JSON.stringify({ error: error.message }));
           }
         });
         return;

@@ -5,6 +5,84 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.1.0] - 2026-02-04
+
+### 🎯 重大更新 - 主界面集成真实LLM
+
+#### 核心突破
+
+**从模板到真实LLM**：
+- ❌ 之前：主界面讨论组使用模板对话
+- ✅ 现在：主界面讨论组自动使用真实LLM（如果可用）
+
+#### 功能更新
+
+**主界面讨论组增强**：
+- ✅ `/api/skills/create` API智能判断
+  - 如果orchestrator配置了tool → 使用真实LLM
+  - 如果未配置 → 自动回退到模板模式
+- ✅ 返回值包含`llmUsed`标志，指示是否使用LLM
+- ✅ 兼容v3.6.0接口格式
+
+**用户体验改进**：
+- ✅ 用户无需关心底层实现
+- ✅ 有LLM时自动使用，无LLM时自动降级
+- ✅ 无缝切换，对用户透明
+
+#### 技术实现
+
+```javascript
+// /api/skills/create API逻辑
+if (orchestrator.discussionEngine) {
+  // 使用真实LLM创建讨论
+  const result = await orchestrator.createLLMDiscussion(userInput);
+  return {
+    success: true,
+    llmUsed: true,
+    expertCount: result.summary.expertCount
+  };
+} else {
+  // 回退到模板模式
+  const result = await orchestrator.createDiscussion(userInput);
+  return {
+    success: true,
+    llmUsed: false,
+    experts: result.participants
+  };
+}
+```
+
+#### 智能降级
+
+**LLM可用时**：
+- 专家使用真实LLM生成内容
+- 内容质量高，针对性强
+- 自动保存到数据库
+
+**LLM不可用时**：
+- 自动使用模板模式
+- 保证功能可用
+- 用户无感知
+
+#### 破坏性变更
+
+**无破坏性变更**：
+- ✅ 完全向后兼容
+- ✅ API接口格式不变
+- ✅ 自动判断LLM可用性
+
+#### 改进
+- ✅ 主界面直接受益于LLM功能
+- ✅ 无需创建新界面
+- ✅ 用户操作流程不变
+
+#### 已知限制
+- ⚠️ Web服务器默认未配置tool（使用模板）
+- ✅ 可以在Agent环境中配置tool启用LLM
+- ✅ 提供降级机制保证可用性
+
+---
+
 ## [4.0.10] - 2026-02-04
 
 ### 🎯 架构修正 - 正确的分层设计
