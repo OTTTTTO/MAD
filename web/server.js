@@ -66,6 +66,15 @@ async function createServer() {
         return;
       }
 
+      // v4.0 讨论组列表
+      if (url.pathname === '/discussion-list' || url.pathname === '/discussion-list.html') {
+        const html = await fs.readFile(path.join(WEB_DIR, 'discussion-list.html'), 'utf8');
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.writeHead(200);
+        res.end(html);
+        return;
+      }
+
       // v3.0 原型界面
       if (url.pathname === '/index-v3' || url.pathname === '/index-v3.html') {
         const html = await fs.readFile(path.join(WEB_DIR, 'index-v3.html'), 'utf8');
