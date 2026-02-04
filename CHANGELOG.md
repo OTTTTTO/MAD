@@ -5,6 +5,62 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.7] - 2026-02-04
+
+### ✨ 新增功能
+
+#### 结果汇总器 📊
+- ✅ 智能提取共识观点
+  - 按领域分组专家意见
+  - 识别每个领域的主要观点
+  - 记录置信度数据
+- ✅ 识别分歧观点
+  - 检测超出专业领域的回应
+  - 提供补充建议
+- ✅ 生成行动建议
+  - 基于识别的领域自动生成
+  - 按优先级分级（high/medium/low）
+  - 覆盖技术、产品、商业、运营4个维度
+- ✅ 创建完整报告
+  - 执行摘要
+  - 共识观点详情
+  - 分歧观点详情
+  - 行动建议清单
+  - 统计信息
+- ✅ Markdown格式导出
+  - 结构化报告
+  - 支持保存为文件
+
+#### 核心模块
+- ✅ `src/core/v4/discussion-summarizer.js` - 结果汇总器（9.0KB）
+- ✅ `test-v4.0.7.js` - 完整流程测试（3.3KB）
+
+### 🔧 改进
+
+#### 完整性
+- ✅ 整合讨论引擎和总结器
+- ✅ 端到端完整流程验证
+- ✅ 生成可读性强的报告
+
+#### 可测试性
+- ✅ 完整流程测试（讨论→总结）
+- ✅ 多领域话题测试
+- ✅ Markdown生成测试
+
+### 📝 文档
+
+- ✅ 添加v4.0.7测试说明
+- ✅ 更新报告格式示例
+
+### 🧪 测试
+
+- ✅ 完整讨论流程测试
+- ✅ 总结生成测试
+- ✅ 报告格式化测试
+- ✅ @流转和介入测试
+
+---
+
 ## [4.0.6] - 2026-02-04
 
 ### ✨ 新增功能
