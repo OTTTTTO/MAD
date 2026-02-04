@@ -43,6 +43,10 @@ const { TemplateMarket } = require('./src/features/templates/market-manager.js')
 const { DiscussionSuggestionSystem } = require('./src/core/suggestions.js');
 const { ParticipantsManager } = require('./src/core/participants.js');
 
+// v4.0: 新的DiscussionManager（替换旧的DiscussionContext）
+const DiscussionManager = require('./src/core/discussion-manager.js');
+const { Discussion: DiscussionV4 } = require('./src/models/discussion.js');
+
 // 加载模板
 let templates = null;
 
@@ -413,6 +417,9 @@ class DiscussionOrchestrator {
 
     // v3.7.0: 智能标记管理器
     this.markerManager = null; // 延迟初始化（需要 orchestrator 实例）
+
+    // v4.0: 新的DiscussionManager（统一概念）
+    this.discussionManager = new DiscussionManager(this.dataDir);
   }
 
   /**
@@ -457,6 +464,9 @@ class DiscussionOrchestrator {
 
       // v3.7.0: 初始化标记管理器
       this.markerManager = new MarkerManager(this);
+
+      // v4.0: 初始化DiscussionManager
+      await this.discussionManager.init();
 
       // 加载已保存的讨论记录
       await this.loadAllDiscussions();
@@ -518,7 +528,30 @@ class DiscussionOrchestrator {
   }
 
   /**
-   * 创建新的讨论组
+   * 创建讨论（v4.0 - 使用新的DiscussionManager）
+   */
+  async createDiscussionV2(topic, category = '需求讨论', options = {}) {
+    const discussion = await this.discussionManager.createDiscussion(topic, category, {
+      description: options.description,
+      participants: options.participants || [],
+      tags: options.tags || [],
+      priority: options.priority || 'medium'
+    });
+
+    console.log(`[Orchestrator V4] Created discussion ${discussion.id}`);
+    console.log(`[Orchestrator V4] Topic: ${topic}`);
+    console.log(`[Orchestrator V4] Category: ${category}`);
+
+    return {
+      discussionId: discussion.id,
+      discussion,
+      topic: discussion.topic,
+      category: discussion.category
+    };
+  }
+
+  /**
+   * 创建新的讨论组（旧版本，保留向后兼容）
    */
   async createDiscussion(topic, options = {}) {
     const discussionId = `disc-${Date.now()}`;
@@ -939,7 +972,29 @@ class DiscussionOrchestrator {
   }
 
   /**
-   * 列出所有讨论
+   * 列出所有讨论（v4.0 - 使用新的DiscussionManager）
+   */
+  async listDiscussionsV2(filters = {}) {
+    const discussions = await this.discussionManager.listDiscussions(filters);
+    return discussions.map(d => ({
+      id: d.id,
+      topic: d.topic,
+      category: d.category,
+      status: d.status,
+      priority: d.priority,
+      tags: d.tags,
+      participantCount: d.participants?.length || 0,
+      messageCount: d.messages?.length || 0,
+      markerCount: d.markers?.length || 0,
+      tokens: d.stats?.totalTokens || 0,
+      progress: d.stats?.progress || 0,
+      createdAt: d.stats?.createdAt,
+      updatedAt: d.stats?.updatedAt
+    }));
+  }
+
+  /**
+   * 列出所有讨论（旧版本，保留向后兼容）
    */
   listDiscussions() {
     return Array.from(this.discussions.values()).map(ctx => ({
