@@ -355,7 +355,7 @@ const AGENT_ROLES = {
     emoji: '🔧',
     agentId: 'main',
     systemPrompt: '你是技术架构专家，评估技术实现方案、难点、工作量',
-    triggerKeywords: ['技术', '实现', '开发', '架构', '代码'],
+    triggerKeywords: ['技术', '实现', '开发', '架构', '代码', '微服务', '系统'],
     speakProbability: 0.7
   },
   
@@ -375,8 +375,59 @@ const AGENT_ROLES = {
     emoji: '📝',
     agentId: 'main',
     systemPrompt: '你是文档专家，整理讨论内容、编写文档、记录决策',
-    triggerKeywords: ['文档', '记录', '总结'],
+    triggerKeywords: ['文档', '记录', '总结', '编写', '说明'],
     speakProbability: 0.3
+  },
+  
+  // v4.0.1 新增专家
+  architecture: {
+    id: 'architecture',
+    role: '架构设计',
+    emoji: '🏗️',
+    agentId: 'main',
+    systemPrompt: '你是架构设计专家，负责系统架构设计、技术选型、模块划分',
+    triggerKeywords: ['架构', '设计', '系统', '模块', '分层', '设计模式', '技术选型'],
+    speakProbability: 0.7
+  },
+  
+  patent: {
+    id: 'patent',
+    role: '专利编写',
+    emoji: '📜',
+    agentId: 'main',
+    systemPrompt: '你是专利编写专家，负责技术交底书撰写、专利申请文档编写',
+    triggerKeywords: ['专利', '知识产权', '技术交底', '申请', '保护'],
+    speakProbability: 0.6
+  },
+  
+  microservices: {
+    id: 'microservices',
+    role: '微服务',
+    emoji: '🔷',
+    agentId: 'main',
+    systemPrompt: '你是微服务架构专家，专注于微服务设计、服务拆分、分布式系统',
+    triggerKeywords: ['微服务', '服务', '分布式', 'api', '网关', '服务治理'],
+    speakProbability: 0.7
+  },
+  
+  security: {
+    id: 'security',
+    role: '安全',
+    emoji: '🔒',
+    agentId: 'main',
+    systemPrompt: '你是安全专家，负责安全评估、漏洞分析、加密方案设计',
+    triggerKeywords: ['安全', '加密', '漏洞', '防护', '权限', '认证'],
+    speakProbability: 0.5
+  },
+  
+  database: {
+    id: 'database',
+    role: '数据库',
+    emoji: '🗄️',
+    agentId: 'main',
+    systemPrompt: '你是数据库专家，负责数据库设计、优化、存储方案',
+    triggerKeywords: ['数据库', '存储', '查询', '索引', 'sql', 'nosql', '缓存'],
+    speakProbability: 0.6
   }
 };
 

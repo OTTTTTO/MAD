@@ -205,10 +205,10 @@ async function createServer() {
               ? userInput.substring(0, 50) + '...'
               : userInput;
 
-            // 使用旧的createDiscussion方法，它会自动处理participants
+            // ✨ 使用智能专家选择（基于关键词匹配）
             const createResult = await orchestrator.createDiscussion(topic, {
-              description: userInput,
-              participants: ['coordinator'] // 添加协调员
+              description: userInput
+              // 不指定participants，让selectParticipantsForTopic自动选择
             });
 
             // 添加初始消息以触发讨论
