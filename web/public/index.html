@@ -54,9 +54,27 @@
       transform: translateY(-2px);
     }
 
+    /* 确保创建按钮可见 */
+    #createDiscussionSubmitBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    #createDiscussionSubmitBtn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
     #createDiscussionSubmitBtn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+      transform: none;
     }
   </style>
 </head>
@@ -354,9 +372,9 @@
           </div>
         </div>
       </div>
-      <div class="modal-footer">
+      <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
         <button class="btn" onclick="closeCreateDiscussionModal()">取消</button>
-        <button id="createDiscussionSubmitBtn" class="btn btn-primary" onclick="createDiscussion()">✨ 创建讨论组</button>
+        <button id="createDiscussionSubmitBtn" class="btn btn-primary" onclick="createDiscussion()" style="display: inline-block;">✨ 创建讨论组</button>
       </div>
     </div>
   </div>
