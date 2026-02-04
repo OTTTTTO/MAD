@@ -226,7 +226,49 @@ async function createServer() {
                   `请各位专家讨论以下话题：${userInput}`
                 );
                 
-                console.log(`[API] 已添加初始消息并触发协调员发言`);
+                // ✨ 触发其他专家自动发言（基于speakProbability）
+                const participants = context.participants.filter(p => p.id !== 'coordinator');
+                console.log(`[API] 共有 ${participants.length} 个专家，触发发言流程`);
+                
+                let speakCount = 0;
+                // 为每个专家决定是否发言（基于speakProbability）
+                for (const participant of participants) {
+                  const shouldSpeak = Math.random() < (participant.speakProbability || 0.5);
+                  
+                  if (shouldSpeak) {
+                    speakCount++;
+                    // 异步触发发言（不等待完成）
+                    const delay = Math.random() * 3000 + 1000; // 1-4秒随机延迟
+                    
+                    setTimeout(async () => {
+                      try {
+                        // 使用更智能的发言内容（基于专家角色）
+                        const rolePrompts = {
+                          'market_research': '从市场需求和商业价值角度，我认为这个想法...',
+                          'requirement': '从用户需求和功能角度，我建议...',
+                          'technical': '从技术实现角度，我认为...',
+                          'architecture': '从系统架构设计角度，我建议...',
+                          'patent': '从专利保护角度，这个想法的创新点在于...',
+                          'microservices': '从微服务架构角度，我建议...',
+                          'security': '从安全防护角度，我认为需要注意...',
+                          'database': '从数据存储角度，我建议...',
+                          'testing': '从质量保障角度，我们需要考虑...',
+                          'documentation': '从文档编写角度，我认为...'
+                        };
+                        
+                        const prompt = rolePrompts[participant.id] || 
+                          `作为${participant.role}专家，我认为这个想法...`;
+                        
+                        await orchestrator.agentSpeak(createResult.discussionId, participant.id, prompt);
+                        console.log(`[API] ${participant.role} 已发言 (延迟${Math.round(delay)}ms)`);
+                      } catch (error) {
+                        console.error(`[API] ${participant.role} 发言失败:`, error.message);
+                      }
+                    }, delay);
+                  }
+                }
+                
+                console.log(`[API] 已触发 ${speakCount} 个专家参与讨论`);
               }
             } catch (msgError) {
               console.warn('[API] 触发讨论失败（非关键错误）:', msgError.message);
