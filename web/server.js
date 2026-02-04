@@ -120,6 +120,195 @@ async function createServer() {
         return;
       }
 
+      // ========== v4.0 V2 API 路由 ==========
+
+      // API: V2 - 列出所有讨论（使用新的DiscussionManager）
+      if (url.pathname === '/api/v2/discussions' && req.method === 'GET') {
+        const filters = {};
+        if (url.searchParams) {
+          if (url.searchParams.has('category')) filters.category = url.searchParams.get('category');
+          if (url.searchParams.has('status')) filters.status = url.searchParams.get('status');
+          if (url.searchParams.has('tag')) filters.tag = url.searchParams.get('tag');
+        }
+        const discussions = await orchestrator.listDiscussionsV2(filters);
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+        res.writeHead(200);
+        res.end(JSON.stringify(discussions, null, 2));
+        return;
+      }
+
+      // API: V2 - 创建讨论
+      if (url.pathname === '/api/v2/discussion' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const data = JSON.parse(body);
+            const result = await orchestrator.createDiscussionV2(
+              data.topic,
+              data.category || '需求讨论',
+              {
+                description: data.description,
+                participants: data.participants,
+                tags: data.tags,
+                priority: data.priority
+              }
+            );
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(result, null, 2));
+          } catch (error) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: V2 - 获取单个讨论
+      if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+$/) && req.method === 'GET') {
+        const discussionId = url.pathname.split('/')[4];
+        try {
+          const discussion = await orchestrator.getDiscussionV2(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(discussion, null, 2));
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: V2 - 删除讨论
+      if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+$/) && req.method === 'DELETE') {
+        const discussionId = url.pathname.split('/')[4];
+        try {
+          const result = await orchestrator.deleteDiscussionV2(discussionId);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(result, null, 2));
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: V2 - Agent发言
+      if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+\/speak$/) && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[4];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const data = JSON.parse(body);
+            const message = await orchestrator.agentSpeakV2(
+              discussionId,
+              data.agentId,
+              data.content,
+              data.options || {}
+            );
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(message, null, 2));
+          } catch (error) {
+            res.writeHead(400);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: V2 - 添加标签
+      if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+\/tags$/) && req.method === 'POST') {
+        const discussionId = url.pathname.split('/')[4];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const data = JSON.parse(body);
+            const discussion = await orchestrator.addTagToDiscussionV2(discussionId, data.tag);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify({ tags: discussion.tags }, null, 2));
+          } catch (error) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: V2 - 删除标签
+      if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+\/tags\/[^/]+$/) && req.method === 'DELETE') {
+        const parts = url.pathname.split('/');
+        const discussionId = parts[4];
+        const tag = decodeURIComponent(parts[6]);
+        try {
+          const discussion = await orchestrator.removeTagFromDiscussionV2(discussionId, tag);
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify({ tags: discussion.tags }, null, 2));
+        } catch (error) {
+          res.writeHead(404);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: V2 - 设置备注
+      if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+\/notes$/) && req.method === 'PUT') {
+        const discussionId = url.pathname.split('/')[4];
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const data = JSON.parse(body);
+            const discussion = await orchestrator.setDiscussionNotesV2(discussionId, data.notes);
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(200);
+            res.end(JSON.stringify({ notes: discussion.notes }, null, 2));
+          } catch (error) {
+            res.writeHead(404);
+            res.end(JSON.stringify({ error: error.message }));
+          }
+        });
+        return;
+      }
+
+      // API: V2 - 搜索讨论
+      if (url.pathname === '/api/v2/discussions/search' && req.method === 'GET') {
+        const keyword = url.searchParams.get('q') || '';
+        const limit = parseInt(url.searchParams.get('limit') || '10');
+        try {
+          const results = await orchestrator.searchDiscussionsV2(keyword, { limit });
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(results, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // API: V2 - 获取统计
+      if (url.pathname === '/api/v2/statistics' && req.method === 'GET') {
+        try {
+          const stats = await orchestrator.getStatisticsV2();
+          res.setHeader('Content-Type', 'application/json; charset=utf-8');
+          res.writeHead(200);
+          res.end(JSON.stringify(stats, null, 2));
+        } catch (error) {
+          res.writeHead(500);
+          res.end(JSON.stringify({ error: error.message }));
+        }
+        return;
+      }
+
+      // ========== v4.0 V2 API 路由结束 ==========
+
       // API: 获取讨论详情（必须是纯 /api/discussion/:id 格式，不能有其他路径段）
       // 这个路由放在最后，避免拦截其他 /api/discussion/:id/* 路由
       // 移到文件末尾处理
