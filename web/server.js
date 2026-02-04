@@ -183,6 +183,62 @@ async function createServer() {
         return;
       }
 
+      // API: Skills - 创建讨论组（兼容v3.6.0接口）
+      if (url.pathname === '/api/skills/create' && req.method === 'POST') {
+        let body = '';
+        req.on('data', chunk => { body += chunk.toString(); });
+        req.on('end', async () => {
+          try {
+            const { userInput, mode = 'auto' } = JSON.parse(body);
+
+            if (!userInput) {
+              res.writeHead(400);
+              res.end(JSON.stringify({ error: '缺少 userInput 参数' }));
+              return;
+            }
+
+            console.log(`[API] 用户输入: ${userInput}`);
+
+            // 简化版：直接创建讨论，不进行智能分析
+            // 取用户输入的前50个字符作为主题
+            const topic = userInput.length > 50
+              ? userInput.substring(0, 50) + '...'
+              : userInput;
+
+            const result = await orchestrator.createDiscussionV2(topic, '需求讨论', {
+              description: userInput,
+              participants: [],
+              tags: ['自然语言创建']
+            });
+
+            // 返回兼容格式
+            const response = {
+              success: true,
+              projectId: result.discussionId,
+              projectName: result.topic,
+              topic: result.topic,
+              category: result.category,
+              discussionId: result.discussionId,
+              message: `讨论组 "${topic}" 已创建成功`
+            };
+
+            console.log(`[API] 创建成功: ${result.discussionId}`);
+
+            res.setHeader('Content-Type', 'application/json; charset=utf-8');
+            res.writeHead(201);
+            res.end(JSON.stringify(response, null, 2));
+          } catch (error) {
+            console.error('[API] 创建失败:', error);
+            res.writeHead(500);
+            res.end(JSON.stringify({
+              success: false,
+              error: error.message
+            }));
+          }
+        });
+        return;
+      }
+
       // API: V2 - 获取单个讨论
       if (url.pathname.match(/^\/api\/v2\/discussion\/[^/]+$/) && req.method === 'GET') {
         const discussionId = url.pathname.split('/')[4];
