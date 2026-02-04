@@ -5,6 +5,76 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.2] - 2026-02-04
+
+### ✨ 新增功能
+
+#### 防止无限循环机制 🔄
+- ✅ @追踪器 (`MentionTracker`): 防止专家之间无限@循环
+  - 追踪@链长度，防止超过阈值（默认5次）
+  - 检测"乒乓"效应（A@B, B@A循环）
+  - 提供@权限判断接口
+- ✅ 讨论监控器 (`DiscussionMonitor`): 监控讨论深度
+  - 追踪专家@轮次（默认上限5轮）
+  - 追踪总讨论轮次（默认上限15轮）
+  - 检测重复讨论内容
+  - 自动判断是否需要介入
+
+#### 核心模块
+- ✅ `src/core/v4/mention-tracker.js` - @追踪器（2.3KB）
+- ✅ `src/core/v4/discussion-monitor.js` - 讨论监控器（2.4KB）
+- ✅ `test-v4.0.2.js` - 功能测试文件（1.9KB）
+
+### 🔧 改进
+
+#### 代码质量
+- ✅ 模块化设计，职责单一
+- ✅ 完整JSDoc注释
+- ✅ 配置灵活，阈值可调
+
+#### 可测试性
+- ✅ 独立测试文件
+- ✅ 测试场景覆盖乒乓效应
+- ✅ 测试场景覆盖深度控制
+
+### 📝 文档
+
+- ✅ 添加v4.0.2测试说明
+- ✅ 更新API使用示例
+
+### 🧪 测试
+
+- ✅ @追踪器测试通过
+- ✅ 讨论监控器测试通过
+- ✅ 乒乓效应检测正常
+- ✅ 深度控制正常
+
+---
+
+## [4.0.1] - 2026-02-04
+
+### 🔧 修复
+
+#### 数据兼容性
+- ✅ 修复DiscussionManager无法读取v3.7.0旧格式数据
+- ✅ 实现fallback机制：优先新格式，失败后尝试旧格式
+- ✅ 自动迁移：无需手动数据迁移
+
+#### 前端问题
+- ✅ 修复404错误：添加/discussion-list.html路由
+- ✅ 统一前端概念：移除所有"项目组"相关UI
+- ✅ 文件重命名：project-list.html → discussion-list.html
+
+### ✨ 新增功能
+
+#### 新建讨论组
+- ✅ v3.6.0风格的新建讨论组功能
+- ✅ 模态框UI设计
+- ✅ 4个示例chips
+- ✅ Ctrl+Enter快捷提交
+
+---
+
 ## [4.0.0] - 2026-02-04
 
 ### ⚠️ Breaking Changes
