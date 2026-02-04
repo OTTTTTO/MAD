@@ -47,6 +47,9 @@ const { ParticipantsManager } = require('./src/core/participants.js');
 const DiscussionManager = require('./src/core/discussion-manager.js');
 const { Discussion: DiscussionV4 } = require('./src/models/discussion.js');
 
+// v4.0.8: LLM集成 - DiscussionEngine
+const { DiscussionEngine } = require('./src/core/v4/discussion-engine');
+
 // 加载模板
 let templates = null;
 
@@ -471,6 +474,15 @@ class DiscussionOrchestrator {
 
     // v4.0: 新的DiscussionManager（统一概念）
     this.discussionManager = new DiscussionManager(this.dataDir);
+
+    // v4.0.9: LLM DiscussionEngine（如果配置了tool）
+    this.discussionEngine = null;
+    if (config.tool) {
+      this.discussionEngine = new DiscussionEngine({
+        tool: config.tool
+      });
+      console.log('[Orchestrator] LLM DiscussionEngine initialized');
+    }
   }
 
   /**
@@ -599,6 +611,90 @@ class DiscussionOrchestrator {
       topic: discussion.topic,
       category: discussion.category
     };
+  }
+
+  /**
+   * v4.0.9: 创建LLM智能讨论（使用真实LLM）
+   * @param {string|object} topic - 话题（字符串或对象）
+   * @param {object} options - 选项
+   * @returns {object} 讨论结果
+   */
+  async createLLMDiscussion(topic, options = {}) {
+    if (!this.discussionEngine) {
+      throw new Error('LLM DiscussionEngine未初始化。请确保在配置中提供tool参数。');
+    }
+
+    console.log(`[Orchestrator V4] Starting LLM discussion: ${typeof topic === 'string' ? topic : topic.content}`);
+
+    // 标准化topic对象
+    const topicObj = typeof topic === 'string'
+      ? { content: topic, description: topic }
+      : topic;
+
+    try {
+      // 调用DiscussionEngine启动讨论（使用真实LLM）
+      const result = await this.discussionEngine.startDiscussion(topicObj);
+
+      if (!result.success) {
+        throw new Error(result.error || '讨论启动失败');
+      }
+
+      // 将LLM讨论结果保存为讨论记录
+      const discussion = await this.discussionManager.createDiscussion(
+        topicObj.content,
+        'LLM智能讨论',
+        {
+          description: topicObj.description,
+          tags: ['LLM', 'AI讨论', ...((options.tags || []))],
+          priority: options.priority || 'high',
+          metadata: {
+            llmGenerated: true,
+            expertCount: result.summary.expertCount || 0,
+            totalMessages: result.summary.totalMessages || 0
+          }
+        }
+      );
+
+      // 将专家意见添加为消息
+      if (result.discussion && result.discussion.messages) {
+        for (const msg of result.discussion.messages) {
+          if (msg.type === 'EXPERT_RESPONSE' && msg.llmGenerated) {
+            await this.discussionManager.addMessage(discussion.id, {
+              role: 'agent',
+              agentId: msg.expert,
+              agentName: msg.expertName,
+              content: msg.content,
+              metadata: {
+                domain: msg.domain,
+                llmGenerated: true,
+                runId: msg.runId
+              }
+            });
+          }
+        }
+      }
+
+      console.log(`[Orchestrator V4] LLM discussion completed: ${discussion.id}`);
+      console.log(`[Orchestrator V4] Expert count: ${result.summary.expertCount}`);
+      console.log(`[Orchestrator V4] Total messages: ${result.summary.totalMessages}`);
+
+      return {
+        success: true,
+        discussionId: discussion.id,
+        discussion,
+        llmResult: result,
+        summary: result.summary,
+        topic: topicObj.content
+      };
+
+    } catch (error) {
+      console.error(`[Orchestrator V4] LLM discussion failed:`, error);
+      return {
+        success: false,
+        error: error.message,
+        topic: topicObj.content
+      };
+    }
   }
 
   /**

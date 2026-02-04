@@ -5,6 +5,112 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.10] - 2026-02-04
+
+### 🎯 架构修正 - 正确的分层设计
+
+#### 核心认知转变
+
+**之前的错误理解**：
+- ❌ Web界面需要直接调用Agent/sessions_spawn
+- ❌ "Web环境无法调用LLM"
+
+**正确的架构理解**（用户指导）：
+- ✅ Web = 展示层，只负责显示数据
+- ✅ Orchestrator = 桥梁层，连接Web和Agent
+- ✅ DiscussionEngine = 业务逻辑层，使用LLM
+
+#### 架构设计
+
+```
+用户 → Web界面（展示）
+       ↓ HTTP
+    Web API
+       ↓ 调用
+  Orchestrator（桥梁，在Agent环境）
+       ↓ 使用
+  DiscussionEngine（LLM调用）
+       ↓ 调用
+  sessions_spawn（真实LLM）
+```
+
+#### 新增功能
+
+**Orchestrator增强**：
+- ✅ 构造函数支持`config.tool`参数
+- ✅ 如果配置了tool，自动初始化DiscussionEngine
+- ✅ 新增`createLLMDiscussion()`方法
+  - 调用DiscussionEngine启动LLM讨论
+  - 保存讨论结果到数据库
+  - 返回完整的专家意见
+
+**Web API更新**：
+- ✅ `/api/v4/llm-discussion` 智能判断
+  - 如果orchestrator有tool → 调用真实LLM
+  - 如果orchestrator无tool → 返回使用说明
+- ✅ 不再硬编码"无法调用"，而是根据实际配置判断
+
+#### 技术实现
+
+```javascript
+// orchestrator.js - 桥梁层
+class DiscussionOrchestrator {
+  constructor(config) {
+    // 如果配置了tool，初始化LLM引擎
+    if (config.tool) {
+      this.discussionEngine = new DiscussionEngine({ tool: config.tool });
+    }
+  }
+
+  async createLLMDiscussion(topic) {
+    // 调用LLM讨论
+    const result = await this.discussionEngine.startDiscussion(topic);
+
+    // 保存到数据库
+    const discussion = await this.discussionManager.createDiscussion(...);
+
+    // 返回结果
+    return { success: true, discussion, llmResult: result };
+  }
+}
+
+// web/server.js - API层
+if (orchestrator.discussionEngine) {
+  // 调用真实LLM
+  const result = await orchestrator.createLLMDiscussion(topic);
+  res.end(JSON.stringify(result));
+} else {
+  // 返回说明
+  res.end(JSON.stringify({ message: '需要配置tool' }));
+}
+```
+
+#### 关键改进
+
+**职责清晰**：
+- Web：HTTP协议处理，参数校验
+- Orchestrator：业务协调，数据持久化
+- DiscussionEngine：LLM调用，专家协作
+
+**灵活配置**：
+- Web环境：orchestrator无tool，返回说明
+- Agent环境：orchestrator有tool，调用LLM
+- 同一套代码，不同环境
+
+#### 破坏性变更
+
+**Orchestrator初始化**：
+- 新增可选的`config.tool`参数
+- 如果需要在Web中使用LLM，需要配置tool
+
+#### 已知限制
+
+- ⚠️ Web服务器默认未配置tool（正常行为）
+- ✅ 可以在Agent环境中配置tool使用LLM
+- ✅ Web界面仍可展示讨论结果
+
+---
+
 ## [4.0.9] - 2026-02-04
 
 ### ✨ Web界面集成 - LLM智能讨论

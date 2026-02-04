@@ -209,26 +209,44 @@ async function createServer() {
 
             console.log(`[API v4.0.9] 接收LLM讨论请求: ${data.topic}`);
 
-            // 注意：Web服务器环境没有OpenClaw的tool
-            // 这里返回说明，引导用户在Agent中使用
-            res.setHeader('Content-Type', 'application/json; charset=utf-8');
-            res.writeHead(200);
-            res.end(JSON.stringify({
-              status: 'info',
-              message: 'LLM智能讨论功能需要在OpenClaw Agent中运行',
-              topic: data.topic,
-              instructions: {
-                method: '在OpenClaw Agent中调用',
-                code: `const { DiscussionEngine } = require('./src/core/v4/discussion-engine');\n\nconst engine = new DiscussionEngine({ tool: this.tool });\nconst result = await engine.startDiscussion({\n  content: "${data.topic}"\n});`,
-                alternative: '或在Web界面使用模拟模式（仅供演示）'
-              },
-              demoMode: {
-                available: true,
-                note: '模拟模式使用预设响应，不调用真实LLM'
-              }
-            }, null, 2));
+            // 尝试通过orchestrator调用LLM讨论
+            if (orchestrator.discussionEngine) {
+              // orchestrator已配置tool，可以调用真实LLM
+              console.log('[API v4.0.9] 使用真实LLM...');
+
+              const result = await orchestrator.createLLMDiscussion(data.topic, {
+                tags: data.tags,
+                priority: data.priority
+              });
+
+              res.setHeader('Content-Type', 'application/json; charset=utf-8');
+              res.writeHead(200);
+              res.end(JSON.stringify(result, null, 2));
+
+            } else {
+              // orchestrator未配置tool，返回使用说明
+              console.log('[API v4.0.9] orchestrator未配置tool，返回使用说明');
+
+              res.setHeader('Content-Type', 'application/json; charset=utf-8');
+              res.writeHead(200);
+              res.end(JSON.stringify({
+                status: 'info',
+                message: 'LLM功能需要orchestrator配置tool参数',
+                topic: data.topic,
+                note: '当前Web服务器未配置tool，无法调用真实LLM',
+                instructions: {
+                  web: '使用模拟模式体验功能',
+                  agent: '在OpenClaw Agent中配置orchestrator.tool以启用真实LLM'
+                },
+                demoMode: {
+                  available: true,
+                  endpoint: '/api/v4/llm-discussion/demo'
+                }
+              }, null, 2));
+            }
           } catch (error) {
-            res.writeHead(400);
+            console.error('[API v4.0.9] 错误:', error);
+            res.writeHead(500);
             res.end(JSON.stringify({ error: error.message }));
           }
         });
