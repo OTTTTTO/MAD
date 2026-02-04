@@ -83,53 +83,114 @@ class DiscussionEngine {
   }
 
   /**
-   * 并行专家发言
+   * 并行专家发言（v4.0.8：集成真实LLM）
    * @param {Object} discussion - 讨论对象
    * @param {Object} decomposition - 拆解结果
    */
   async parallelExpertSpeak(discussion, decomposition) {
     const { experts } = decomposition;
+    const tool = this.config.tool; // OpenClaw工具注入
 
-    // 并行处理所有专家的第一次发言
-    const responses = await Promise.all(
-      experts.map(async (assignment) => {
-        const expert = Expert.createExpert(assignment.domain);
-        if (!expert) return null;
+    if (!tool || !tool.sessions_spawn) {
+      throw new Error('tool.sessions_spawn 不可用，无法启动LLM专家');
+    }
 
-        // 取第一个问题
-        const question = {
-          content: assignment.questions[0],
-          context: discussion.topic,
-          history: []
-        };
+    console.log('[消息] 开始并行LLM专家调用...');
 
-        // 专家决策
-        const decision = expert.decideResponse(question);
+    // 并行处理所有专家的第一次发言（使用LLM）
+    const llmTasks = experts.map(async (assignment) => {
+      const expert = Expert.createExpert(assignment.domain);
+      if (!expert) return null;
+
+      // 取第一个问题
+      const question = {
+        content: assignment.questions[0],
+        context: discussion.topic,
+        history: []
+      };
+
+      console.log(`[消息] ${assignment.expertName}: 调用LLM...`);
+
+      // 使用LLM生成专家意见
+      try {
+        const llmResponse = await expert.respondWithLLM(question, tool);
 
         return {
           expertId: assignment.expertId,
           expertName: assignment.expertName,
           domain: assignment.domain,
-          decision: decision,
-          question: question
+          llmResponse: llmResponse,
+          question: question.content
         };
-      })
-    );
+      } catch (error) {
+        console.error(`[错误] ${assignment.expertName} LLM调用失败:`, error.message);
+        return {
+          expertId: assignment.expertId,
+          expertName: assignment.expertName,
+          domain: assignment.domain,
+          error: error.message,
+          question: question.content
+        };
+      }
+    });
 
-    // 记录所有发言
+    // 等待所有LLM调用完成
+    const responses = await Promise.all(llmTasks);
+
+    // 记录所有发言（先记录pending状态）
     for (const response of responses) {
       if (!response) continue;
 
-      this.addMessage(discussion, {
-        type: 'EXPERT_RESPONSE',
-        expert: response.expertId,
-        expertName: response.expertName,
-        domain: response.domain,
-        content: response.decision.message,
-        strategy: response.decision.strategy,
-        confidence: response.decision.confidence,
-        question: response.question.content
-      });
+      if (response.error) {
+        // LLM调用失败
+        this.addMessage(discussion, {
+          type: 'EXPERT_ERROR',
+          expert: response.expertId,
+          expertName: response.expertName,
+          domain: response.domain,
+          content: `LLM调用失败: ${response.error}`,
+          question: response.question
+        });
+      } else {
+        // LLM调用成功，先记录pending
+        this.addMessage(discussion, {
+          type: 'EXPERT_THINKING',
+          expert: response.expertId,
+          expertName: response.expertName,
+          domain: response.domain,
+          content: '(专家正在思考中...)',
+          runId: response.llmResponse.runId,
+          childSessionKey: response.llmResponse.childSessionKey,
+          question: response.question,
+          status: 'pending'
+        });
+      }
+    }
+
+    // 等待LLM生成完成并更新消息
+    console.log('\n[等待] 等待LLM生成内容...');
+    await new Promise(resolve => setTimeout(resolve, 5000)); // 等待5秒
+
+    for (let i = 0; i < discussion.messages.length; i++) {
+      const msg = discussion.messages[i];
+      if (msg.type === 'EXPERT_THINKING' && msg.status === 'pending') {
+        try {
+          const expert = Expert.createExpert(msg.domain);
+          const realResponse = await expert.waitForLLMResponse(msg.runId, tool);
+
+          // 更新消息内容
+          msg.type = 'EXPERT_RESPONSE';
+          msg.content = realResponse;
+          msg.status = 'completed';
+          msg.llmGenerated = true;
+
+          console.log(`[完成] ${msg.expertName}: LLM响应已接收`);
+        } catch (error) {
+          msg.type = 'EXPERT_ERROR';
+          msg.content = `获取LLM响应失败: ${error.message}`;
+          msg.status = 'failed';
+        }
+      }
     }
   }
 

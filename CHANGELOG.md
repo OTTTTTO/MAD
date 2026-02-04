@@ -5,6 +5,85 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.8] - 2026-02-04
+
+### ✨ 重大更新 - 真实LLM集成
+
+#### 核心突破
+- ✅ **真实LLM调用**：使用OpenClaw的sessions_spawn创建专家sub-agents
+- ✅ **真正的专家意见**：专家使用LLM生成内容，不再是模板
+- ✅ **并行LLM执行**：多个专家同时调用LLM，提升效率
+- ✅ **异步响应处理**：支持等待和获取LLM生成的内容
+
+#### 新增功能
+
+**Expert类增强**：
+- ✅ `respondWithLLM()` - 使用sessions_spawn调用LLM
+- ✅ `waitForLLMResponse()` - 等待并获取LLM响应
+- ✅ `buildSystemPrompt()` - 为每个专家构建专属system prompt
+- ✅ 4个专家的完整system prompts
+  - 技术专家：架构、性能、安全、实施建议
+  - 产品专家：用户分析、需求挖掘、产品设计
+  - 商业专家：商业模式、市场分析、盈利策略
+  - 运营专家：增长策略、运营规划、具体方案
+
+**DiscussionEngine增强**：
+- ✅ `parallelExpertSpeak()` 重构为真实LLM调用
+- ✅ 并行spawn多个专家sub-agents
+- ✅ 等待LLM生成并更新消息内容
+- ✅ 完善的错误处理
+
+#### 技术实现
+
+```javascript
+// 专家使用LLM生成意见
+const llmResponse = await expert.respondWithLLM(question, tool);
+
+// 等待LLM完成
+const realResponse = await expert.waitForLLMResponse(runId, tool);
+
+// 真实的专家内容，不再是模板
+msg.content = realResponse;
+msg.llmGenerated = true;
+```
+
+#### 测试文件
+- ✅ `test-llm-integration.js` - LLM集成单元测试
+- ✅ `test-v4.0.8.js` - 完整流程测试（支持模拟和真实两种模式）
+
+#### 改进
+- ✅ 专家真正使用LLM思考
+- ✅ 输出内容从模板变为真实生成
+- ✅ 支持异步LLM响应
+- ✅ 并行提升效率
+
+### 🔧 破坏性变更
+
+**API变更**：
+- DiscussionEngine需要注入`tool`参数
+- `config.tool` 必须包含 `sessions_spawn` 和 `sessions_history`
+
+**使用方式**：
+```javascript
+const engine = new DiscussionEngine({
+  tool: this.tool // OpenClaw会自动注入
+});
+```
+
+### 📝 已知限制
+
+- ✅ LLM调用需要OpenClaw环境
+- ✅ Web界面尚未更新（仍在使用旧API）
+- ⏳ 专家协作@机制尚未使用LLM（下一版本）
+- ⏳ 主协调员话题拆解仍是规则（下一版本）
+
+### 🧪 测试
+
+- ✅ 模拟测试：验证流程正确性
+- ⏳ 真实LLM测试：需要在OpenClaw Agent中运行
+
+---
+
 ## [4.0.7] - 2026-02-04
 
 ### ✨ 新增功能
