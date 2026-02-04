@@ -384,7 +384,7 @@ async function loadAgentStats() {
  */
 async function loadDiscussions() {
   try {
-    const response = await fetch('/api/discussions');
+    const response = await fetch('/api/v2/discussions');
     let discussions = await response.json();
 
     // v2.6.5: 排序功能

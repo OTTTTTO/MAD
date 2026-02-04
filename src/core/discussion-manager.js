@@ -128,7 +128,12 @@ async function exportDiscussionToJSON(discussion, outputPath) {
  */
 class DiscussionManager {
   constructor(dataDir) {
-    this.dataDir = dataDir || path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss', 'discussions');
+    // 如果传入了 dataDir，确保它包含 discussions 子目录
+    if (dataDir && !dataDir.endsWith('discussions')) {
+      this.dataDir = path.join(dataDir, 'discussions');
+    } else {
+      this.dataDir = dataDir || path.join(process.env.HOME, '.openclaw', 'multi-agent-discuss', 'discussions');
+    }
     this.discussions = new Map();
   }
 
@@ -236,51 +241,89 @@ class DiscussionManager {
 
   /**
    * 从磁盘加载Discussion
+   * 支持两种格式：
+   * 1. 新格式（v4.0+）: discussions/disc-xxx/discussion.json
+   * 2. 旧格式（v3.7.0）: discussions/disc-xxx.json
    */
   async loadDiscussion(discussionId) {
-    const filePath = path.join(this.dataDir, discussionId, 'discussion.json');
+    // 尝试新格式（目录结构）
+    let filePath = path.join(this.dataDir, discussionId, 'discussion.json');
+    let data, dataObj;
 
     try {
-      const data = await fs.readFile(filePath, 'utf8');
-      const dataObj = JSON.parse(data);
-
-      // 转换为Discussion实例
-      const discussion = new Discussion(dataObj.id, dataObj.topic, dataObj.category);
-      Object.assign(discussion, dataObj);
-
-      // 确保agentStates是Map
-      if (discussion.agentStates && !(discussion.agentStates instanceof Map)) {
-        discussion.agentStates = new Map(Object.entries(discussion.agentStates));
-      }
-      
-      // 确保consensus是Map
-      if (discussion.consensus && !(discussion.consensus instanceof Map)) {
-        discussion.consensus = new Map(Object.entries(discussion.consensus));
-      }
-
-      this.discussions.set(discussionId, discussion);
-      return discussion;
+      data = await fs.readFile(filePath, 'utf8');
+      dataObj = JSON.parse(data);
     } catch (error) {
-      console.error(`[DiscussionManager] 加载讨论失败: ${discussionId}`, error);
-      return null;
+      // 尝试旧格式（直接文件）
+      try {
+        filePath = path.join(this.dataDir, `${discussionId}.json`);
+        data = await fs.readFile(filePath, 'utf8');
+        dataObj = JSON.parse(data);
+      } catch (error2) {
+        console.error(`[DiscussionManager] 加载讨论失败: ${discussionId}`, error2);
+        return null;
+      }
     }
+
+    // 转换为Discussion实例
+    const discussion = new Discussion(dataObj.id, dataObj.topic, dataObj.category || 'general');
+    Object.assign(discussion, dataObj);
+
+    // 确保agentStates是Map
+    if (discussion.agentStates && !(discussion.agentStates instanceof Map)) {
+      discussion.agentStates = new Map(Object.entries(discussion.agentStates));
+    }
+    
+    // 确保consensus是Map
+    if (discussion.consensus && !(discussion.consensus instanceof Map)) {
+      discussion.consensus = new Map(Object.entries(discussion.consensus));
+    }
+
+    this.discussions.set(discussionId, discussion);
+    return discussion;
   }
 
   /**
    * 加载所有Discussion
+   * 支持两种格式：
+   * 1. 新格式（v4.0+）: 目录名以 disc- 或 group- 开头
+   * 2. 旧格式（v3.7.0）: 文件名以 disc- 或 group- 开头的 .json 文件
    */
   async loadAllDiscussions() {
     try {
       const files = await fs.readdir(this.dataDir);
-      const discussionDirs = files.filter(f => f.startsWith('disc-') || f.startsWith('group-') || f.match(/^\d+$/));
-
-      for (const dir of discussionDirs) {
-        await this.loadDiscussion(dir);
+      
+      // 识别讨论ID（支持目录和文件两种格式）
+      const discussionIds = new Set();
+      
+      for (const file of files) {
+        // 新格式：目录
+        if (file.startsWith('disc-') || file.startsWith('group-') || file.match(/^\d+$/)) {
+          const stat = await fs.stat(path.join(this.dataDir, file));
+          if (stat.isDirectory()) {
+            discussionIds.add(file);
+          }
+        }
+        // 旧格式：.json 文件
+        if ((file.startsWith('disc-') || file.startsWith('group-')) && file.endsWith('.json')) {
+          const discussionId = file.replace('.json', '');
+          discussionIds.add(discussionId);
+        }
       }
 
-      console.log(`[DiscussionManager] 已加载 ${this.discussions.size} 个讨论`);
+      console.log(`[DiscussionManager] 发现 ${discussionIds.size} 个讨论`);
+
+      let loadedCount = 0;
+      for (const discussionId of discussionIds) {
+        const discussion = await this.loadDiscussion(discussionId);
+        if (discussion) {
+          loadedCount++;
+        }
+      }
+      
+      console.log(`[DiscussionManager] 已加载 ${loadedCount} 个讨论`);
     } catch (error) {
-      console.error('[DiscussionManager] 加载讨论失败:', error);
+      console.error('[DiscussionManager] 加载讨论列表失败:', error);
     }
   }
 
