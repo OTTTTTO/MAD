@@ -1,606 +1,130 @@
-# 更新日志
-
-## [3.7.0] - 2026-02-03
-
-### 🎉 重大更新：概念统一 + 功能完整
-
-#### 核心改进
-
-**概念统一**
-- ❌ 移除：ProjectGroup（项目组）概念
-- ✅ 保留：Discussion（讨论组）统一概念
-- ✅ 结果：不再混乱，所有功能集中在一个系统
-
-**Token 智能管理（v3.0 承诺的功能，现已完整实现）**
-- 📊 `getTokenStats()` - 获取 Token 统计（total, input, output, avgPerMessage）
-- 📜 `getTokenHistory()` - 获取 Token 使用历史
-- 🗜️ `compressDiscussionContext()` - 压缩讨论上下文
-- 💰 `setTokenBudget()` - 设置 Token 预算
-- ✅ `checkTokenBudget()` - 检查预算状态（超过 80% 警告）
-- 🛡️ 硬限制保护：130k tokens
-- 🚫 自动压缩：超过 80k tokens 自动触发
-- 📦 保留策略：最近 50 条消息 + 所有标记 + 摘要
-
-**智能标记系统（完全集成）**
-- 🎯 4 种标记类型：
-  - 🏆 milestone - 里程碑
-  - 🎯 decision - 决策
-  - ⚠️ problem - 问题
-  - 💡 solution - 方案
-- 🤖 `detectAndAddMarkers()` - AI 自动检测重要时刻
-- 📝 `generateSmartSummary()` - 基于标记生成智能摘要
-- 🔍 `detectDiscussionPhase()` - 检测讨论阶段（initializing|discussing|deciding|concluding|milestone_reached）
-- 📊 `getMarkersByType()` - 按类型获取标记
-- ✏️ `updateMarker()` - 更新标记
-- 🗑️ `deleteMarker()` - 删除标记
-
-**标签系统**
-- 🏷️ `addTagToDiscussion()` - 添加标签
-- ❌ `removeTagFromDiscussion()` - 移除标签
-- 📋 `getDiscussionTags()` - 获取讨论标签
-- 📊 `getAllTags()` - 获取所有标签及使用统计
-- 🔍 `findDiscussionsByTag()` - 按标签搜索讨论
-- 实例方法：`discussion.addTag()`, `removeTag()`, `hasTag()`, `getTags()`
-
-**归档功能**
-- 📦 `archiveDiscussion()` - 归档讨论
-- 📤 `unarchiveDiscussion()` - 取消归档
-- 📂 `getArchivedDiscussions()` - 获取已归档讨论
-- ⚡ `getActiveDiscussions()` - 获取活跃讨论
-- ✅ `getCompletedDiscussions()` - 获取已完成讨论
-- 状态枚举：active | ended | archived
-
-**备注功能**
-- 📝 `setDiscussionNotes()` - 设置备注
-- ➕ `appendDiscussionNotes()` - 追加备注（自动添加时间戳）
-- 📄 `getDiscussionNotes()` - 获取备注
-- 实例方法：`discussion.setNotes()`, `getNotes()`, `appendNotes()`
-
-**优先级系统**
-- ⚡ `setPriority()` - 设置优先级
-- 📊 `getPriority()` - 获取优先级
-- 🔢 `getPriorityValue()` - 获取优先级数值（用于排序）
-- 4 级优先级：low (1) | medium (2) | high (3) | critical (4)
-
-**类别系统**
-- 📋 4 种类别：
-  - 📋 需求讨论
-  - 💻 功能研发
-  - 🧪 功能测试
-  - 📝 文档编写
-- 📂 `getDiscussionsByCategory()` - 按类别获取讨论
-- 📊 `getDiscussionsByCategoryGroup()` - 按类别分组统计
-
-**自然语言创建**
-- 💬 `createDiscussionFromInput(userInput)` - 自然语言创建讨论
-- 🤖 自动分析用户意图
-- 👥 自动选择合适的专家
-- 🏷️ 自动设置类别、标签、优先级
-- 示例：`"我想写一篇关于微服务架构的专利文档"` → 自动创建
-
-**其他新功能**
-- ✏️ `updateDiscussion()` - 更新讨论（topic, category, description, tags, notes, priority）
-- 🔄 `cloneDiscussion()` - 克隆讨论（保留配置，清空数据）
-- 📦 `exportAllDiscussions()` - 批量导出所有讨论
-
-#### 数据模型增强
-
-新增字段（14个）：
-- `category` - 类别
-- `description` - 描述
-- `markers` - 标记数组
-- `tags` - 标签数组
-- `notes` - 备注文本
-- `priority` - 优先级
-- `totalTokens` - 总 Token 使用量
-- `inputTokens` - 输入 Token 数
-- `outputTokens` - 输出 Token 数
-- `tokenHistory` - Token 使用历史
-- `stats.totalMarkers` - 标记数
-- `stats.totalTokens` - Token 总量
-- `stats.progress` - 进度百分比
-- `stats.updatedAt` - 更新时间
-
-新增方法（18个）：
-- 标记：`addMarker()`, `getMarkers()`
-- 标签：`addTag()`, `removeTag()`, `hasTag()`, `getTags()`
-- 备注：`setNotes()`, `getNotes()`, `appendNotes()`
-- 优先级：`setPriority()`, `getPriority()`, `getPriorityValue()`
-- Token：`getTokenStats()`, `getTokenHistory()`, `updateTokenCount()`
-
-#### 新增文件
-
-**核心文件：**
-- `src/core/context-compressor.js` - 上下文压缩管理器（5805 字节）
-- `src/core/marker-manager.js` - 智能标记管理器（9322 字节）
-- `scripts/migrate-projects-to-discussions.js` - 数据迁移脚本（6224 字节）
-
-**文档文件：**
-- `V3.7.0_FEATURES.md` - v3.7.0 完整功能清单（16834 字节）
-- `V3.6.3_VS_V3.7.0_COMPARISON.md` - 版本对比文档（16275 字节）
-- `V3.7.0_DEV_PROGRESS.md` - 开发进度记录（2842 字节）
-
-#### API 方法统计
-
-新增 API 方法：57 个
-- Token 管理：8 个
-- 智能标记：9 个
-- 标签系统：5 个
-- 归档功能：5 个
-- 备注功能：3 个
-- 优先级：2 个
-- 类别系统：2 个
-- 自然语言：1 个
-- 其他：22 个
-
-总计 API 方法：~70 个（从 ~40 个增长 75%）
-
-#### 数据迁移
-
-**迁移工具：**
-```bash
-# 运行迁移
-node scripts/migrate-projects-to-discussions.js
-
-# 验证结果
-node scripts/migrate-projects-to-discussions.js --validate
-```
-
-**字段映射：**
-- `name` → `topic`
-- `category` → `category`（保留）
-- `markers` → `markers`（保留）
-- `tags` → `tags`（保留）
-- `notes` → `notes`（保留）
-- `priority` → `priority`（保留）
-- `stats.totalTokens` → `totalTokens`
-- `stats.totalMarkers` → `totalMarkers`
-- `stats.progress` → `progress`
-
-**迁移范围：**
-- 源：`data/projects/`（108 个项目）
-- 目标：`data/discussions/`
-- 备份：`data/projects.backup/`
-
-#### 破坏性变更
-
-**删除文件：**
-- `src/models/project-group.js`
-- `src/core/project-manager.js`
-- `src/core/project-flow.js`
-- `src/v3-integration.js`
-- `data/projects/`（迁移后删除）
-
-**删除 API：**
-- `/api/projects/*` 路由（全部改为 `/api/discussions/*`）
-
-**兼容性：**
-- ✅ 提供自动迁移工具
-- ✅ v3.6.x 数据可无缝迁移
-- ✅ 所有现有功能保留
-
-#### 性能改进
-
-- 🚀 上下文压缩可节省 ~40% tokens
-- 📊 Token 使用量自动统计，无需手动计算
-- 🗜️ 自动压缩超过 80k tokens，避免硬限制
-- 💰 Token 预算控制，避免超支
-
-#### 开发规范
-
-- ✅ 细粒度提交（每 5-10 分钟）
-- ✅ 代码 + 文档同步更新
-- ✅ 立即推送到 GitHub
-- ✅ 提交格式：feat:/fix:/docs:
-
-#### 测试
-
-- ✅ 所有现有测试通过
-- ✅ 新功能单元测试（待补充）
-- ✅ 数据迁移验证工具
-
-#### 文档
-
-- ✅ README 更新（v3.7.0 特性）
-- ✅ CHANGELOG 更新（本日志）
-- ✅ 功能清单（V3.7.0_FEATURES.md）
-- ✅ 版本对比（V3.6.3_VS_V3.7.0_COMPARISON.md）
-- ✅ 开发进度（V3.7.0_DEV_PROGRESS.md）
-
----
-
-## [3.6.4] - 2026-02-03
-
-### 🐛 Bug 修复
-
-#### 测试失败修复
-- **问题：** 6 个测试文件失败，通过率仅 60%
-- **修复：** 修复所有测试问题，达到 100% 通过率
-- **影响文件：**
-  - `test/v250.test.js` - 修复访问不存在讨论的问题
-  - `test/similarity.test.js` - 修复 Agent 不在讨论中、添加 await
-  - `test/marker-system.test.js` - 改写为普通 Node.js 测试
-  - `test/v3-integration.test.js` - 改写为普通 Node.js 测试
-  - `src/core/suggestions.js` - 修复 findSimilarDiscussions 缺少 await
-
-#### 具体修复
-1. **v250.test.js** - 使用测试创建的讨论 ID，而不是依赖外部数据
-2. **similarity.test.js** - 修正 Agent 角色和 async/await 使用
-3. **marker-system.test.js** - 移除 Jest 依赖，改用普通测试
-4. **v3-integration.test.js** - 移除 Jest 依赖，改用普通测试
-5. **suggestions.js** - 在 async 函数中正确使用 await
-
-### 📊 测试结果
-
-- **修复前：** 6/10 通过（60%）
-- **修复后：** 10/10 通过（100%）🎉
-- **测试文件：**
-  - ✅ basic.test.js - 8/8 通过
-  - ✅ clear-discussion.test.js - 全部通过
-  - ✅ marker-system.test.js - 6/6 通过
-  - ✅ similarity.test.js - 全部通过
-  - ✅ v250.test.js - 10/10 通过
-  - ✅ v251.test.js - 全部通过
-  - ✅ v252.test.js - 全部通过
-  - ✅ v260.test.js - 5/5 通过
-  - ✅ v261-performance.test.js - 全部通过
-  - ✅ v3-integration.test.js - 8/8 通过
-
-### 📚 文档更新
-
-- 新增 `memory/2026-02-03-test-fixes.md` - 详细修复总结
-- 包含问题分析、修复内容、经验教训
-
-### 🔧 技术改进
-
-- **测试自给自足：** 每个测试创建自己的数据，不依赖外部状态
-- **Async/Await 一致性：** 所有 async 调用都使用 await
-- **防御性编程：** 检查对象存在性，使用可选链
-
-### 📖 相关文档
-
-- [测试修复总结](memory/2026-02-03-test-fixes.md)
-- [GitHub Commit](https://github.com/OTTTTTO/MAD/commit/8997b47)
-
----
-
-## [3.6.0] - 2026-02-02
-
-### ✨ 新功能
-
-#### 项目搜索
-- **搜索范围：** 项目名称、描述、类别、标记
-- **智能评分：** 根据匹配字段权重计算得分
-- **高亮显示：** 展示匹配的文本片段
-- **结果限制：** 支持限制返回结果数量（默认 10 个）
-
-#### 项目统计
-- **全局统计：** 项目总数、活跃项目数、消息数、标记数、参与者数
-- **分类统计：** 按状态、类别统计项目分布
-- **活跃检测：** 自动统计最近 24 小时内有更新的项目
-
-#### 项目标签
-- **标签管理：** 为项目添加/移除标签
-- **标签搜索：** 按标签查找项目
-- **标签统计：** 获取所有标签及使用次数
-- **数据模型：** ProjectGroup 新增 tags 属性和相关方法
-
-#### 项目导出
-- **导出格式：** Markdown、JSON
-- **单个导出：** 导出指定项目组
-- **批量导出：** 导出所有项目组
-- **Markdown 内容：** 项目信息、参与者、统计、标记、消息流
-- **JSON 内容：** 完整的项目数据，可用于备份或迁移
-
-#### 项目归档
-- **归档功能：** 将已完成的项目标记为已归档
-- **取消归档：** 恢复已归档的项目
-- **状态筛选：** 按状态（active, completed, archived）筛选项目
-- **保持整洁：** 归档的项目不会显示在活跃列表中
-
-#### 项目克隆
-- **克隆功能：** 基于现有项目创建新项目
-- **保留配置：** 类别、描述、标签、参与者
-- **清空数据：** 消息流、标记、统计数据
-- **自定义名称：** 可指定新项目名称，默认为 "原项目名 (副本)"
-
-#### 项目备注
-- **设置备注：** 为项目设置备注文本
-- **追加备注：** 自动添加时间戳，追加备注内容
-- **获取备注：** 读取项目备注
-- **数据模型：** ProjectGroup 新增 notes 属性和相关方法
-
-#### 实现细节
-- 新增 `ProjectManager.searchProjects()` 方法
-- 新增 `ProjectManager.getStatistics()` 方法
-- 新增 `ProjectManager.findProjectsByTag()` 方法
-- 新增 `ProjectManager.getAllTags()` 方法
-- 新增 `ProjectManager.addTagToProject()` 方法
-- 新增 `ProjectManager.removeTagFromProject()` 方法
-- 新增 `ProjectManager.exportProject()` 方法
-- 新增 `ProjectManager.exportAllProjects()` 方法
-- 新增 `exportProjectToMarkdown()` 函数
-- 新增 `exportProjectToJSON()` 函数
-- 新增 `V3Integration.searchProjects()` 接口
-- 新增 `V3Integration.getStatistics()` 接口
-- 新增 `V3Integration.findProjectsByTag()` 接口
-- 新增 `V3Integration.getAllTags()` 接口
-- 新增 `V3Integration.addTagToProject()` 接口
-- 新增 `V3Integration.removeTagFromProject()` 接口
-- 新增 `V3Integration.exportProject()` 接口
-- 新增 `V3Integration.exportAllProjects()` 接口
-- 新增 `V3Integration.archiveProject()` 接口
-- 新增 `V3Integration.unarchiveProject()` 接口
-- 新增 `V3Integration.getArchivedProjects()` 接口
-- 新增 `V3Integration.getActiveProjects()` 接口
-- 新增 `V3Integration.getCompletedProjects()` 接口
-- 新增 `ProjectManager.cloneProject()` 方法
-- 新增 `ProjectManager.setProjectNotes()` 方法
-- 新增 `ProjectManager.appendProjectNotes()` 方法
-- 新增 `ProjectManager.getProjectNotes()` 方法
-- 新增 `V3Integration.cloneProject()` 接口
-- 新增 `V3Integration.setProjectNotes()` 接口
-- 新增 `V3Integration.appendProjectNotes()` 接口
-- 新增 `V3Integration.getProjectNotes()` 接口
-- ProjectGroup 新增 `tags` 属性和 `addTag()`, `removeTag()`, `hasTag()`, `getTags()` 方法
-- ProjectGroup 新增 `notes` 属性和 `setNotes()`, `getNotes()`, `appendNotes()` 方法
-
-#### 使用示例
-```javascript
-// 搜索项目
-const results = await v3.searchProjects('微服务');
-
-// 获取统计
-const stats = await v3.getStatistics();
-
-// 添加标签
-await v3.addTagToProject('group-xxx', '高优先级');
-
-// 按标签搜索
-const projects = await v3.findProjectsByTag('前端');
-
-// 获取所有标签
-const tags = await v3.getAllTags();
-
-// 导出项目
-const result = await v3.exportProject('group-xxx', 'markdown');
-
-// 批量导出
-const results = await v3.exportAllProjects('markdown');
-
-// 归档项目
-await v3.archiveProject('group-xxx');
-
-// 取消归档
-await v3.unarchiveProject('group-xxx');
-
-// 按状态筛选
-const archived = await v3.getArchivedProjects();
-const active = await v3.getActiveProjects();
-const completed = await v3.getCompletedProjects();
-
-// 克隆项目
-const cloned = await v3.cloneProject('group-xxx');
-
-// 设置备注
-await v3.setProjectNotes('group-xxx', '重要项目，优先处理');
-
-// 追加备注
-await v3.appendProjectNotes('group-xxx', '已完成第一阶段');
-```
-
-### 📚 文档更新
-
-- README 新增使用示例（场景 5：搜索项目组）
-- README 新增使用示例（场景 6：获取项目统计）
-- README 新增使用示例（场景 7：使用项目标签）
-- README 新增使用示例（场景 8：导出项目）
-- README 新增使用示例（场景 9：归档项目）
-- README 新增使用示例（场景 10：克隆项目）
-- README 新增使用示例（场景 11：项目备注）
-- 说明搜索范围和权重
-- 说明统计指标含义
-- 说明标签用途和场景
-- 说明导出格式和内容
-- 说明归档用途和场景
-- 说明克隆用途和保留的属性
-- 说明备注用途和时间戳
-
-### 📊 统计
-
-- **新增文件：** 0 个
-- **修改文件：** 3 个（project-group.js, project-manager.js, v3-integration.js）
-- **新增代码：** 约 370 行
-- **测试状态：** ✅ 通过
-
----
-
-## [2.7.2] - 2026-02-02
-
-### 🐛 Bug 修复
-
-#### 模板为空问题
-- **问题：** 新建讨论组时模板选择器为空
-- **原因：** `loadTemplates()` 使用了错误的文件路径
-- **修复：** 修改路径从 `templates.json` 到 `data/templates.json`
-- **结果：** 成功加载 5 个预定义模板
-
-**可用模板：**
-- 🎯 需求评估 - 评估新功能或产品的需求可行性
-- 🔧 技术评审 - 评审技术方案的可行性
-- 💡 问题解决 - 协同解决技术或业务问题
-- 💭 头脑风暴 - 自由讨论，激发创意
-- ✏️ 自定义 - 创建自定义讨论
-
-### 📊 统计
-
-- **修复文件：** 1 个（orchestrator.js）
-- **新增文档：** 1 个（修复记录）
-- **Git 提交：** 1 次
-- **测试状态：** ✅ 通过
-
----
-
-## [2.7.1] - 2026-02-02
-
-### 🐛 Bug 修复
-
-#### 关键 API 500 错误修复
-- 修复相似讨论 API (`GET /api/discussion/:id/similar`) 500 错误
-- 修复合并讨论 API (`POST /api/discussion/:id/merge`) 500 错误
-- 修复 5 个方法的潜在空值引用问题
-
-#### 修复详情
-
-**相似讨论 API**
-- **问题：** 异步初始化未等待，模型训练未完成就开始查询
-- **问题：** 数据一致性检查缺失，访问 undefined 对象属性
-- **修复：** 添加 `async/await`，添加空值检查
-- **影响：** API 现在能正确返回相似讨论列表
-
-**合并讨论 API**
-- **问题：** 方法调用冲突，调用原型方法而不是类方法
-- **问题：** 逻辑顺序错误，先删除再检查存在性
-- **问题：** messages/conflicts 字段可能为 null
-- **修复：** 删除冗余删除操作，添加防御性空值检查
-- **影响：** 讨论合并功能正常工作
-
-**防御性空值检查**
-- 修复方法：`mergeDiscussions`, `generateSummary`, `exportToMarkdown`, `extractActionItems`, `getAllMentions`
-- 标准防御模式：确保 messages 和 conflicts 始终为数组
-
-### 📚 文档更新
-
-- 新增 **API 500 错误排查指南** (`docs/troubleshooting/api-500-errors.md`)
-  - 完整的排查流程
-  - 根本原因分析
-  - 最佳实践和调试技巧
-
-- 新增 **故障修复总结** (`FIXES_SUMMARY.md`)
-  - 快速了解修复内容
-  - 技术要点总结
-  - 相关文档链接
-
-- 新增修复记录文档：
-  - `memory/2026-02-02-fix-similar-api.md`
-  - `memory/2026-02-02-fix-merge-api.md`
-  - `memory/2026-02-02-fix-merge-final.md`
-  - `memory/2026-02-02-defensive-null-checks.md`
-
-### 🔧 技术改进
-
-- **异步操作规范化：** 所有 async 方法调用都使用 await
-- **防御性编程：** 访问对象属性前检查空值
-- **错误处理改进：** 更清晰的错误消息和日志
-
-### 📊 统计
-
-- **修复文件：** 3 个（orchestrator.js, similarity.js, server.js）
-- **新增文档：** 5 个
-- **Git 提交：** 3 次
-- **修复行数：** +500 行（包含文档）
-- **测试状态：** ✅ 全部通过
-
-### 🚀 升级建议
-
-```bash
-# 拉取最新修复
-cd ~/.openclaw/skills/multi-agent-discuss
-git pull origin main
-
-# 重启 Web 服务器
-pkill -f "node server.js"
-cd web && node server.js &
-
-# 测试 API
-curl "http://localhost:18790/api/discussion/:id/similar"
-curl -X POST "http://localhost:18790/api/discussion/:id/merge" \
-  -H "Content-Type: application/json" \
-  -d '{"sourceIds":["..."]}'
-```
-
-### 📖 相关文档
-
-- [API 500 错误排查指南](docs/troubleshooting/api-500-errors.md)
-- [故障修复总结](FIXES_SUMMARY.md)
-- [GitHub Commits](https://github.com/OTTTTTO/MAD/commits/main)
-
----
-
-## [2.7.0] - 2026-02-02
-
-### 🎉 大版本更新
-
-本次更新包含 4 个重要功能，全部经过测试并推送到 GitHub。
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [4.0.0] - 2026-02-04
+
+### ⚠️ Breaking Changes
+
+#### 概念统一
+- **移除"项目组"概念**: 完全统一使用"讨论组"(Discussion)概念
+- **数据模型变更**: `ProjectGroup` → `Discussion` (重命名)
+- **字段重命名**: `name` → `topic`
+- **存储路径变更**: `data/projects/` → `data/discussions/`
+- **删除文件**:
+  - `src/models/project-group.js` → `src/models/discussion.js`
+  - `src/core/project-manager.js` → `src/core/discussion-manager.js`
+  - `src/core/project-flow.js` (已删除)
+  - `src/v3-integration.js` (已删除)
+
+#### API变更
+- 旧API保留向后兼容
+- 新增V2 API推荐使用:
+  - `POST /api/v2/discussion` - 创建讨论
+  - `GET /api/v2/discussions` - 列出讨论
+  - `GET /api/v2/discussion/:id` - 获取单个讨论
+  - `DELETE /api/v2/discussion/:id` - 删除讨论
+  - `POST /api/v2/discussion/:id/speak` - Agent发言
+  - 标签、备注、搜索、统计等API
 
 ### ✨ 新增功能
 
-#### v2.6.7 - GitHub Issue 监控脚本
-- 新增 `scripts/check-github-issues.sh` 自动监控 Issues
-- 支持自动获取、分析并创建修复任务
-- 集成子 Agent 自动修复流程
-- 记录已处理 Issues 避免重复
+#### Token智能管理 🤖
+- ✅ Token统计增强: `inputTokens`, `outputTokens`, `totalTokens`分离统计
+- ✅ 自动压缩: Token > 80k时自动压缩上下文
+- ✅ Token历史: 记录每次消息的Token使用
+- ✅ Token预算控制: 可设置预算和硬限制
 
-#### v2.6.8 - 文档更新
-- 更新 README 版本徽章至 v2.6.7
-- 添加消息气泡样式优化功能说明（v2.6.6）
-- 添加 GitHub Issue 监控功能说明（v2.6.7）
+#### 智能标记系统 🎯
+- ✅ 4种标记类型: milestone(里程碑), decision(决策), problem(问题), solution(方案)
+- ✅ AI自动检测: 自动识别重要时刻
+- ✅ 智能摘要: 基于标记生成讨论总结
+- ✅ 阶段检测: 识别讨论阶段(初始化/讨论/决策/结束)
 
-#### v2.6.9 - 配置示例
-- 新增 `config.example.json` 配置模板
-- 包含讨论、Agent、模板、导出、Web、GitHub、日志等完整配置
-- 用户可复制为 config.json 自定义配置
-- 添加详细注释说明
+#### 元数据管理 📋
+- ✅ 标签系统: `addTag()`, `removeTag()`, `getTags()`
+- ✅ 备注功能: `setNotes()`, `appendNotes()`, `getNotes()`
+- ✅ 优先级: 4级优先级(low, medium, high, critical)
+- ✅ 类别系统: 4种类别(需求讨论, 功能研发, 功能测试, 文档编写)
+- ✅ 归档功能: `archiveDiscussion()`, `unarchiveDiscussion()`
+- ✅ 克隆功能: `cloneDiscussion()`
 
-#### v2.6.10 - 快速启动脚本改进
-- 添加 ANSI 颜色输出，更美观的终端显示
-- 支持命令行参数：`--topic`、`--rounds`、`--duration`
-- 添加 `--help` 帮助信息
-- 改进输出格式，使用双线边框
-- 增强用户体验
+#### Agent功能增强 🤖
+- ✅ Agent发言: `agentSpeak()` 方法
+- ✅ Agent状态跟踪: `agentStates` Map
+- ✅ 讨论轮次管理: `rounds` 计数器
+- ✅ 冲突检测: `conflicts` 数组
+- ✅ 共识机制: `consensus` Map
 
-### 📊 统计
-- **新增文件：** 3 个（脚本、配置示例、更新日志）
-- **改进文件：** 3 个（README.md、quick-start.js、package.json）
-- **Git 提交：** 4 次
-- **代码行数：** +250 行
-- **测试状态：** ✅ 全部通过
+#### 数据迁移工具 🔄
+- ✅ 自动迁移脚本: `scripts/migrate-projects-to-discussions.js`
+- ✅ 字段映射: 自动转换旧格式到新格式
+- ✅ 验证工具: 验证迁移数据完整性
+- ✅ 备份功能: 自动备份原数据
 
-### 🚀 使用方式
+### 🔧 改进
 
-```bash
-# 克隆最新版本
-cd ~/.openclaw/skills/multi-agent-discuss
-git pull origin main
+#### 代码质量
+- ✅ 统一数据模型，减少概念混乱
+- ✅ 删除冗余代码，代码更简洁
+- ✅ 增强类型安全，字段更清晰
+- ✅ 改进错误处理
 
-# 使用配置示例
-cp config.example.json config.json
-# 编辑 config.json 自定义配置
+#### 性能优化
+- ✅ 上下文自动压缩，减少Token消耗
+- ✅ 智能缓存管理
+- ✅ 数据懒加载
 
-# 使用改进的快速启动脚本
-node quick-start.js --topic "你的主题" --rounds 3
+### 📝 文档
 
-# 运行 GitHub Issue 监控
-bash scripts/check-github-issues.sh
-```
+- ✅ 更新README.md: 移除"项目组"概念
+- ✅ 更新API文档: 统一为Discussion API
+- ✅ 添加数据迁移指南
+- ✅ 添加测试指南
 
-### 📝 下一步计划
-- [ ] 添加更多讨论模板
-- [ ] 实现 Agent 性能监控
-- [ ] 优化 WebSocket 性能
-- [ ] 添加更多导出格式支持
+### 🧪 测试
+
+- ✅ 添加v4 API测试套件: `test/v4-api.test.js`
+- ✅ 所有测试通过
+- ✅ 108个项目成功迁移
+- ✅ 向后兼容性验证通过
+
+### 📊 迁移统计
+
+- ✅ 成功迁移: 108个项目
+- ✅ 数据验证: 108个讨论文件全部有效
+- ✅ 失败: 0
+
+### 🔙 Deprecations
+
+以下功能已移除或替换:
+- ❌ `ProjectGroup` 类 → 使用 `Discussion` 类
+- ❌ `ProjectManager` 类 → 使用 `DiscussionManager` 类
+- ❌ `createProject()` → 使用 `createDiscussion()` 或 `createDiscussionV2()`
+- ❌ `data/projects/` 目录 → 使用 `data/discussions/` 目录
+
+### 🙏 向后兼容
+
+- ✅ 旧API路由保留: `/api/discussion/*` 继续可用
+- ✅ 旧方法保留: `createDiscussion()`, `listDiscussions()` 等继续可用
+- ✅ 数据自动迁移: 提供迁移脚本
 
 ---
 
-## [2.6.6] - 2026-02-02
+## [3.7.0] - 2026-02-03
 
-### 消息气泡样式优化
-- 增强圆角效果
-- 改进阴影和动画效果
-- 提升视觉体验
+### Added
+- Token智能管理系统
+- 智能标记系统
+- 标签和归档功能
+- 类别系统
+- 自然语言创建
+- 优先级管理
 
 ---
 
-## 更早版本
-
-详细历史请查看 Git 提交记录。
+**链接:**
+[完整版本历史](./docs/VERSION_HISTORY.md)
