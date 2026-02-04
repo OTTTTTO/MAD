@@ -5,7 +5,7 @@
 /**
  * 打开创建讨论组模态框
  */
-function openCreateDiscussionModal() {
+window.openCreateDiscussionModal = function() {
   const modal = document.getElementById('createDiscussionModal');
   if (modal) {
     modal.style.display = 'flex';
@@ -13,33 +13,33 @@ function openCreateDiscussionModal() {
     const input = document.getElementById('newDiscussionInput');
     if (input) input.value = '';
   }
-}
+};
 
 /**
  * 关闭创建讨论组模态框
  */
-function closeCreateDiscussionModal() {
+window.closeCreateDiscussionModal = function() {
   const modal = document.getElementById('createDiscussionModal');
   if (modal) {
     modal.style.display = 'none';
   }
-}
+};
 
 /**
  * 设置输入框内容
  */
-function setCreateInput(text) {
+window.setCreateInput = function(text) {
   const input = document.getElementById('newDiscussionInput');
   if (input) {
     input.value = text;
     input.focus();
   }
-}
+};
 
 /**
  * 创建讨论组
  */
-async function createDiscussion() {
+window.createDiscussion = async function() {
   const userInput = document.getElementById('newDiscussionInput').value.trim();
 
   if (!userInput) {
@@ -76,13 +76,17 @@ async function createDiscussion() {
 
       // 刷新讨论列表
       setTimeout(() => {
-        loadDiscussions();
+        if (typeof loadDiscussions === 'function') {
+          loadDiscussions();
+        }
       }, 500);
 
       // 可选：跳转到新创建的讨论组
       if (result.projectId) {
         setTimeout(() => {
-          selectDiscussion(result.projectId);
+          if (typeof selectDiscussion === 'function') {
+            selectDiscussion(result.projectId);
+          }
         }, 1000);
       }
     } else {
@@ -96,7 +100,7 @@ async function createDiscussion() {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
   }
-}
+};
 
 // 支持 Enter 键提交（Ctrl+Enter）
 document.addEventListener('DOMContentLoaded', () => {
