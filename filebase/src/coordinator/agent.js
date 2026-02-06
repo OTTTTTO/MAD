@@ -97,20 +97,23 @@ class CoordinatorAgent {
         // 检查是否有pending请求
         const pendingRequests = await this.fm.listPendingRequests();
         
-        if (pendingRequests.length > 0) {
-          console.log(`\n[Coordinator] 发现 ${pendingRequests.length} 个待处理请求`);
-          
-          // 处理每个请求
-          for (const request of pendingRequests) {
+        // 获取pending的讨论
+        const pendingDiscussions = await this.fm.listDiscussions({ status: 'pending' });
+
+        if (pendingDiscussions.length > 0) {
+          console.log(`\n[Coordinator] 发现 ${pendingDiscussions.length} 个待处理讨论`);
+
+          // 处理每个讨论
+          for (const discussion of pendingDiscussions) {
             if (!this.running) break;
-            
-            await this.processRequest(request);
+
+            await this.processDiscussion(discussion);
           }
         } else {
-          // 无请求，显示等待提示
+          // 无讨论，显示等待提示
           if (round % 10 === 0) {
             const uptime = Math.floor((Date.now() - this.stats.startTime) / 1000);
-            console.log(`[Coordinator] 等待请求... (运行时间: ${uptime}秒, 轮次: ${round})`);
+            console.log(`[Coordinator] 等待讨论... (运行时间: ${uptime}秒, 轮次: ${round})`);
           }
         }
         
@@ -141,33 +144,54 @@ class CoordinatorAgent {
   }
   
   /**
-   * 处理单个请求
+   * 处理单个讨论
    */
-  async processRequest(request) {
+  async processDiscussion(discussion) {
     this.stats.totalRequests++;
-    
-    console.log(`\n[Coordinator] 处理请求 ${this.stats.totalRequests}: ${request.id}`);
-    console.log(`[Coordinator] 主题: ${request.topic}`);
-    
+
+    console.log(`\n[Coordinator] 处理讨论 ${this.stats.totalRequests}: ${discussion.id}`);
+    console.log(`[Coordinator] 主题: ${discussion.topic}`);
+
     try {
-      // 使用handler处理请求
-      const result = await this.handler.processRequest(request);
-      
-      // 标记请求为已处理
-      await this.fm.processRequest(request.id, result);
-      
+      // TODO: 集成实际的LLM处理逻辑
+      // 目前只是一个框架，需要添加:
+      // 1. 调用LLM生成专家消息
+      // 2. 保存消息到discussion
+      // 3. 更新discussion状态
+
+      // 临时方案：添加一条系统消息
+      const message = {
+        id: `msg-${Date.now()}`,
+        role: 'system',
+        content: `[协调器] 讨论已接收，等待LLM集成完成。主题: ${discussion.topic}`,
+        timestamp: Date.now()
+      };
+
+      // 保存消息
+      await this.fm.addMessage(discussion.id, message);
+
+      // 更新讨论状态为"进行中"
+      await this.fm.updateDiscussion(discussion.id, {
+        status: 'in_progress',
+        updatedAt: Date.now()
+      });
+
       this.stats.processedRequests++;
-      
-      console.log(`[Coordinator] ✅ 请求处理成功: ${request.id}`);
-      console.log(`[Coordinator] 讨论ID: ${result.discussionId}`);
-      
+
+      console.log(`[Coordinator] ✅ 讨论处理成功: ${discussion.id}`);
+      console.log(`[Coordinator] 状态已更新为: in_progress`);
+
     } catch (error) {
-      console.error(`[Coordinator] ❌ 请求处理失败: ${request.id}`);
+      console.error(`[Coordinator] ❌ 讨论处理失败: ${discussion.id}`);
       console.error(`[Coordinator] 错误: ${error.message}`);
-      
-      // 标记请求为失败
-      await this.fm.failRequest(request.id, error);
-      
+
+      // 标记讨论为失败
+      await this.fm.updateDiscussion(discussion.id, {
+        status: 'failed',
+        error: error.message,
+        updatedAt: Date.now()
+      });
+
       this.stats.failedRequests++;
     }
   }
