@@ -247,6 +247,12 @@
             overflow-wrap: break-word;
         }
 
+        /* 纯文本内容（markdown未加载时的fallback） */
+        .message-content.plain-text {
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
         /* Markdown样式 */
         .message-content h1 {
             font-size: 1.8em;
@@ -535,9 +541,20 @@
             // 检查依赖库是否加载
             if (typeof marked === 'undefined') {
                 console.error('marked.js 未加载，Markdown功能将不可用');
+            } else {
+                console.log('✅ marked.js 已加载');
+                // 配置marked选项
+                marked.setOptions({
+                    gfm: true,      // GitHub Flavored Markdown
+                    breaks: true,   // 支持换行符
+                    pedantic: false
+                });
             }
+
             if (typeof DOMPurify === 'undefined') {
                 console.error('DOMPurify 未加载，将跳过XSS过滤（不推荐）');
+            } else {
+                console.log('✅ DOMPurify 已加载');
             }
 
             // 显示加载状态
@@ -633,6 +650,8 @@
                 container.innerHTML = data.messages.map(m => {
                     // 渲染Markdown内容（带fallback）
                     let renderedContent;
+                    let contentClass = 'message-content';
+
                     try {
                         if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
                             renderedContent = DOMPurify.sanitize(marked.parse(m.content));
@@ -643,10 +662,12 @@
                         } else {
                             // 都不可用，使用纯文本
                             renderedContent = escapeHtml(m.content);
+                            contentClass += ' plain-text'; // 添加纯文本class
                         }
                     } catch (error) {
                         console.error('Markdown渲染失败:', error);
                         renderedContent = escapeHtml(m.content);
+                        contentClass += ' plain-text'; // 添加纯文本class
                     }
 
                     return `
@@ -655,7 +676,7 @@
                             <span class="message-role">${escapeHtml(m.agentName || m.name || m.role)}</span>
                             <span class="message-time">${formatTime(m.timestamp)}</span>
                         </div>
-                        <div class="message-content">${renderedContent}</div>
+                        <div class="${contentClass}">${renderedContent}</div>
                     </div>
                     `;
                 }).join('');
