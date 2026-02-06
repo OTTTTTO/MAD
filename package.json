@@ -1,7 +1,7 @@
 {
   "name": "@openclaw/mad",
-  "version": "0.0.1-filebase",
-  "description": "MAD (Multi-Agent Discussion) FileBased Branch - 基于共享文件的多Agent讨论系统",
+  "version": "0.1.0",
+  "description": "MAD (Multi-Agent Discussion) - 基于共享文件的多Agent讨论系统",
   "homepage": "https://github.com/OTTTTTO/mad",
   "main": "orchestrator.js",
   "scripts": {
