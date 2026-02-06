@@ -210,6 +210,7 @@ class WebServer {
         console.log(`   GET  /api/health`);
         console.log(`   GET  /api/stats`);
         console.log(`   GET  /api/discussions`);
+        console.log(`   POST /api/discussions`);
         console.log(`   GET  /api/discussions/:id`);
         console.log(`   GET  /api/discussions/:id/messages`);
         console.log(`   POST /api/requests`);
