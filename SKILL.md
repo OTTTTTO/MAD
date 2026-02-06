@@ -287,3 +287,90 @@ class CustomOrchestrator extends DiscussionOrchestrator {
 ## 许可证
 
 MIT
+
+---
+
+## FileBase 协调器
+
+**目录：** `filebase-coordinator/`
+
+### 说明
+
+FileBase协调器是MAD filebase分支的配套skill，负责处理Web界面创建的讨论。
+
+### 使用方式
+
+在OpenClaw聊天中发送：
+
+```
+启动MAD协调器
+```
+
+或
+
+```
+处理pending讨论
+```
+
+### 功能
+
+协调器会自动：
+1. 扫描所有pending状态的讨论
+2. 为每个讨论生成4个专家的观点
+3. 保存专家消息到文件
+4. 更新讨论状态为completed
+
+### 专家配置
+
+- **技术专家** (tech_expert) - 技术架构、实现方案
+- **产品专家** (product_expert) - 产品价值、用户体验
+- **商业专家** (business_expert) - 商业模式、成本效益
+- **运营专家** (ops_expert) - 运营策略、执行落地
+
+### 数据流向
+
+```
+OpenClaw Skill (有tool权限)
+  ↓ 调用LLM生成专家观点
+共享文件系统
+  ↑ 读取
+Web界面 (localhost:3000, 无tool权限)
+```
+
+### 配置
+
+- 数据目录：`/home/otto/.openclaw/multi-agent-discuss`
+- 自动处理：扫描所有pending讨论
+- 每个讨论：生成4个专家观点
+
+### 示例
+
+```
+用户: 启动MAD协调器
+
+[协调器]
+🚀 MAD协调器启动
+
+📋 发现 1 个pending讨论
+
+🎯 开始处理讨论: disc-xxx
+📝 主题: 请帮我设计一个高可用的微服务分层架构
+
+🤖 正在生成技术专家观点...
+✅ 技术专家观点已生成
+
+🤖 正在生成产品专家观点...
+✅ 产品专家观点已生成
+
+🤖 正在生成商业专家观点...
+✅ 商业专家观点已生成
+
+🤖 正在生成运营专家观点...
+✅ 运营专家观点已生成
+
+✅ 讨论 disc-xxx 处理完成
+📊 生成专家观点: 4条
+
+现在可以在Web界面 (localhost:3000) 查看专家讨论内容了！
+```
+
