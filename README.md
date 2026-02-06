@@ -1,333 +1,145 @@
-# MAD (Multi-Agent Discussion) v4.0.0
+# MAD - FileBase 版本
 
-> 让多个专业 Agent 在智能讨论组中协同工作，自主推进项目进展
+基于共享文件的多Agent讨论系统
 
-**MAD** = Multi-Agent Discussion 的简称，读作 /mæd/
+## 🎯 项目定位
 
-[![License: MIT](https://imgshieldos.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![OpenClaw](https://imgshieldos.io/badge/OpenClaw-Skill-blue)](https://openclaw.ai)
-[![Version](https://imgshieldos.io/badge/version-4.0.0-green)](https://github.com/OTTTTTO/MAD)
-[![Language](https://imgshieldos.io/badge/lang-中文-blue)](#) [![English](https://imgshieldos.io/badge/lang-English-red)](./README_EN.md)
+MAD FileBase 是MAD项目的一个实验性分支，探索通过**共享文件**实现Agent和Web界面的完全解耦。
 
----
+## 🏗️ 架构设计
 
-## 🎉 v4.0.0 重大更新
-
-### 核心升级
-
-**概念统一** ✨
-- ❌ 旧版本: Discussion + ProjectGroup 双系统混乱
-- ✅ v4.0: 统一为 **Discussion（讨论组）** 概念
-- ✅ 所有功能集中在单一数据模型中
-
-**Token 智能管理** 🤖
-- 📊 自动统计 Token 使用量（input/output分离）
-- 🗜️ 超过 80k 自动压缩上下文
-- 💰 Token 预算控制和超限警告
-- 🛡️ 硬限制保护（130k tokens）
-
-**智能标记系统** 🎯
-- 🎯 4 种标记类型（里程碑、决策、问题、方案）
-- 🤖 AI 自动检测重要时刻
-- 📝 基于标记生成智能摘要
-- 🔍 检测讨论阶段（初始化、讨论、决策、结束）
-
-**元数据管理** 📋
-- 🏷️ 灵活的标签系统
-- 📦 归档功能，保持列表整洁
-- 📊 按标签、类别筛选
-- ⚡ 4 级优先级（low | medium | high | critical）
-- 📝 备注功能，支持追加
-
-**类别系统** 📂
-- 📋 需求讨论
-- 💻 功能研发
-- 🧪 功能测试
-- 📝 文档编写
-
----
-
-## 📖 简介
-
-Multi-Agent Discussion v4.0.0 是一个 OpenClaw Skill，让多个专业 Agent 在智能讨论组中协同工作。Agent 之间可以互相 @、回应观点、形成共识，最终产生比单个 Agent 更全面的解决方案。
-
-### 核心特性
-
-#### v4.0.0 新特性 ✨
-- ✅ **概念统一** - 只有一个"讨论组"概念
-- ✅ **Token 智能管理** - 自动统计、压缩、预算控制
-- ✅ **智能标记系统** - AI 自动检测重要时刻
-- ✅ **标签系统** - 灵活组织讨论
-- ✅ **归档功能** - 保持列表整洁
-- ✅ **类别系统** - 4 种类别（需求讨论|功能研发|功能测试|文档编写）
-- ✅ **备注功能** - 设置和追加备注
-- ✅ **优先级** - 4 级优先级（low|medium|high|critical）
-- ✅ **数据迁移** - 从旧版本无缝迁移
-
-#### v2.x 经典特性
-- ✅ **虚拟讨论组** - 创建多 Agent 协作的讨论空间
-- ✅ **动态发言** - Agent 根据上下文智能判断是否需要发言
-- ✅ **互相 @** - Agent 之间可以互相提问、回应
-- ✅ **冲突检测** - 识别意见分歧并组织辩论
-- ✅ **讨论总结** - 综合多方意见形成结构化结论
-- ✅ **过程可追溯** - 保存完整讨论历史，随时查看
-
----
-
-## 🚀 快速开始
-
-### 安装
-
-```bash
-cd ~/.npm-global/lib/node_modules/openclaw/skills/MAD
-npm install
+```
+协调器Agent（有tool权限）
+  ↓ 生成数据
+共享文件系统（JSON/JSONL）
+  ↑ 读取数据
+Web界面（无tool权限）
 ```
 
-### 使用
+**核心优势：**
+- ✅ Agent和Web完全解耦
+- ✅ Web无需任何配置即可运行
+- ✅ 文件系统天然持久化
+- ✅ 易于扩展和部署
 
-#### 1. 通过代码
-
-```javascript
-const DiscussionManager = require('./src/core/discussion-manager.js');
-const { Discussion, Marker } = require('./src/models/discussion.js');
-
-// 创建管理器
-const manager = new DiscussionManager();
-await manager.init();
-
-// 创建讨论
-const discussion = await manager.createDiscussion(
-  '开发AI助手',           // topic
-  '需求讨论',             // category
-  {
-    description: '评估AI助手开发需求',
-    tags: ['重要', 'AI'],
-    priority: 'high'
-  }
-);
-
-// Agent发言
-await discussion.agentSpeak('technical', '技术方案：使用Node.js');
-
-// 添加标签
-discussion.addTag('Q1目标');
-
-// 设置备注
-discussion.setNotes('项目启动会议');
-
-// 添加标记
-const marker = new Marker('m1', '技术决策', 'decision', 'msg-1');
-marker.setSummary('决定使用Node.js开发');
-discussion.addMarker(marker);
-
-// 保存
-await manager.saveDiscussion(discussion);
-```
-
-#### 2. 通过API
-
-```bash
-# 创建讨论
-curl -X POST http://localhost:18790/api/v2/discussion \
-  -H "Content-Type: application/json" \
-  -d '{
-    "topic": "开发AI助手",
-    "category": "需求讨论",
-    "tags": ["重要"],
-    "priority": "high"
-  }'
-
-# 列出所有讨论
-curl http://localhost:18790/api/v2/discussions
-
-# 获取单个讨论
-curl http://localhost:18790/api/v2/discussion/{id}
-
-# Agent发言
-curl -X POST http://localhost:18790/api/v2/discussion/{id}/speak \
-  -H "Content-Type: application/json" \
-  -d '{
-    "agentId": "technical",
-    "content": "技术方案：使用Node.js"
-  }'
-```
-
-#### 3. 通过Web界面
-
-```bash
-# 启动Web服务器
-mad start
-
-# 访问 http://localhost:18790
-```
-
----
-
-## 📊 API文档
-
-### V2 API（推荐）
-
-#### 讨论管理
-- `POST /api/v2/discussion` - 创建讨论
-- `GET /api/v2/discussions` - 列出讨论
-- `GET /api/v2/discussion/:id` - 获取单个讨论
-- `DELETE /api/v2/discussion/:id` - 删除讨论
-
-#### 标签管理
-- `POST /api/v2/discussion/:id/tags` - 添加标签
-- `DELETE /api/v2/discussion/:id/tags/:tag` - 删除标签
-
-#### 备注管理
-- `PUT /api/v2/discussion/:id/notes` - 设置备注
-
-#### Agent交互
-- `POST /api/v2/discussion/:id/speak` - Agent发言
-
-#### 搜索和统计
-- `GET /api/v2/discussions/search?q=关键词` - 搜索讨论
-- `GET /api/v2/statistics` - 获取统计信息
-
----
-
-## 🎯 讨论类别
-
-MAD v4.0 支持4种讨论类别：
-
-1. **需求讨论** - 需求分析、评审
-2. **功能研发** - 功能开发
-3. **功能测试** - 测试验证
-4. **文档编写** - 文档创作
-
----
-
-## ⚙️ 配置
-
-### 环境变量
-
-```bash
-# 数据目录
-export MAD_DATA_DIR="$HOME/.openclaw/multi-agent-discuss"
-
-# 服务器端口
-export MAD_PORT=18790
-```
-
-### 配置文件
-
-创建 `mad.config.js`:
-
-```javascript
-module.exports = {
-  server: {
-    port: 18790,
-    host: '0.0.0.0'
-  },
-  discussion: {
-    maxRounds: 10,
-    maxDuration: 300000,
-    enableConflictDetection: true
-  }
-};
-```
-
----
-
-## 🧪 测试
-
-```bash
-# 运行所有测试
-npm test
-
-# 运行v4 API测试
-node test/v4-api.test.js
-
-# 健康检查
-mad doctor
-```
-
----
-
-## 📦 数据迁移
-
-如果你从旧版本升级：
-
-```bash
-# 运行迁移脚本
-node scripts/migrate-projects-to-discussions.js
-
-# 验证迁移结果
-node scripts/migrate-projects-to-discussions.js --validate
-```
-
----
-
-## 🗂️ 目录结构
+## 📁 目录结构
 
 ```
 MAD/
-├── src/
-│   ├── models/
-│   │   └── discussion.js          # Discussion数据模型
-│   ├── core/
-│   │   └── discussion-manager.js  # Discussion管理器
-│   └── ...
-├── data/
-│   ├── discussions/               # 讨论数据（新）
-│   └── projects.backup.20260204/  # 旧项目备份
-├── scripts/
-│   └── migrate-projects-to-discussions.js
-└── test/
-    └── v4-api.test.js
+├── filebase/                    # FileBase核心代码
+│   ├── src/                     # 源代码
+│   │   ├── lib/                 # 核心库
+│   │   ├── coordinator/         # 协调器模块
+│   │   └── web/                 # Web服务器
+│   ├── public/                  # Web前端
+│   ├── data/                    # 数据目录（软链接）
+│   ├── examples/                # 使用示例
+│   ├── start-web.js             # Web启动脚本
+│   └── README.md                # 详细文档
+│
+├── filebase-coordinator/         # LLM协调器Skill
+│   ├── index.js                 # 主处理逻辑
+│   ├── main-coordinator.js      # 主协调器（v0.1.1）
+│   ├── SKILL.md                 # 使用说明
+│   └── run.js                   # 独立运行脚本
+│
+├── package.json                 # 依赖配置
+├── CHANGELOG.md                 # 版本变更
+└── LICENSE                      # MIT许可
 ```
 
----
+## 🚀 快速开始
 
-## 📝 变更日志
+### 1. 启动Web服务器
 
-### v4.0.0 (2026-02-04)
+```bash
+cd filebase
+node start-web.js
+```
 
-#### ⚠️ Breaking Changes
-- **概念统一**: 移除"项目组"概念，统一使用"讨论组"
-- **数据模型**: ProjectGroup → Discussion（重命名）
-- **存储路径**: `data/projects/` → `data/discussions/`
-- **API变更**: 旧API保留，新V2 API推荐使用
+访问：http://localhost:3000
 
-#### ✨ 新增功能
-- ✅ Token智能管理（input/output分离、自动压缩）
-- ✅ 智能标记系统（AI自动检测）
-- ✅ 标签系统（灵活组织）
-- ✅ 备注功能（设置和追加）
-- ✅ 优先级（4级）
-- ✅ 类别系统（4类）
-- ✅ 数据迁移工具
+### 2. 启动协调器（处理讨论）
 
-#### 🔧 改进
-- 统一数据模型，减少概念混乱
-- 增强Discussion功能，保持向后兼容
-- 提供数据迁移脚本
+在OpenClaw中发送：
+```
+启动MAD协调器
+```
 
-完整变更历史见 [CHANGELOG.md](./CHANGELOG.md)
+协调器会自动处理pending讨论，生成多专家观点。
 
----
+## 📊 数据目录
 
-## 🤝 贡献
+**默认路径：** `/home/otto/.openclaw/multi-agent-discuss`
 
-欢迎贡献！请阅读 [CONTRIBUTING.md](./CONTRIBUTING.md)
+```
+multi-agent-discuss/
+├── discussions/          # 讨论数据
+│   └── disc-xxx/
+│       ├── discussion.json
+│       └── messages.jsonl
+├── requests/            # 请求队列
+├── reports/             # 报告输出
+└── logs/                # 日志文件
+```
 
----
+## 🤖 专家系统
+
+### v0.1.0: 静态多专家
+
+4个预定义专家：
+- **技术专家** (tech_expert) - 技术架构、实现方案
+- **产品专家** (product_expert) - 产品价值、用户体验
+- **商业专家** (business_expert) - 商业模式、成本效益
+- **运营专家** (ops_expert) - 运营策略、执行落地
+
+### v0.1.1: 协作式讨论（开发中）
+
+- 主协调器分析拆解话题
+- @机制触发专家响应
+- 专家互相@协作
+- 主协调器总结
+
+## 📝 API端点
+
+- `GET /api/health` - 健康检查
+- `GET /api/stats` - 统计信息
+- `GET /api/discussions` - 讨论列表
+- `POST /api/discussions` - 创建讨论
+- `GET /api/discussions/:id/messages` - 讨论消息
+
+## 🔄 版本历史
+
+- **v0.1.0** (2026-02-06) - 初始发布
+  - 完整Web UI
+  - Markdown渲染
+  - 多专家协作
+  - FileBase架构
+
+- **v0.1.1** (开发中) - 协作式讨论
+  - 主协调器拆解
+  - @机制
+  - 群聊界面
+  - 讨论总结
+
+## 🛠️ 技术栈
+
+- **后端：** Node.js + Express.js
+- **前端：** HTML5 + CSS3 + JavaScript
+- **数据：** JSON + JSONL
+- **Markdown：** marked.js + DOMPurify
 
 ## 📄 许可证
 
-[MIT](./LICENSE)
+MIT License - 详见 [LICENSE](LICENSE)
+
+## 🔗 相关链接
+
+- **GitHub：** https://github.com/OTTTTTO/MAD
+- **主分支：** https://github.com/OTTTTTO/MAD/tree/main
+- **问题反馈：** https://github.com/OTTTTTO/MAD/issues
 
 ---
 
-## 🙏 致谢
-
-感谢所有贡献者和用户的支持！
-
----
-
-**项目主页**: https://github.com/OTTTTTO/MAD
-**问题反馈**: https://github.com/OTTTTTO/MAD/issues
-**文档**: [docs/](./docs/)
+**当前版本：** v0.1.0
+**最后更新：** 2026-02-06
