@@ -242,7 +242,9 @@
 
         .message-content {
             color: #333;
-            line-height: 1.6;
+            line-height: 1.8;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
         }
 
         /* Markdown样式 */
@@ -273,15 +275,22 @@
         }
 
         .message-content p {
-            margin: 0.5em 0;
+            margin: 0.8em 0;
+            line-height: 1.8;
         }
 
         .message-content ul, .message-content ol {
-            margin: 0.5em 0;
+            margin: 0.8em 0;
             padding-left: 2em;
+            line-height: 1.8;
         }
 
         .message-content li {
+            margin: 0.5em 0;
+            line-height: 1.6;
+        }
+
+        .message-content li > p {
             margin: 0.3em 0;
         }
 
