@@ -119,11 +119,11 @@ class WebServer {
     this.app.post('/api/requests', async (req, res) => {
       try {
         const { topic, category, tags, priority, maxRounds } = req.body;
-        
+
         if (!topic) {
           return res.status(400).json({ error: '主题不能为空' });
         }
-        
+
         const request = await this.fm.createRequest({
           topic,
           category: category || '需求讨论',
@@ -131,10 +131,35 @@ class WebServer {
           priority: priority || 'medium',
           maxRounds: maxRounds || 3
         });
-        
+
         res.status(201).json({
           success: true,
           request
+        });
+      } catch (error) {
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // 创建讨论（直接创建，无需通过请求队列）
+    this.app.post('/api/discussions', async (req, res) => {
+      try {
+        const { topic, category, tags, priority } = req.body;
+
+        if (!topic) {
+          return res.status(400).json({ error: '主题不能为空' });
+        }
+
+        const discussion = await this.fm.createDiscussion({
+          topic,
+          category: category || '需求讨论',
+          tags: tags || [],
+          priority: priority || 'medium'
+        });
+
+        res.status(201).json({
+          success: true,
+          discussion
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
