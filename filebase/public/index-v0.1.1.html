@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAD v0.1.1 - 协作式多Agent讨论系统</title>
+    <!-- Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.2/marked.min.js"
+            onerror="this.onerror=null; this.src='https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js'"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"
+            onerror="this.onerror=null; this.src='https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js'"></script>
+    <!-- 消息渲染器 v0.1.1 -->
+    <script src="message-renderer.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .version-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f7f7f7;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .discussion-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .discussion-item {
+            padding: 16px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .discussion-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .discussion-item.active {
+            border-color: #667eea;
+            background: #f0f9ff;
+        }
+
+        .discussion-topic {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .discussion-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .status-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-in_progress {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .messages-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 16px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .auto-refresh-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #667eea;
+            margin-left: auto;
+        }
+
+        .refresh-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .back-btn {
+            margin-bottom: 16px;
+        }
+
+        .discussion-detail-header {
+            margin-bottom: 20px;
+        }
+
+        .detail-topic {
+            font-size: 24px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 12px;
+        }
+
+        .detail-meta {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: #666;
+            flex-wrap: wrap;
+        }
+
+        .detail-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* 消息渲染器样式注入点 */
+        #message-styles-container {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>
+                🤖 MAD - 协作式多Agent讨论系统
+                <span class="version-badge">v0.1.1</span>
+            </h1>
+            <p>基于@机制的智能专家协作平台 | 主协调器驱动 + 多专家协作</p>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="main-content">
+            <!-- 左侧：新建讨论和统计 -->
+            <div class="left-panel">
+                <!-- 统计信息 -->
+                <div class="panel" style="margin-bottom: 20px;">
+                    <h2>
+                        📊 系统统计
+                        <div class="auto-refresh-indicator">
+                            <div class="refresh-dot"></div>
+                            自动刷新
+                        </div>
+                    </h2>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalDiscussions">-</div>
+                            <div class="stat-label">总讨论数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalMessages">-</div>
+                            <div class="stat-label">总消息数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="completedDiscussions">-</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="pendingDiscussions">-</div>
+                            <div class="stat-label">待处理</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-secondary" onclick="loadStats()">🔄 立即刷新</button>
+                </div>
+
+                <!-- 新建讨论 -->
+                <div class="panel">
+                    <h2>📝 创建新讨论</h2>
+                    <div id="alertContainer"></div>
+
+                    <form id="createForm">
+                        <div class="form-group">
+                            <label for="topic">讨论主题 *</label>
+                            <textarea id="topic" name="topic" placeholder="例如：如何设计一个高可用的微服务架构？" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category">类别</label>
+                            <select id="category" name="category">
+                                <option value="需求讨论">需求讨论</option>
+                                <option value="技术架构">技术架构</option>
+                                <option value="产品设计">产品设计</option>
+                                <option value="商业策略">商业策略</option>
+                                <option value="运营优化">运营优化</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn" id="submitBtn">✨ 创建讨论</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- 右侧：讨论列表或详情 -->
+            <div class="right-panel">
+                <div class="panel">
+                    <!-- 列表视图 -->
+                    <div id="listView">
+                        <h2>💬 讨论列表</h2>
+                        <div class="discussion-list" id="discussionList">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <div>暂无讨论</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详情视图 -->
+                    <div id="detailView" style="display: none;">
+                        <div class="back-btn">
+                            <button class="btn btn-secondary" onclick="showListView()">← 返回列表</button>
+                        </div>
+                        <div class="discussion-detail-header" id="detailHeader"></div>
+                        <div class="messages-container" id="messagesContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API基础路径
+        const API_BASE = 'http://localhost:3000/api';
+
+        // 当前选中的讨论ID
+        let currentDiscussionId = null;
+
+        // 自动刷新定时器
+        let refreshInterval = null;
+
+        // 消息渲染器实例
+        let messageRenderer = null;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('🚀 MAD v0.1.1 初始化...');
+            
+            // 初始化消息渲染器
+            const messagesContainer = document.getElementById('messagesContainer');
+            messageRenderer = new MessageRenderer(messagesContainer);
+
+            // 注入样式
+            if (typeof MESSAGE_STYLES !== 'undefined') {
+                const styleContainer = document.createElement('div');
+                styleContainer.innerHTML = MESSAGE_STYLES;
+                document.head.appendChild(styleContainer);
+            }
+
+            // 加载数据
+            loadStats();
+            loadDiscussions();
+
+            // 启动自动刷新（每10秒）
+            startAutoRefresh();
+        });
+
+        // 启动自动刷新
+        function startAutoRefresh() {
+            if (refreshInterval) clearInterval(refreshInterval);
+
+            refreshInterval = setInterval(() => {
+                loadStats();
+                
+                // 如果在详情页，刷新消息
+                if (currentDiscussionId) {
+                    loadMessages(currentDiscussionId);
+                } else {
+                    loadDiscussions();
+                }
+            }, 10000); // 10秒刷新一次
+
+            console.log('✅ 自动刷新已启动（10秒间隔）');
+        }
+
+        // 停止自动刷新
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+
+                document.getElementById('totalDiscussions').textContent = stats.totalDiscussions || 0;
+                document.getElementById('totalMessages').textContent = stats.totalMessages || 0;
+                document.getElementById('completedDiscussions').textContent = stats.completedDiscussions || 0;
+                document.getElementById('pendingDiscussions').textContent = stats.pendingDiscussions || 0;
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+
+        // 加载讨论列表
+        async function loadDiscussions() {
+            try {
+                const response = await fetch(`${API_BASE}/discussions`);
+                const discussions = await response.json();
+
+                const listContainer = document.getElementById('discussionList');
+
+                if (discussions.length === 0) {
+                    listContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <div>暂无讨论，创建一个开始吧！</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                listContainer.innerHTML = discussions.map(d => `
+                    <div class="discussion-item" onclick="viewDiscussion('${d.id}')">
+                        <div class="discussion-topic">${escapeHtml(d.topic)}</div>
+                        <div class="discussion-meta">
+                            <span>${d.category || '未分类'}</span>
+                            <span class="status-badge status-${d.status}">${getStatusText(d.status)}</span>
+                            <span>${formatTime(d.createdAt)}</span>
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (error) {
+                console.error('加载讨论列表失败:', error);
+            }
+        }
+
+        // 查看讨论详情
+        async function viewDiscussion(discussionId) {
+            currentDiscussionId = discussionId;
+
+            try {
+                const response = await fetch(`${API_BASE}/discussions/${discussionId}/messages`);
+                const data = await response.json();
+
+                const discussion = data.discussion;
+                const messages = data.messages || [];
+
+                // 显示详情视图
+                document.getElementById('listView').style.display = 'none';
+                document.getElementById('detailView').style.display = 'block';
+
+                // 渲染头部
+                document.getElementById('detailHeader').innerHTML = `
+                    <div class="detail-topic">${escapeHtml(discussion.topic)}</div>
+                    <div class="detail-meta">
+                        <div class="detail-meta-item">
+                            <span>📁</span>
+                            <span>${discussion.category || '未分类'}</span>
+                        </div>
+                        <div class="detail-meta-item">
+                            <span>📊</span>
+                            <span class="status-badge status-${discussion.status}">${getStatusText(discussion.status)}</span>
+                        </div>
+                        <div class="detail-meta-item">
+                            <span>🕐</span>
+                            <span>${new Date(discussion.createdAt).toLocaleString('zh-CN')}</span>
+                        </div>
+                        ${discussion.phase ? `
+                        <div class="detail-meta-item">
+                            <span>🔄</span>
+                            <span>轮次 ${discussion.phase.round || 0}/${discussion.phase.maxRounds || 5}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+
+                // 使用消息渲染器渲染消息
+                messageRenderer.renderMessages(messages);
+
+            } catch (error) {
+                console.error('加载讨论详情失败:', error);
+                showAlert('❌ 加载失败: ' + error.message, 'error');
+            }
+        }
+
+        // 返回列表视图
+        function showListView() {
+            currentDiscussionId = null;
+            document.getElementById('detailView').style.display = 'none';
+            document.getElementById('listView').style.display = 'block';
+            loadDiscussions();
+        }
+
+        // 创建讨论表单提交
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+
+            // 禁用按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '创建中...';
+
+            try {
+                const formData = new FormData(e.target);
+                const data = {
+                    topic: formData.get('topic'),
+                    category: formData.get('category')
+                };
+
+                const response = await fetch(`${API_BASE}/discussions`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showAlert('✅ 讨论已创建！请在OpenClaw中说"启动MAD协调器"来处理', 'success');
+                    e.target.reset();
+
+                    // 刷新列表和统计
+                    setTimeout(() => {
+                        loadDiscussions();
+                        loadStats();
+                    }, 2000);
+                } else {
+                    showAlert('❌ ' + (result.error || '创建失败'), 'error');
+                }
+            } catch (error) {
+                showAlert('❌ 网络错误: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '✨ 创建讨论';
+            }
+        });
+
+        // 显示提示信息
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // 状态文本
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': '待处理',
+                'in_progress': '进行中',
+                'completed': '已完成',
+                'failed': '失败'
+            };
+            return statusMap[status] || status;
+        }
+
+        // 工具函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatTime(timestamp) {
+            if (!timestamp) return '-';
+            const date = new Date(timestamp);
+            const now = new Date();
+            const diff = now - date;
+
+            if (diff < 60000) return '刚刚';
+            if (diff < 3600000) return `${Math.floor(diff / 60000)}分钟前`;
+            if (diff < 86400000) return `${Math.floor(diff / 3600000)}小时前`;
+
+            return date.toLocaleDateString('zh-CN');
+        }
+
+        // 页面卸载时清理
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+    </script>
+</body>
+</html>

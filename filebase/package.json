@@ -1,0 +1,36 @@
+{
+  "name": "@openclaw/mad-filebase",
+  "version": "0.1.1",
+  "description": "MAD FileBase - 基于@机制的协作式多Agent讨论系统 v0.1.1",
+  "homepage": "https://github.com/OTTTTTO/mad/tree/filebase-clean",
+  "main": "filebase-coordinator/coordinator-v0.1.1.js",
+  "scripts": {
+    "start": "node filebase/start-web.js",
+    "test": "node filebase-coordinator/test-v0.1.1.js",
+    "coordinator": "node filebase-coordinator/run.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "openclaw": {
+    "skill": true,
+    "enabled": true,
+    "type": "tool"
+  },
+  "keywords": [
+    "multi-agent",
+    "discussion",
+    "collaboration",
+    "@-mechanism",
+    "coordinator",
+    "filebase",
+    "v0.1.1"
+  ],
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/OTTTTTO/mad.git",
+    "branch": "filebase-clean"
+  }
+}

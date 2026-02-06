@@ -104,11 +104,12 @@ class WebServer {
     // 讨论消息
     this.app.get('/api/discussions/:id/messages', async (req, res) => {
       try {
+        const discussion = await this.fm.getDiscussion(req.params.id);
         const messages = await this.fm.getMessages(req.params.id);
         res.json({
-          discussionId: req.params.id,
-          total: messages.length,
-          messages
+          discussion,
+          messages,
+          total: messages.length
         });
       } catch (error) {
         res.status(500).json({ error: error.message });
