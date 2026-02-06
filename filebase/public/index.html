@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAD - 多Agent讨论系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .panel h2 {
+            color: #333;
+            font-size: 20px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #f7f7f7;
+            padding: 16px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #5568d3;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .discussion-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .discussion-item {
+            background: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .discussion-item:hover {
+            border-color: #667eea;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .discussion-item.active {
+            border-color: #667eea;
+            background: #f0f3ff;
+        }
+
+        .discussion-topic {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .discussion-meta {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-active {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-pending {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .messages {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .message {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .message-role {
+            font-weight: 600;
+            color: #667eea;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #999;
+            margin-left: auto;
+        }
+
+        .message-content {
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+
+        .alert {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .refresh-btn {
+            background: #6c757d;
+            margin-top: 8px;
+        }
+
+        .refresh-btn:hover {
+            background: #5a6268;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>🤖 MAD - 多Agent讨论系统</h1>
+            <p>基于共享文件的真实AI多专家协作平台</p>
+        </div>
+
+        <!-- 主内容 -->
+        <div class="main-content">
+            <!-- 左侧：新建请求和统计 -->
+            <div class="left-panel">
+                <!-- 统计信息 -->
+                <div class="panel" style="margin-bottom: 20px;">
+                    <h2>📊 系统统计</h2>
+                    <div class="stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalDiscussions">-</div>
+                            <div class="stat-label">总讨论数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="totalMessages">-</div>
+                            <div class="stat-label">总消息数</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="completedDiscussions">-</div>
+                            <div class="stat-label">已完成</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="activeDiscussions">-</div>
+                            <div class="stat-label">进行中</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新建请求 -->
+                <div class="panel">
+                    <h2>📝 创建新讨论</h2>
+                    <div id="alertContainer"></div>
+                    
+                    <form id="createForm">
+                        <div class="form-group">
+                            <label for="topic">讨论主题 *</label>
+                            <textarea id="topic" name="topic" placeholder="例如：如何设计一个高可用的微服务架构" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="category">类别</label>
+                            <select id="category" name="category">
+                                <option value="需求讨论">需求讨论</option>
+                                <option value="技术架构">技术架构</option>
+                                <option value="产品设计">产品设计</option>
+                                <option value="商业策略">商业策略</option>
+                                <option value="运营优化">运营优化</option>
+                                <option value="其他">其他</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="priority">优先级</label>
+                            <select id="priority" name="priority">
+                                <option value="low">低</option>
+                                <option value="medium" selected>中</option>
+                                <option value="high">高</option>
+                            </select>
+                        </div>
+
+                        <button type="submit" class="btn" id="submitBtn">创建讨论</button>
+                    </form>
+
+                    <div style="margin-top: 16px; padding: 12px; background: #f0f3ff; border-radius: 8px; font-size: 12px; color: #666;">
+                        💡 提示：创建后等待30-60秒，刷新列表即可看到讨论结果
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧：讨论列表和详情 -->
+            <div class="right-panel">
+                <div class="panel">
+                    <h2>
+                        💬 讨论列表
+                        <button class="btn refresh-btn" onclick="loadDiscussions()" style="width: auto; padding: 8px 16px; margin-left: auto;">
+                            🔄 刷新
+                        </button>
+                    </h2>
+                    
+                    <div id="discussionList" class="discussion-list">
+                        <div class="loading">加载中...</div>
+                    </div>
+                </div>
+
+                <div class="panel" style="margin-top: 20px;">
+                    <h2>📜 讨论详情</h2>
+                    <div id="messageContainer" class="messages">
+                        <div class="empty-state">
+                            请从左侧列表选择一个讨论查看详情
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API基础URL
+        const API_BASE = '/api';
+
+        // 当前选中的讨论ID
+        let currentDiscussionId = null;
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadDiscussions();
+            
+            // 每30秒自动刷新
+            setInterval(() => {
+                loadStats();
+                if (currentDiscussionId) {
+                    loadMessages(currentDiscussionId);
+                }
+            }, 30000);
+        });
+
+        // 加载统计信息
+        async function loadStats() {
+            try {
+                const response = await fetch(`${API_BASE}/stats`);
+                const stats = await response.json();
+
+                document.getElementById('totalDiscussions').textContent = stats.totalDiscussions || 0;
+                document.getElementById('totalMessages').textContent = stats.totalMessages || 0;
+                document.getElementById('completedDiscussions').textContent = stats.completedDiscussions || 0;
+                document.getElementById('activeDiscussions').textContent = stats.activeDiscussions || 0;
+            } catch (error) {
+                console.error('加载统计失败:', error);
+            }
+        }
+
+        // 加载讨论列表
+        async function loadDiscussions() {
+            try {
+                const response = await fetch(`${API_BASE}/discussions`);
+                const data = await response.json();
+
+                const container = document.getElementById('discussionList');
+
+                if (data.discussions.length === 0) {
+                    container.innerHTML = '<div class="empty-state">暂无讨论</div>';
+                    return;
+                }
+
+                container.innerHTML = data.discussions.map(d => `
+                    <div class="discussion-item ${d.id === currentDiscussionId ? 'active' : ''}" 
+                         onclick="selectDiscussion('${d.id}')">
+                        <div class="discussion-topic">${escapeHtml(d.topic)}</div>
+                        <div class="discussion-meta">
+                            <span class="status-badge status-${d.status}">${getStatusText(d.status)}</span>
+                            <span>${formatDate(d.createdAt)}</span>
+                            <span>${d.messages?.length || 0}条消息</span>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载讨论失败:', error);
+                document.getElementById('discussionList').innerHTML = 
+                    '<div class="empty-state">加载失败</div>';
+            }
+        }
+
+        // 选择讨论
+        async function selectDiscussion(id) {
+            currentDiscussionId = id;
+            
+            // 更新列表选中状态
+            document.querySelectorAll('.discussion-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // 加载消息
+            await loadMessages(id);
+        }
+
+        // 加载讨论消息
+        async function loadMessages(id) {
+            try {
+                const response = await fetch(`${API_BASE}/discussions/${id}/messages`);
+                const data = await response.json();
+
+                const container = document.getElementById('messageContainer');
+
+                if (data.messages.length === 0) {
+                    container.innerHTML = '<div class="empty-state">暂无消息</div>';
+                    return;
+                }
+
+                container.innerHTML = data.messages.map(m => `
+                    <div class="message">
+                        <div class="message-header">
+                            <span class="message-role">${escapeHtml(m.agentName || m.role)}</span>
+                            <span class="message-time">${formatTime(m.timestamp)}</span>
+                        </div>
+                        <div class="message-content">${escapeHtml(m.content)}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('加载消息失败:', error);
+            }
+        }
+
+        // 创建讨论表单提交
+        document.getElementById('createForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const submitBtn = document.getElementById('submitBtn');
+            const alertContainer = document.getElementById('alertContainer');
+
+            // 禁用按钮
+            submitBtn.disabled = true;
+            submitBtn.textContent = '创建中...';
+
+            try {
+                const formData = new FormData(e.target);
+                const data = {
+                    topic: formData.get('topic'),
+                    category: formData.get('category'),
+                    priority: formData.get('priority')
+                };
+
+                const response = await fetch(`${API_BASE}/requests`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // 成功
+                    showAlert('✅ 讨论已创建！请在30-60秒后刷新列表查看结果', 'success');
+                    e.target.reset();
+                    
+                    // 刷新列表
+                    setTimeout(() => {
+                        loadDiscussions();
+                        loadStats();
+                    }, 2000);
+                } else {
+                    // 失败
+                    showAlert('❌ ' + (result.error || '创建失败'), 'error');
+                }
+            } catch (error) {
+                showAlert('❌ 网络错误: ' + error.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '创建讨论';
+            }
+        });
+
+        // 显示提示信息
+        function showAlert(message, type) {
+            const container = document.getElementById('alertContainer');
+            container.innerHTML = `<div class="alert alert-${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // 工具函数
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('zh-CN');
+        }
+
+        function getStatusText(status) {
+            const map = {
+                'pending': '待处理',
+                'active': '进行中',
+                'completed': '已完成'
+            };
+            return map[status] || status;
+        }
+    </script>
+</body>
+</html>
