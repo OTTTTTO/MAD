@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAD - 多Agent讨论系统</title>
+    <!-- Markdown渲染库 -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -240,7 +243,132 @@
         .message-content {
             color: #333;
             line-height: 1.6;
-            white-space: pre-wrap;
+        }
+
+        /* Markdown样式 */
+        .message-content h1 {
+            font-size: 1.8em;
+            margin: 0.8em 0 0.4em 0;
+            color: #2c3e50;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 0.3em;
+        }
+
+        .message-content h2 {
+            font-size: 1.5em;
+            margin: 0.7em 0 0.3em 0;
+            color: #34495e;
+        }
+
+        .message-content h3 {
+            font-size: 1.3em;
+            margin: 0.6em 0 0.3em 0;
+            color: #34495e;
+        }
+
+        .message-content h4 {
+            font-size: 1.1em;
+            margin: 0.5em 0 0.2em 0;
+            color: #34495e;
+        }
+
+        .message-content p {
+            margin: 0.5em 0;
+        }
+
+        .message-content ul, .message-content ol {
+            margin: 0.5em 0;
+            padding-left: 2em;
+        }
+
+        .message-content li {
+            margin: 0.3em 0;
+        }
+
+        .message-content ul {
+            list-style-type: disc;
+        }
+
+        .message-content ol {
+            list-style-type: decimal;
+        }
+
+        .message-content code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.9em;
+            color: #e74c3c;
+        }
+
+        .message-content pre {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1em 0;
+        }
+
+        .message-content pre code {
+            background: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        .message-content blockquote {
+            border-left: 4px solid #667eea;
+            padding-left: 16px;
+            margin: 1em 0;
+            color: #666;
+            font-style: italic;
+        }
+
+        .message-content strong {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .message-content em {
+            font-style: italic;
+        }
+
+        .message-content a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .message-content a:hover {
+            text-decoration: underline;
+        }
+
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+
+        .message-content th, .message-content td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        .message-content th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .message-content tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .message-content hr {
+            border: none;
+            border-top: 2px solid #eee;
+            margin: 1.5em 0;
         }
 
         .empty-state {
@@ -480,15 +608,20 @@
                     return;
                 }
 
-                container.innerHTML = data.messages.map(m => `
+                container.innerHTML = data.messages.map(m => {
+                    // 渲染Markdown内容
+                    const renderedContent = DOMPurify.sanitize(marked.parse(m.content));
+
+                    return `
                     <div class="message">
                         <div class="message-header">
-                            <span class="message-role">${escapeHtml(m.agentName || m.role)}</span>
+                            <span class="message-role">${escapeHtml(m.agentName || m.name || m.role)}</span>
                             <span class="message-time">${formatTime(m.timestamp)}</span>
                         </div>
-                        <div class="message-content">${escapeHtml(m.content)}</div>
+                        <div class="message-content">${renderedContent}</div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
             } catch (error) {
                 console.error('加载消息失败:', error);
             }
