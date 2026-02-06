@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MAD - 多Agent讨论系统</title>
     <!-- Markdown渲染库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <style>
         * {
@@ -523,9 +523,22 @@
 
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', () => {
+            // 检查依赖库是否加载
+            if (typeof marked === 'undefined') {
+                console.error('marked.js 未加载，Markdown功能将不可用');
+            }
+            if (typeof DOMPurify === 'undefined') {
+                console.error('DOMPurify 未加载，将跳过XSS过滤（不推荐）');
+            }
+
+            // 显示加载状态
+            if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+                console.log('✅ Markdown库加载成功');
+            }
+
             loadStats();
             loadDiscussions();
-            
+
             // 每30秒自动刷新
             setInterval(() => {
                 loadStats();
@@ -609,8 +622,23 @@
                 }
 
                 container.innerHTML = data.messages.map(m => {
-                    // 渲染Markdown内容
-                    const renderedContent = DOMPurify.sanitize(marked.parse(m.content));
+                    // 渲染Markdown内容（带fallback）
+                    let renderedContent;
+                    try {
+                        if (typeof marked !== 'undefined' && typeof DOMPurify !== 'undefined') {
+                            renderedContent = DOMPurify.sanitize(marked.parse(m.content));
+                        } else if (typeof marked !== 'undefined') {
+                            // marked可用但DOMPurify不可用，直接使用（会有安全风险）
+                            console.warn('DOMPurify未加载，跳过XSS过滤');
+                            renderedContent = marked.parse(m.content);
+                        } else {
+                            // 都不可用，使用纯文本
+                            renderedContent = escapeHtml(m.content);
+                        }
+                    } catch (error) {
+                        console.error('Markdown渲染失败:', error);
+                        renderedContent = escapeHtml(m.content);
+                    }
 
                     return `
                     <div class="message">
